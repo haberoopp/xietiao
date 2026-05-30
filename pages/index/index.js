@@ -148,6 +148,10 @@ Page({
   // 显示数量输入弹窗
   showQtyInput(e) {
     const product = e.currentTarget.dataset.product;
+    if (product.status === 'out') {
+      wx.showToast({ title: '该产品暂时缺货', icon: 'none' });
+      return;
+    }
     // 检查购物车中已有数量
     const app = getApp();
     const cart = app.globalData.cart || [];

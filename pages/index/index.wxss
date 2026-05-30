@@ -467,3 +467,21 @@
   transform: scale(0.97);
 }
 
+/* 缺货产品 */
+.product-out {
+  opacity: 0.55;
+}
+
+.product-low {
+  /* 正常显示无需降透明度 */
+}
+
+.img-out {
+  filter: grayscale(60%);
+}
+
+.add-cart-out {
+  background: #bdbdbd !important;
+  color: #fff;
+}
+

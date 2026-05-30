@@ -48,9 +48,9 @@
   </view>
 
   <view wx:else class="product-list">
-    <view class="product-card card" wx:for="{{products}}" wx:key="_id">
+    <view class="product-card card {{item.status === 'out' ? 'product-out' : ''}} {{item.status === 'low' ? 'product-low' : ''}}" wx:for="{{products}}" wx:key="_id">
       <image
-        class="product-image"
+        class="product-image {{item.status === 'out' ? 'img-out' : ''}}"
         src="{{item.image || '/images/placeholder.png'}}"
         mode="aspectFill"
       />
@@ -65,6 +65,11 @@
             <text class="price-symbol">¥</text>{{item.priceText}}
           </view>
           <view
+            wx:if="{{item.status === 'out'}}"
+            class="add-cart-btn add-cart-out"
+          >缺货</view>
+          <view
+            wx:else
             class="add-cart-btn"
             data-product="{{item}}"
             bindtap="showQtyInput"
