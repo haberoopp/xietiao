@@ -531,6 +531,39 @@ Page({
     }});
   },
 
+  onMarkLowStock(e) {
+    const { productId, productName } = e.currentTarget.dataset;
+    const app = getApp();
+
+    if (app.globalData.demoMode) {
+      const p = app.globalData.demoProducts.find(p => p._id === productId);
+      if (p && p.status === 'sufficient') {
+        p.status = 'low';
+        wx.showToast({ title: '已标记"' + productName + '"为紧张', icon: 'success' });
+        this.loadOrders();
+      } else if (p && p.status === 'low') {
+        wx.showToast({ title: '"' + productName + '"已标记为紧张', icon: 'none' });
+      } else if (p && p.status === 'out') {
+        wx.showToast({ title: '"' + productName + '"已是缺货状态', icon: 'none' });
+      }
+      return;
+    }
+
+    wx.showLoading({ title: '更新中...' });
+    wx.cloud.callFunction({
+      name: 'adminUpdateProduct',
+      data: { productId, status: 'low' }
+    }).then(res => {
+      wx.hideLoading();
+      if (res.result.code === 0) {
+        wx.showToast({ title: '已标记为紧张', icon: 'success' });
+      }
+    }).catch(() => {
+      wx.hideLoading();
+      wx.showToast({ title: '操作失败', icon: 'none' });
+    });
+  },
+
   onLogout() {
     // 清除客户端状态
     getApp().globalData.adminLoggedIn = false;

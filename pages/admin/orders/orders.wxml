@@ -125,8 +125,11 @@
         <!-- 产品明细 -->
         <view class="order-products">
           <view class="op-item" wx:for="{{item.items}}" wx:key="productId" wx:for-item="p">
-            <text class="op-name">{{p.name}}</text>
-            <text class="op-detail">¥{{p.priceText}} × {{p.quantity}}{{p.unit}}</text>
+            <view class="op-text">
+              <text class="op-name">{{p.name}}</text>
+              <text class="op-detail">¥{{p.priceText}} × {{p.quantity}}{{p.unit}}</text>
+            </view>
+            <view class="op-mark-low" data-product-id="{{p.productId}}" data-product-name="{{p.name}}" catchtap="onMarkLowStock">标记紧张</view>
           </view>
         </view>
 

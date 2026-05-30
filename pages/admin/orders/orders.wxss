@@ -183,9 +183,28 @@
 
 .op-item {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 4rpx 0;
-  font-size: 26rpx;
+  padding: 10rpx 0;
+}
+
+.op-text {
+  flex: 1;
+  overflow: hidden;
+}
+
+.op-mark-low {
+  font-size: 20rpx;
+  color: #ff9800;
+  border: 1rpx solid #ff9800;
+  border-radius: 4rpx;
+  padding: 4rpx 12rpx;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+}
+
+.op-mark-low:active {
+  background: #fff3e0;
 }
 
 .op-name {
