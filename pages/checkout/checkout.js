@@ -389,6 +389,8 @@ Page({
       discount: this.data.customerDiscount,
       deliveryMethod: this.data.deliveryMethod,
       status: 'processing',
+      payment_status: 'unpaid',
+      paid_amount: 0,
       location: this.data.pickedLocation || undefined,
       createdAt: new Date().toISOString()
     };
