@@ -6,6 +6,7 @@
       <text class="logout-link" bindtap="onLogout">退出</text>
     </view>
     <view wx:if="{{isManager}}" class="top-actions">
+      <view class="go-dash-btn" bindtap="onGoDashboard">📊 仪表盘</view>
       <view class="go-products-btn" bindtap="onGoCustomers">客户管理</view>
       <view class="go-products-btn" bindtap="onGoProducts">管理产品</view>
     </view>

@@ -514,6 +514,10 @@ Page({
     wx.navigateTo({ url: '/pages/admin/products/products' });
   },
 
+  onGoDashboard() {
+    wx.navigateTo({ url: '/pages/admin/dashboard/dashboard' });
+  },
+
   onGoCustomers() {
     wx.navigateTo({ url: '/pages/admin/customers/customers' });
   },
