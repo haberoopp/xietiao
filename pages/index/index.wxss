@@ -116,25 +116,8 @@
 .cfb-icon-bg {
   position: absolute; inset: 0; background: #C0392B; border-radius: 50%;
   box-shadow: 0 4rpx 12rpx rgba(192,57,43,0.25);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-.cfb-cart-handle {
-  width: 20rpx;
-  height: 10rpx;
-  border: 4rpx solid #fff;
-  border-bottom: none;
-  border-radius: 12rpx 12rpx 0 0;
-  margin-bottom: 0;
-}
-.cfb-cart-body {
-  width: 0;
-  height: 0;
-  border-left: 16rpx solid transparent;
-  border-right: 16rpx solid transparent;
-  border-bottom: 32rpx solid #fff;
-  border-top: none;
-  border-radius: 0;
-}
+.cfb-icon-text { position: relative; z-index: 1; font-size: 40rpx; }
 .cfb-count {
   position: absolute; top: -2rpx; right: -4rpx; z-index: 2;
   min-width: 34rpx; height: 34rpx; line-height: 34rpx; text-align: center;

@@ -126,10 +126,8 @@
     <view class="cart-float-bar">
       <view class="cfb-left">
         <view class="cfb-icon-wrap" bindtap="onToggleCart">
-          <view class="cfb-icon-bg">
-            <view class="cfb-cart-handle"></view>
-            <view class="cfb-cart-body"></view>
-          </view>
+          <view class="cfb-icon-bg"></view>
+          <text class="cfb-icon-text">🛒</text>
           <text wx:if="{{cartCount > 0}}" class="cfb-count">{{cartCount > 99 ? '99+' : cartCount}}</text>
         </view>
         <text class="cfb-total">¥{{cartTotal}}</text>
