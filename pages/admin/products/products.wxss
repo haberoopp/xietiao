@@ -18,7 +18,7 @@
 .search-input-wrap {
   display: flex;
   align-items: center;
-  background: #f5f5f5;
+  background: #F5F6FA;
   border-radius: 8rpx;
   padding: 0 16rpx;
 }
@@ -34,7 +34,7 @@
 }
 .search-clear {
   font-size: 28rpx;
-  color: #999;
+  color: #7F8C8D;
   padding: 10rpx;
   flex-shrink: 0;
 }
@@ -48,7 +48,7 @@
 .add-btn {
   font-size: 26rpx;
   color: #fff;
-  background: #d32f2f;
+  background: #C0392B;
   padding: 10rpx 24rpx;
   border-radius: 6rpx;
 }
@@ -92,7 +92,7 @@
 
 .pa-meta {
   font-size: 22rpx;
-  color: #999;
+  color: #7F8C8D;
   margin-top: 4rpx;
 }
 
@@ -110,8 +110,8 @@
   flex-shrink: 0;
 }
 
-.dot-suf { background: #4caf50; }
-.dot-low { background: #ff9800; }
+.dot-suf { background: #27AE60; }
+.dot-low { background: #E67E22; }
 .dot-out { background: #f44336; }
 
 .status-dot-inline {
@@ -130,7 +130,7 @@
 
 .pa-recent-sales {
   font-size: 22rpx;
-  color: #999;
+  color: #7F8C8D;
   margin-left: auto;
 }
 
@@ -232,7 +232,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: #7F8C8D;
   font-size: 28rpx;
 }
 

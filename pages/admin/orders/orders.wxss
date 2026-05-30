@@ -18,17 +18,17 @@
   border-radius: 4rpx;
 }
 
-.role-badge.role-manager { background: #d32f2f; }
+.role-badge.role-manager { background: #C0392B; }
 .role-badge.role-delivery { background: #2196f3; }
-.role-badge.role-warehouse { background: #4caf50; }
+.role-badge.role-warehouse { background: #27AE60; }
 
 .logout-link {
   font-size: 22rpx;
-  color: #999;
+  color: #7F8C8D;
 }
 
 .logout-link:active {
-  color: #d32f2f;
+  color: #C0392B;
 }
 
 .top-actions {
@@ -38,17 +38,17 @@
 
 .go-dash-btn {
   font-size: 26rpx;
-  color: #ff9800;
+  color: #E67E22;
   padding: 10rpx 24rpx;
-  border: 1rpx solid #ff9800;
+  border: 1rpx solid #E67E22;
   border-radius: 6rpx;
 }
 
 .go-products-btn {
   font-size: 26rpx;
-  color: #d32f2f;
+  color: #C0392B;
   padding: 10rpx 20rpx;
-  border: 1rpx solid #d32f2f;
+  border: 1rpx solid #C0392B;
   border-radius: 6rpx;
 }
 
@@ -69,7 +69,7 @@
 }
 
 .tab-item.active {
-  background: #d32f2f;
+  background: #C0392B;
   color: #fff;
 }
 
@@ -81,7 +81,7 @@
 .search-input-wrap {
   display: flex;
   align-items: center;
-  background: #f5f5f5;
+  background: #F5F6FA;
   border-radius: 8rpx;
   padding: 0 16rpx;
 }
@@ -100,7 +100,7 @@
 
 .search-clear {
   font-size: 28rpx;
-  color: #999;
+  color: #7F8C8D;
   padding: 10rpx;
   flex-shrink: 0;
 }
@@ -118,21 +118,21 @@
 }
 
 /* 已拿货/未拿货 badge */
-.badge-pickedup-yes { background: #4caf50; }
-.badge-pickedup-no { background: #9e9e9e; }
+.badge-pickedup-yes { background: #27AE60; }
+.badge-pickedup-no { background: #7F8C8D; }
 
 /* 已拿货/未拿货 底部按钮 */
 .pickedup-btn {
   font-size: 24rpx;
   color: #666;
-  background: #f5f5f5;
+  background: #F5F6FA;
   padding: 8rpx 20rpx;
   border-radius: 6rpx;
 }
 
 .pickedup-btn.pu-done {
   color: #fff;
-  background: #4caf50;
+  background: #27AE60;
 }
 
 .pickedup-btn:active {
@@ -140,7 +140,7 @@
 }
 
 .info-label {
-  color: #999;
+  color: #7F8C8D;
 }
 
 .info-phone {
@@ -166,7 +166,7 @@
   flex-shrink: 0;
   margin-left: 12rpx;
   padding: 6rpx 16rpx;
-  background: #4caf50;
+  background: #27AE60;
   color: #fff;
   font-size: 22rpx;
   border-radius: 4rpx;
@@ -195,8 +195,8 @@
 
 .op-mark-low {
   font-size: 20rpx;
-  color: #ff9800;
-  border: 1rpx solid #ff9800;
+  color: #E67E22;
+  border: 1rpx solid #E67E22;
   border-radius: 4rpx;
   padding: 4rpx 12rpx;
   flex-shrink: 0;
@@ -222,7 +222,7 @@
 
 .order-remark {
   font-size: 24rpx;
-  color: #999;
+  color: #7F8C8D;
   margin-bottom: 12rpx;
   padding: 8rpx;
   background: #fff8e1;
@@ -237,7 +237,7 @@
 
 .rr-badge {
   font-size: 22rpx;
-  color: #d32f2f;
+  color: #C0392B;
   font-weight: 500;
   margin-bottom: 6rpx;
 }
@@ -262,7 +262,7 @@
   margin-top: 6rpx;
   padding-top: 6rpx;
   border-top: 1rpx solid #ffe0b2;
-  color: #999;
+  color: #7F8C8D;
 }
 
 .order-footer {
@@ -291,8 +291,8 @@
 
 .edit-price-btn {
   font-size: 22rpx;
-  color: #ff9800;
-  border: 1rpx solid #ff9800;
+  color: #E67E22;
+  border: 1rpx solid #E67E22;
   padding: 4rpx 12rpx;
   border-radius: 4rpx;
 }
@@ -310,8 +310,8 @@
   top: 16rpx;
   right: 16rpx;
   font-size: 22rpx;
-  color: #d32f2f;
-  border: 1rpx solid #d32f2f;
+  color: #C0392B;
+  border: 1rpx solid #C0392B;
   padding: 4rpx 12rpx;
   border-radius: 4rpx;
   z-index: 1;
@@ -341,10 +341,10 @@
 }
 
 /* 退换货状态标签 */
-.badge-return-pending { background: #ff9800; }
+.badge-return-pending { background: #E67E22; }
 .badge-return-approved { background: #2196f3; }
-.badge-return-rejected { background: #9e9e9e; }
-.badge-return-completed { background: #4caf50; }
+.badge-return-rejected { background: #7F8C8D; }
+.badge-return-completed { background: #27AE60; }
 
 /* 退换货处理按钮 */
 .return-actions {
@@ -364,7 +364,7 @@
 }
 
 .return-act.approve {
-  background: #4caf50;
+  background: #27AE60;
 }
 
 .return-act.reject {
@@ -424,8 +424,8 @@
 
 .upload-btn {
   font-size: 24rpx;
-  color: #4caf50;
-  border: 1rpx solid #4caf50;
+  color: #27AE60;
+  border: 1rpx solid #27AE60;
   padding: 8rpx 16rpx;
   border-radius: 6rpx;
 }
@@ -436,7 +436,7 @@
 
 .upload-hint {
   font-size: 22rpx;
-  color: #ff9800;
+  color: #E67E22;
   margin-left: 12rpx;
 }
 
@@ -470,7 +470,7 @@
 
 .price-current {
   font-size: 28rpx;
-  color: #999;
+  color: #7F8C8D;
   margin-bottom: 24rpx;
   text-align: center;
 }
@@ -478,12 +478,12 @@
 .price-input {
   width: 100%;
   height: 90rpx;
-  border: 2rpx solid #d32f2f;
+  border: 2rpx solid #C0392B;
   border-radius: 8rpx;
   text-align: center;
   font-size: 40rpx;
   font-weight: bold;
-  color: #d32f2f;
+  color: #C0392B;
   box-sizing: border-box;
 }
 
@@ -513,8 +513,8 @@
 }
 
 .pt-unpaid {
-  color: #ff9800;
-  border: 1rpx solid #ff9800;
+  color: #E67E22;
+  border: 1rpx solid #E67E22;
 }
 
 .pt-unpaid:active {
@@ -526,3 +526,7 @@
   background: #e8f5e9;
   border: 1rpx solid #a5d6a7;
 }
+
+/* Ensure action buttons have consistent touch targets */
+.admin-order-card { padding: 16rpx; background: #fff; border-radius: 8rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06); margin-bottom: 16rpx; }
+.action-btn { min-height: 56rpx; line-height: 40rpx; padding: 8rpx 16rpx; border-radius: 6rpx; font-size: 24rpx; }
