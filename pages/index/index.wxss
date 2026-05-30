@@ -117,7 +117,12 @@
   position: absolute; inset: 0; background: #C0392B; border-radius: 50%;
   box-shadow: 0 4rpx 12rpx rgba(192,57,43,0.25);
 }
-.cfb-icon-text { position: relative; z-index: 1; font-size: 40rpx; }
+.cfb-cart-icon {
+  position: relative;
+  z-index: 1;
+  width: 48rpx;
+  height: 48rpx;
+}
 .cfb-count {
   position: absolute; top: -2rpx; right: -4rpx; z-index: 2;
   min-width: 34rpx; height: 34rpx; line-height: 34rpx; text-align: center;
