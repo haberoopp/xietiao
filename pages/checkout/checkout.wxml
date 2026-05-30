@@ -41,7 +41,7 @@
         data-method="pickup"
         bindtap="onDeliveryChange"
       >
-        <view class="do-icon">🏪</view>
+        <view class="do-icon">📍</view>
         <view class="do-label">自取</view>
       </view>
       <view
@@ -49,7 +49,7 @@
         data-method="delivery"
         bindtap="onDeliveryChange"
       >
-        <view class="do-icon">🛵</view>
+        <view class="do-icon">🚲</view>
         <view class="do-label">配送</view>
       </view>
       <view
@@ -57,13 +57,13 @@
         data-method="logistics"
         bindtap="onDeliveryChange"
       >
-        <view class="do-icon">🚚</view>
+        <view class="do-icon">📦</view>
         <view class="do-label">物流</view>
       </view>
     </view>
 
     <view wx:if="{{deliveryMethod === 'logistics'}}" class="logistics-warn">
-      ⚠️ 订单费用不包含物流运费，物流费用需另行支付
+      ! 订单费用不包含物流运费，物流费用需另行支付
     </view>
 
     <view wx:if="{{deliveryMethod === 'pickup'}}" class="pickup-hint">
@@ -130,7 +130,7 @@
           bindinput="onInput"
         />
         <view wx:if="{{matchedCustomer}}" class="matched-customer">
-          <text>🎗 {{matchedCustomer.name}}</text>
+          <text>★ {{matchedCustomer.name}}</text>
           <text wx:if="{{matchedCustomer.discount < 1}}" class="matched-discount">享{{matchedCustomer.discount * 10}}折</text>
         </view>
       </view>
