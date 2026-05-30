@@ -29,6 +29,8 @@ const mockOrders = [
     totalAmount: 25000,
     deliveryMethod: 'delivery',
     status: 'completed',
+    payment_status: 'paid',
+    paid_amount: 25000,
     pickedUp: true,
     location: { lat: 28.0185, lng: 120.6505 },
     remark: '颜色选黑色和白色各一半',
@@ -46,6 +48,8 @@ const mockOrders = [
     totalAmount: 15000,
     deliveryMethod: 'pickup',
     status: 'processing',
+    payment_status: 'unpaid',
+    paid_amount: 0,
     location: { lat: 28.0045, lng: 120.5619 },
     remark: '',
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
@@ -63,6 +67,8 @@ const mockOrders = [
     totalAmount: 50500,
     deliveryMethod: 'logistics',
     status: 'processing',
+    payment_status: 'unpaid',
+    paid_amount: 0,
     location: { lat: 28.4716, lng: 119.9156 },
     remark: '急单，请尽快发货',
     createdAt: new Date(Date.now() - 86400000).toISOString(),
@@ -70,8 +76,8 @@ const mockOrders = [
 ];
 
 const mockCustomers = [
-  { _id: 'c001', name: '温州服装厂', phone: '13800138001', discount: 0.9, totalOrders: 3, totalAmount: 25500, createdAt: Date.now() - 86400000 * 30 },
-  { _id: 'c002', name: '陈大明', phone: '13900139002', discount: 0.85, totalOrders: 1, totalAmount: 15000, createdAt: Date.now() - 86400000 * 15 },
+  { _id: 'c001', name: '温州服装厂', phone: '13800138001', discount: 0.9, totalOrders: 3, totalAmount: 25500, debt: 0, createdAt: Date.now() - 86400000 * 30 },
+  { _id: 'c002', name: '陈大明', phone: '13900139002', discount: 0.85, totalOrders: 1, totalAmount: 15000, debt: 15000, createdAt: Date.now() - 86400000 * 15 },
 ];
 
 module.exports = {
