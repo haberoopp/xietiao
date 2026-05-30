@@ -45,6 +45,16 @@ Page({
         ];
         wx.setStorageSync('customers', customers);
       }
+      // 从订单计算欠款（兼容旧客户数据无debt字段）
+      const allOrders = [...(wx.getStorageSync('demoOrders') || []), ...(app.globalData.demoOrders || [])];
+      customers = customers.map(c => {
+        if (c.debt === undefined) {
+          c.debt = allOrders
+            .filter(o => o.phone === c.phone && o.payment_status === 'unpaid')
+            .reduce((sum, o) => sum + (o.totalAmount || 0) - (o.paid_amount || 0), 0);
+        }
+        return c;
+      });
       this.setData({ customers: this.formatCustomers(customers) });
       this.filterCustomers();
       return;
@@ -194,7 +204,8 @@ Page({
     return list.map(c => ({
       ...c,
       discountLabel: c.discount < 1 ? (c.discount * 10).toFixed(1).replace(/\.0$/, '') + '折' : '',
-      amountText: (c.totalAmount / 100).toFixed(2)
+      amountText: (c.totalAmount / 100).toFixed(2),
+      debtText: (c.debt && c.debt > 0) ? ((c.debt / 100).toFixed(2)) : ''
     }));
   },
 

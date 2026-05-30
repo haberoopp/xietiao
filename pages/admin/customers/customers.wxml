@@ -26,6 +26,7 @@
         <view class="cust-discount">
           <text wx:if="{{item.discount < 1}}" class="discount-badge">{{item.discountLabel}}</text>
           <text wx:if="{{item.totalOrders > 0}}" class="cust-stats">累计{{item.totalOrders}}单 ¥{{item.amountText}}</text>
+          <text wx:if="{{item.debtText}}" class="cust-debt">欠款 ¥{{item.debtText}}</text>
         </view>
       </view>
       <view class="cust-actions">

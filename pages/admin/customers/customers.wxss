@@ -162,3 +162,9 @@
 
 .modal-cancel { flex: 1; }
 .modal-save { flex: 1; }
+.cust-debt {
+  font-size: 24rpx;
+  color: #f44336;
+  font-weight: 500;
+  margin-left: 16rpx;
+}
