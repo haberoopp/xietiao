@@ -4,7 +4,7 @@
 }
 
 .default-card {
-  border: 2rpx solid #d32f2f;
+  border: 2rpx solid #C0392B;
 }
 
 .addr-top {
@@ -21,28 +21,27 @@
 }
 
 .addr-name {
-  font-size: 30rpx;
-  font-weight: 600;
+  font-size: 32rpx;
+  font-weight: 500;
 }
 
 .addr-phone {
-  font-size: 26rpx;
-  color: #666;
+  font-size: 28rpx;
+  color: #7F8C8D;
 }
 
 .default-tag {
   font-size: 22rpx;
-  color: #d32f2f;
-  background: #ffebee;
-  padding: 4rpx 14rpx;
-  border-radius: 4rpx;
+  color: #C0392B;
+  background: #FDF2F2;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
 }
 
 .addr-detail {
-  font-size: 26rpx;
-  color: #666;
-  line-height: 1.5;
-  margin-bottom: 16rpx;
+  font-size: 28rpx;
+  color: #1A1A1A;
+  margin-top: 4rpx;
 }
 
 .addr-actions {
@@ -138,13 +137,13 @@
 
 .poi-dist {
   font-size: 22rpx;
-  color: #999;
+  color: #7F8C8D;
   margin-top: 2rpx;
 }
 
 .searching-hint {
   font-size: 22rpx;
-  color: #999;
+  color: #7F8C8D;
   padding: 10rpx 0;
 }
 
@@ -163,7 +162,7 @@
   align-items: center;
   gap: 10rpx;
   font-size: 26rpx;
-  color: #999;
+  color: #7F8C8D;
 }
 
 .addr-search-icon {
@@ -195,7 +194,7 @@
 
 .addr-manual-toggle {
   font-size: 24rpx;
-  color: #d32f2f;
+  color: #C0392B;
   padding: 12rpx 0;
   text-align: right;
 }
@@ -232,3 +231,21 @@
 .locate-icon {
   font-size: 28rpx;
 }
+
+/* Address card */
+.addr-item { padding: 16rpx; background: #fff; border-radius: 8rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06); margin-bottom: 16rpx; }
+.addr-name { font-size: 32rpx; font-weight: 500; }
+.addr-phone { font-size: 28rpx; color: #7F8C8D; }
+.addr-detail { font-size: 28rpx; color: #1A1A1A; margin-top: 4rpx; }
+.addr-default-tag { background: #FDF2F2; color: #C0392B; font-size: 22rpx; padding: 2rpx 10rpx; border-radius: 6rpx; }
+
+/* Add address button */
+.add-addr-btn {
+  width: 100%; padding: 16rpx 0;
+  border: 2rpx dashed #C0392B; border-radius: 8rpx;
+  text-align: center; font-size: 28rpx; color: #C0392B;
+  background: #fff;
+}
+
+/* Delete button */
+.del-btn { color: #C0392B; font-size: 24rpx; padding: 8rpx; }
