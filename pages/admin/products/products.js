@@ -175,7 +175,7 @@ Page({
   },
 
   async onSave() {
-    const { name, category, price, unit, stock, description, image } = this.data.form;
+    const { name, category, price, unit, description, image } = this.data.form;
 
     if (!name.trim()) {
       wx.showToast({ title: '请输入产品名称', icon: 'none' });
@@ -196,6 +196,11 @@ Page({
       image
     };
 
+    // 状态变为充足时记录补货时间（demo和云端均需）
+    if (this.data.editingProduct && productData.status === 'sufficient' && this.data.editingProduct.status !== 'sufficient') {
+      productData.last_produced_at = Date.now();
+    }
+
     const app = getApp();
 
     if (app.globalData.demoMode) {
@@ -203,9 +208,6 @@ Page({
         const idx = app.globalData.demoProducts.findIndex(p => p._id === this.data.editingProduct._id);
         if (idx > -1) {
           const old = app.globalData.demoProducts[idx];
-          if (productData.status === 'sufficient' && old.status !== 'sufficient') {
-            productData.last_produced_at = Date.now();
-          }
           app.globalData.demoProducts[idx] = { ...old, ...productData };
         }
       } else {
