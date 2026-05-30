@@ -1,0 +1,179 @@
+.admin-top-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.back-btn {
+  font-size: 26rpx;
+  color: #666;
+  padding: 10rpx 0;
+  margin-right: 20rpx;
+}
+
+.dash-title {
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+/* 统计卡片 */
+.stats-row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.stat-card {
+  flex: 1;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx 16rpx;
+  text-align: center;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.04);
+}
+
+.stat-value {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.stat-warn { color: #f44336; }
+
+.stat-label {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+/* 区块 */
+.section {
+  margin-bottom: 24rpx;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+.section-more {
+  font-size: 24rpx;
+  color: #2196f3;
+}
+
+/* 缺货列表 */
+.shortage-item {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 12rpx;
+  border-left: 6rpx solid transparent;
+}
+
+.so-out { border-left-color: #f44336; }
+.so-low { border-left-color: #ff9800; }
+
+.si-status {
+  font-size: 22rpx;
+  margin-bottom: 6rpx;
+}
+
+.si-name {
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.si-meta {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 6rpx;
+}
+
+/* 排行 */
+.rank-item {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  margin-bottom: 10rpx;
+}
+
+.rank-num {
+  width: 48rpx;
+  height: 48rpx;
+  line-height: 48rpx;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #999;
+  background: #f5f5f5;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rank-top1 { background: #ffd700; color: #fff; }
+.rank-top2 { background: #c0c0c0; color: #fff; }
+.rank-top3 { background: #cd7f32; color: #fff; }
+
+.rank-info {
+  flex: 1;
+  margin-left: 16rpx;
+  overflow: hidden;
+}
+
+.rank-name {
+  font-size: 26rpx;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-meta {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.rank-sales {
+  width: 200rpx;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.rank-amount {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #d32f2f;
+  text-align: right;
+  margin-bottom: 6rpx;
+}
+
+.rank-bar-bg {
+  height: 8rpx;
+  background: #f0f0f0;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.rank-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff9800, #f44336);
+  border-radius: 4rpx;
+  min-width: 8rpx;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40rpx 0;
+  color: #999;
+  font-size: 26rpx;
+}
