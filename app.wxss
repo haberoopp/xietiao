@@ -1,118 +1,157 @@
+/* === Design Tokens === */
 page {
-  background-color: #f5f5f5;
+  --color-primary: #C0392B;
+  --color-primary-dark: #A93226;
+  --color-primary-light: #FDF2F2;
+  --color-warning: #E67E22;
+  --color-success: #27AE60;
+  --color-text: #1A1A1A;
+  --color-text-secondary: #7F8C8D;
+  --color-bg: #F5F6FA;
+  --color-card: #FFFFFF;
+  --color-border: #EEEEEE;
+
+  --space-xs: 4rpx;
+  --space-sm: 8rpx;
+  --space-md: 16rpx;
+  --space-lg: 24rpx;
+  --space-xl: 32rpx;
+  --space-2xl: 48rpx;
+
+  --text-xs: 24rpx;
+  --text-sm: 28rpx;
+  --text-base: 32rpx;
+  --text-lg: 36rpx;
+
+  --shadow-card: 0 2rpx 12rpx rgba(0,0,0,0.06);
+  --shadow-float: 0 4rpx 20rpx rgba(0,0,0,0.1);
+  --shadow-modal: 0 -4rpx 24rpx rgba(0,0,0,0.12);
+
+  --radius-sm: 6rpx;
+  --radius-md: 8rpx;
+  --radius-lg: 12rpx;
+  --radius-full: 40rpx;
+
+  --touch-min: 88rpx;
+
+  background-color: var(--color-bg);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 28rpx;
-  color: #333;
+  font-size: var(--text-sm);
+  color: var(--color-text);
 }
 
+/* Container */
 .container {
-  padding: 20rpx;
-  padding-bottom: 140rpx; /* 自定义tabBar高度 */
+  padding: var(--space-md);
+  padding-bottom: 140rpx;
   min-height: 100vh;
   box-sizing: border-box;
 }
 
-/* 通用按钮 */
+/* Primary Button */
 .btn-primary {
-  background-color: #d32f2f;
+  background-color: var(--color-primary);
   color: #fff;
-  border-radius: 8rpx;
+  border-radius: var(--radius-md);
   font-size: 30rpx;
   padding: 20rpx 0;
   text-align: center;
   border: none;
+  min-height: var(--touch-min);
+  line-height: var(--touch-min);
 }
-
 .btn-primary:active {
-  background-color: #b71c1c;
+  background-color: var(--color-primary-dark);
+  opacity: 0.85;
 }
 
+/* Outline Button */
 .btn-outline {
   background-color: #fff;
-  color: #d32f2f;
-  border: 2rpx solid #d32f2f;
-  border-radius: 8rpx;
-  font-size: 28rpx;
+  color: var(--color-primary);
+  border: 2rpx solid var(--color-primary);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
   padding: 16rpx 30rpx;
   text-align: center;
+  min-height: var(--touch-min);
+  line-height: var(--touch-min);
+  box-sizing: border-box;
+}
+.btn-outline:active {
+  background-color: var(--color-primary-light);
 }
 
-/* 卡片 */
+/* Card */
 .card {
-  background: #fff;
-  border-radius: 12rpx;
-  padding: 20rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
+  background: var(--color-card);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  box-shadow: var(--shadow-card);
 }
 
-/* 表单 */
+/* Form */
 .form-group {
-  margin-bottom: 20rpx;
+  margin-bottom: var(--space-md);
 }
 
 .form-label {
   display: block;
-  font-size: 28rpx;
-  color: #333;
-  margin-bottom: 10rpx;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
   font-weight: 500;
 }
 
 .form-input {
   width: 100%;
-  height: 80rpx;
-  background: #f8f8f8;
-  border-radius: 8rpx;
-  padding: 0 20rpx;
-  font-size: 28rpx;
+  height: var(--touch-min);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-md);
+  font-size: var(--text-sm);
   box-sizing: border-box;
   border: 2rpx solid transparent;
 }
-
 .form-input:focus {
-  border-color: #d32f2f;
+  border-color: var(--color-primary);
   background: #fff;
 }
 
 .form-textarea {
   width: 100%;
   min-height: 150rpx;
-  background: #f8f8f8;
-  border-radius: 8rpx;
-  padding: 20rpx;
-  font-size: 28rpx;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  font-size: var(--text-sm);
   box-sizing: border-box;
 }
 
-/* 空状态 */
+/* Empty State */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 100rpx 0;
-  color: #999;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
 }
-
 .empty-state image {
   width: 200rpx;
   height: 200rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: var(--space-md);
   opacity: 0.4;
 }
 
-.empty-state text {
-  font-size: 28rpx;
-}
-
-/* 价格 */
+/* Price */
 .price {
-  color: #d32f2f;
+  color: var(--color-primary);
   font-weight: bold;
-  font-size: 32rpx;
+  font-size: var(--text-base);
 }
-
 .price-symbol {
   font-size: 24rpx;
 }
@@ -120,16 +159,15 @@ page {
 /* Badge */
 .badge {
   display: inline-block;
-  padding: 6rpx 14rpx;
-  border-radius: 4rpx;
+  padding: 4rpx 12rpx;
+  border-radius: var(--radius-sm);
   font-size: 22rpx;
-  line-height: 1;
+  line-height: 1.5;
   color: #fff;
   flex-shrink: 0;
   white-space: nowrap;
 }
-
-.badge-pending { background-color: #ff9800; }
-.badge-processing { background-color: #2196f3; }
-.badge-completed { background-color: #4caf50; }
-.badge-cancelled { background-color: #9e9e9e; }
+.badge-pending { background-color: var(--color-warning); }
+.badge-processing { background-color: #1976D2; }
+.badge-completed { background-color: var(--color-success); }
+.badge-cancelled { background-color: var(--color-text-secondary); }
