@@ -1,0 +1,10 @@
+{
+  "name": "importProducts",
+  "version": "1.0.0",
+  "description": "Import products from Excel file",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "xlsx": "^0.18.5"
+  }
+}

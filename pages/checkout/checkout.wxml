@@ -1,0 +1,172 @@
+<view class="container">
+  <!-- 1. 商品明细 -->
+  <view class="section-title">商品明细</view>
+  <view class="card">
+    <view class="order-item" wx:for="{{items}}" wx:key="_id" wx:for-index="idx">
+      <view class="oi-del" data-index="{{idx}}" catchtap="onRemoveItem">×</view>
+      <image class="oi-image" src="{{item.image || '/images/placeholder.png'}}" mode="aspectFill" />
+      <view class="oi-info">
+        <view class="oi-name">{{item.name}}</view>
+        <view class="oi-meta">
+          <text wx:if="{{customerDiscount < 1}}" class="original-price">¥{{item.priceText}}</text>
+          <text>¥{{item.discountedPriceText}} / {{item.unit}}</text>
+        </view>
+        <view class="oi-qty-ctrl">
+          <view class="qty-btn" data-index="{{idx}}" catchtap="onDecrease">−</view>
+          <input class="qty-input" type="number" value="{{item.quantity}}" data-index="{{idx}}" bindinput="onQtyInput" />
+          <view class="qty-btn" data-index="{{idx}}" catchtap="onIncrease">+</view>
+        </view>
+      </view>
+      <view class="oi-subtotal">¥{{item.subtotal}}</view>
+    </view>
+
+    <view class="add-product-row" bindtap="onAddProduct">
+      <text class="add-product-icon">+</text>
+      <text>添加商品</text>
+    </view>
+
+    <view class="total-line">
+      <text wx:if="{{customerDiscount < 1}}" class="discount-note">已享{{customerDiscount * 10}}折</text>
+      <text>合计</text>
+      <text class="price">¥{{totalAmount}}</text>
+    </view>
+  </view>
+
+  <!-- 2. 拿货方式 -->
+  <view class="section-title">拿货方式</view>
+  <view class="card delivery-card">
+    <view class="delivery-options">
+      <view
+        class="delivery-option {{deliveryMethod === 'pickup' ? 'active' : ''}}"
+        data-method="pickup"
+        bindtap="onDeliveryChange"
+      >
+        <view class="do-icon">🏪</view>
+        <view class="do-label">自取</view>
+      </view>
+      <view
+        class="delivery-option {{deliveryMethod === 'delivery' ? 'active' : ''}}"
+        data-method="delivery"
+        bindtap="onDeliveryChange"
+      >
+        <view class="do-icon">🛵</view>
+        <view class="do-label">配送</view>
+      </view>
+      <view
+        class="delivery-option {{deliveryMethod === 'logistics' ? 'active' : ''}}"
+        data-method="logistics"
+        bindtap="onDeliveryChange"
+      >
+        <view class="do-icon">🚚</view>
+        <view class="do-label">物流</view>
+      </view>
+    </view>
+
+    <view wx:if="{{deliveryMethod === 'logistics'}}" class="logistics-warn">
+      ⚠️ 订单费用不包含物流运费，物流费用需另行支付
+    </view>
+
+    <view wx:if="{{deliveryMethod === 'pickup'}}" class="pickup-hint">
+      取货地址：浙江省温州市鹿城区双屿街道工业区（具体位置请联系确认）
+    </view>
+  </view>
+
+  <!-- 3. 收货信息 -->
+  <view class="section-title">收货信息</view>
+
+  <view class="card addr-section-card">
+    <!-- 已保存地址快捷选择 -->
+    <view wx:if="{{savedAddresses.length > 0}}" class="address-picker" bindtap="goAddressSelect">
+      <view class="picker-left">
+        <view class="picker-label">选择已保存的地址</view>
+        <view wx:if="{{selectedAddress}}" class="picker-preview">
+          <text class="preview-name">{{selectedAddress.name}}</text>
+          <text decode="true">&nbsp;</text>
+          <text class="preview-phone">{{selectedAddress.phone}}</text>
+        </view>
+        <view wx:else class="picker-hint">点击选择收货地址</view>
+      </view>
+      <view class="picker-arrow">›</view>
+    </view>
+
+    <!-- 无保存地址时的添加按钮 -->
+    <view wx:if="{{savedAddresses.length === 0 && !selectedAddress}}" class="add-addr-row" bindtap="goAddressSelect">
+      <view class="add-addr-icon">+</view>
+      <view class="add-addr-text">添加收货地址</view>
+      <view class="add-addr-arrow">›</view>
+    </view>
+
+    <!-- 已选地址：精简显示（仿订单格式） -->
+    <view wx:if="{{selectedAddress}}" class="addr-compact" bindtap="goAddressSelect">
+      <view class="addr-compact-line">
+        <text>{{selectedAddress.name}}</text>
+        <text decode="true">&nbsp;|&nbsp;</text>
+        <text>{{selectedAddress.phone}}</text>
+      </view>
+      <view class="addr-compact-addr">{{selectedAddress.fullAddress || selectedAddress.address}}</view>
+    </view>
+
+    <!-- 无地址但有保存地址但未选：显示表单 -->
+    <block wx:if="{{!selectedAddress}}">
+      <view class="form-group">
+        <view class="form-label">姓名 / 公司名称 *</view>
+        <input
+          class="form-input"
+          placeholder="请输入姓名或公司名称"
+          value="{{form.customerName}}"
+          data-field="customerName"
+          bindinput="onInput"
+        />
+      </view>
+      <view class="form-group">
+        <view class="form-label">电话 *</view>
+        <input
+          class="form-input"
+          type="number"
+          maxlength="11"
+          placeholder="请输入手机号"
+          value="{{form.phone}}"
+          data-field="phone"
+          bindinput="onInput"
+        />
+        <view wx:if="{{matchedCustomer}}" class="matched-customer">
+          <text>🎗 {{matchedCustomer.name}}</text>
+          <text wx:if="{{matchedCustomer.discount < 1}}" class="matched-discount">享{{matchedCustomer.discount * 10}}折</text>
+        </view>
+      </view>
+      <view class="form-group">
+        <view class="form-label">地址 *</view>
+        <view class="addr-search-box" bindtap="onChooseLocation">
+          <view wx:if="{{form.address}}" class="addr-search-result">
+            <text class="addr-search-text">{{form.address}}</text>
+            <text wx:if="{{pickedLocation}}" class="addr-search-tag">✓ 已定位</text>
+          </view>
+          <view wx:else class="addr-search-placeholder">
+            <text class="addr-search-icon">📍</text>
+            <text>点击搜索地址（可在地图中搜索任意地址）</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 保存地址 + 备注 -->
+    <view class="save-addr-row" bindtap="toggleSaveAddr">
+      <view class="checkbox {{saveAddress ? 'checked' : ''}}"></view>
+      <text>保存为常用地址</text>
+    </view>
+
+    <view class="form-group" style="margin-top: 16rpx;">
+      <view class="form-label">备注</view>
+      <input
+        class="form-input"
+        placeholder="选填"
+        value="{{form.remark}}"
+        data-field="remark"
+        bindinput="onInput"
+      />
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="btn-primary submit-btn" bindtap="onSubmit">提交订单</view>
+</view>

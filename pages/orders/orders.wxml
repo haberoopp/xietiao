@@ -1,0 +1,162 @@
+<view class="container">
+  <view wx:if="{{orders.length === 0}}" class="empty-state">
+    <text>暂无订单</text>
+    <navigator url="/pages/index/index" class="go-shopping">去下单</navigator>
+  </view>
+
+  <view wx:else>
+    <view class="order-card card" wx:for="{{orders}}" wx:key="_id">
+      <view class="order-header">
+        <text class="order-time">{{item.timeText}}</text>
+        <view class="header-right">
+          <view class="header-badges">
+            <!-- 退换货标签 -->
+            <view wx:if="{{item.returnRequest}}" class="badge badge-return-{{item.returnRequest.status}}">
+              {{item.returnRequest.isRetry ? '二次申请-' : ''}}{{item.returnRequest.type === 'return' ? '退货' : '换货'}}-{{item.returnStatusText}}
+            </view>
+            <view class="badge badge-{{item.status}}">{{item.statusText}}</view>
+          </view>
+          <view class="copy-btn" data-order="{{item}}" catchtap="onCopyOrder">复制信息</view>
+        </view>
+      </view>
+
+      <view class="order-products">
+        <view class="op-item" wx:for="{{item.items}}" wx:key="productId" wx:for-item="p">
+          <text class="op-name">{{p.name}}</text>
+          <text class="op-qty">×{{p.quantity}}{{p.unit}}</text>
+        </view>
+      </view>
+
+      <!-- 退换货清单 -->
+      <view wx:if="{{item.returnRequest && item.returnRequest.items && item.returnRequest.items.length > 0}}" class="return-reason">
+        <view class="rr-title">{{item.returnRequest.type === 'return' ? '退货' : '换货'}}商品：</view>
+        <view wx:for="{{item.returnRequest.items}}" wx:key="productId" wx:for-item="ri" class="rr-item">
+          <text>{{ri.name}} ×{{ri.quantity}}{{ri.unit}}</text>
+        </view>
+        <view wx:if="{{item.returnRequest.exchangeItems && item.returnRequest.exchangeItems.length > 0}}" class="rr-exchange">
+          换购商品：
+          <view wx:for="{{item.returnRequest.exchangeItems}}" wx:key="productId" wx:for-item="ei" class="rr-item">
+            <text>{{ei.name}} ×{{ei.quantity}}{{ei.unit}} ¥{{ei.subtotalText}}</text>
+          </view>
+        </view>
+        <view wx:if="{{item.returnRequest.reason}}" class="rr-reason">原因：{{item.returnRequest.reason}}</view>
+      </view>
+      <view wx:elif="{{item.returnRequest && item.returnRequest.reason}}" class="return-reason">
+        退换货原因：{{item.returnRequest.reason}}
+      </view>
+
+      <view class="order-customer">
+        <text>{{item.customerName}}</text>
+        <text decode="true">&nbsp;|&nbsp;</text>
+        <text>{{item.phone}}</text>
+      </view>
+      <view class="order-address">{{item.address}}</view>
+      <view class="order-delivery">拿货方式：{{item.deliveryMethodText}}</view>
+
+      <!-- 订单图片（只读） -->
+      <view wx:if="{{item.images && item.images.length > 0}}" class="order-images">
+        <image class="oi-thumb" wx:for="{{item.images}}" wx:key="fileID" wx:for-item="img"
+          src="{{img.fileID}}" mode="aspectFill"
+          data-url="{{img.fileID}}" bindtap="onPreviewOrderImage" />
+      </view>
+
+      <view class="order-footer">
+        <text class="order-total">合计：<text class="price">¥{{item.totalText}}</text></text>
+        <view class="footer-actions">
+          <view
+            wx:if="{{item.status === 'processing' && (!item.returnRequest || (item.returnRequest.status !== 'completed' && item.returnRequest.status !== 'approved' && item.returnRequest.status !== 'pending'))}}"
+            class="cancel-btn" data-order="{{item}}" bindtap="onCancelOrder"
+          >取消订单</view>
+          <view
+            wx:if="{{item.status === 'completed' && (!item.returnRequest || (item.returnRequest.status === 'rejected' && item.returnRequest.rejectionCount < 2))}}"
+            class="return-btn" data-order="{{item}}" bindtap="onOpenReturn"
+          >退换货</view>
+          <view
+            wx:if="{{item.status === 'processing' && (!item.returnRequest || (item.returnRequest.status !== 'completed' && item.returnRequest.status !== 'approved' && item.returnRequest.status !== 'pending'))}}"
+            class="edit-order-btn" data-order="{{item}}" bindtap="onEditOrder"
+          >修改订单</view>
+          <view class="rebuy-btn" data-order="{{item}}" bindtap="onRebuy">再次购买</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="bottom-links">
+    <view class="bottom-link" bindtap="goAddress">收货地址管理</view>
+    <view class="bottom-link admin-link" bindtap="goAdmin">商家管理</view>
+  </view>
+
+  <!-- 退换货申请弹窗 -->
+  <view wx:if="{{showReturnForm}}" class="modal-mask">
+    <view class="modal-content" catchtap="">
+      <view class="modal-title">申请退换货</view>
+
+      <view class="return-type-select">
+        <view class="type-option {{returnType === 'return' ? 'active' : ''}}" data-type="return" bindtap="onReturnTypeChange">
+          <view class="type-icon">📦</view>
+          <view class="type-label">退货</view>
+        </view>
+        <view class="type-option {{returnType === 'exchange' ? 'active' : ''}}" data-type="exchange" bindtap="onReturnTypeChange">
+          <view class="type-icon">🔄</view>
+          <view class="type-label">换货</view>
+        </view>
+      </view>
+
+      <!-- 选择退换货商品 -->
+      <view class="return-items-section">
+        <view class="form-label">选择退换商品</view>
+        <view class="return-item" wx:for="{{returnItems}}" wx:key="productId" wx:for-index="idx">
+          <view class="ri-check {{item.checked ? 'checked' : ''}}" data-index="{{idx}}" bindtap="onToggleReturnItem"></view>
+          <view class="ri-info">
+            <view class="ri-name">{{item.name}}</view>
+            <view class="ri-meta">¥{{item.priceText}} / {{item.unit}}（已购{{item.quantity}}）</view>
+          </view>
+          <view wx:if="{{item.checked}}" class="ri-qty-ctrl">
+            <view class="qty-btn-sm" data-index="{{idx}}" data-delta="-1" catchtap="onReturnItemQty">−</view>
+            <input class="qty-input-sm" type="number" value="{{item.returnQty}}" data-index="{{idx}}" bindinput="onReturnItemQtyInput" />
+            <view class="qty-btn-sm" data-index="{{idx}}" data-delta="1" catchtap="onReturnItemQty">+</view>
+          </view>
+        </view>
+        <view wx:if="{{!hasCheckedItem}}" class="ri-empty">请至少选择一件商品</view>
+      </view>
+
+      <view wx:if="{{returnType === 'exchange'}}" class="form-group">
+        <view class="form-label">选择换购商品</view>
+        <view class="exchange-items" wx:if="{{exchangeItems.length > 0}}">
+          <view class="ex-item" wx:for="{{exchangeItems}}" wx:key="_id">
+            <image class="ex-item-img" src="{{item.image || '/images/placeholder.png'}}" mode="aspectFill" />
+            <view class="ex-item-info">
+              <view class="ex-item-name">{{item.name}}</view>
+              <view class="ex-item-price">¥{{item.priceText}} × {{item.quantity}}{{item.unit}}</view>
+            </view>
+            <view class="ex-item-subtotal">¥{{item.subtotalText}}</view>
+          </view>
+          <view class="ex-summary">
+            <view class="ex-summary-row">
+              <text>退回商品金额</text><text class="ex-amount minus">-¥{{returnAmountText}}</text>
+            </view>
+            <view class="ex-summary-row">
+              <text>换购商品金额</text><text class="ex-amount plus">+¥{{exchangeAmountText}}</text>
+            </view>
+            <view class="ex-summary-row ex-diff">
+              <text>差价</text><text class="ex-diff-amount">{{priceDiffText}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="btn-outline ex-shop-btn" bindtap="onGoChooseExchangeItems">
+          {{exchangeItems.length > 0 ? '重新选择换购商品' : '去选购换货商品 →'}}
+        </view>
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">退换货原因</view>
+        <textarea class="form-textarea" placeholder="请描述退换货原因..." value="{{returnReason}}" bindinput="onReturnReasonInput" />
+      </view>
+
+      <view class="modal-btns">
+        <view class="btn-outline modal-cancel" bindtap="onCloseReturn">取消</view>
+        <view class="btn-primary modal-save" bindtap="onSubmitReturn">提交申请</view>
+      </view>
+    </view>
+  </view>
+</view>

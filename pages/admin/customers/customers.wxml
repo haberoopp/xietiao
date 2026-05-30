@@ -1,0 +1,63 @@
+<view class="container">
+  <view class="admin-top-bar">
+    <view class="back-btn" bindtap="onBackToOrders">← 返回订单</view>
+    <view class="add-btn" bindtap="onAdd">+ 添加客户</view>
+  </view>
+
+  <!-- 搜索 -->
+  <view class="search-bar">
+    <view class="search-input-wrap">
+      <text class="search-icon">🔍</text>
+      <input class="search-input" placeholder="搜索客户名称或电话..." value="{{searchKeyword}}" bindinput="onSearchInput" confirm-type="search" />
+      <text wx:if="{{searchKeyword}}" class="search-clear" bindtap="onClearSearch">✕</text>
+    </view>
+  </view>
+
+  <view wx:if="{{filteredCustomers.length === 0}}" class="empty-state">
+    <text>暂无客户，点击上方添加</text>
+    <text class="hint">客户下单后会自动录入</text>
+  </view>
+
+  <view wx:else class="customer-list">
+    <view class="customer-card card" wx:for="{{filteredCustomers}}" wx:key="_id">
+      <view class="cust-info">
+        <view class="cust-name">{{item.name}}</view>
+        <view class="cust-phone">{{item.phone}}</view>
+        <view class="cust-discount">
+          <text wx:if="{{item.discount < 1}}" class="discount-badge">{{item.discountLabel}}</text>
+          <text wx:if="{{item.totalOrders > 0}}" class="cust-stats">累计{{item.totalOrders}}单 ¥{{item.amountText}}</text>
+        </view>
+      </view>
+      <view class="cust-actions">
+        <view class="action-btn edit" data-customer="{{item}}" bindtap="onEdit">编辑</view>
+        <view class="action-btn delete" data-id="{{item._id}}" data-name="{{item.name}}" bindtap="onDelete">删除</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 表单弹窗 -->
+  <view wx:if="{{showForm}}" class="modal-mask">
+    <view class="modal-content" catchtap="">
+      <view class="modal-title">{{editingId ? '编辑客户' : '添加客户'}}</view>
+
+      <view class="form-group">
+        <view class="form-label">客户名称 / 公司 *</view>
+        <input class="form-input" placeholder="请输入" value="{{form.name}}" data-field="name" bindinput="onFormInput" />
+      </view>
+      <view class="form-group">
+        <view class="form-label">手机号 *</view>
+        <input class="form-input" type="number" maxlength="11" placeholder="下单时自动匹配" value="{{form.phone}}" data-field="phone" bindinput="onFormInput" />
+      </view>
+      <view class="form-group">
+        <view class="form-label">折扣：{{form.discount * 10}}折</view>
+        <slider min="1" max="100" value="{{form.discount * 100}}" show-value block-size="20" bindchange="onDiscountSlider" />
+        <view class="discount-hint">零售价 × {{form.discount}} = 实际售价</view>
+      </view>
+
+      <view class="modal-btns">
+        <view class="btn-outline modal-cancel" bindtap="onCancel">取消</view>
+        <view class="btn-primary modal-save" bindtap="onSave">保存</view>
+      </view>
+    </view>
+  </view>
+</view>

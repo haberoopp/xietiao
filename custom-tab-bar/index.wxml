@@ -1,0 +1,26 @@
+<view class="tab-bar">
+  <view
+    wx:for="{{list}}"
+    wx:key="text"
+    wx:for-index="idx"
+    class="tab-item {{selected === idx ? 'active' : ''}}"
+    data-index="{{idx}}"
+    bindtap="switchTab"
+  >
+    <view class="tab-icon">
+      <text wx:if="{{item.icon === 'home'}}">🏠</text>
+      <text wx:elif="{{item.icon === 'address'}}">📍</text>
+      <text wx:elif="{{item.icon === 'order'}}">📋</text>
+    </view>
+    <view class="tab-text">{{item.text}}</view>
+  </view>
+  <view
+    wx:if="{{showAdmin}}"
+    class="tab-item {{selected === 3 ? 'active' : ''}}"
+    data-index="3"
+    bindtap="switchTab"
+  >
+    <view class="tab-icon">⚙</view>
+    <view class="tab-text">后台</view>
+  </view>
+</view>

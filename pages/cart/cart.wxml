@@ -1,0 +1,47 @@
+<view class="container">
+  <view wx:if="{{cartItems.length === 0}}" class="empty-state">
+    <text>购物车是空的</text>
+    <navigator url="/pages/index/index" class="go-shopping">去逛逛</navigator>
+  </view>
+
+  <view wx:else>
+    <!-- 全选 -->
+    <view class="select-all-bar">
+      <view class="check-all" bindtap="onToggleAll">
+        <view class="checkbox {{allChecked ? 'checked' : ''}}"></view>
+        <text>全选</text>
+      </view>
+    </view>
+
+    <!-- 商品列表 -->
+    <view class="cart-item card" wx:for="{{cartItems}}" wx:key="_id">
+      <view class="check-btn" data-index="{{index}}" bindtap="onToggleCheck">
+        <view class="checkbox {{item.checked ? 'checked' : ''}}"></view>
+      </view>
+      <image class="item-image" src="{{item.image || '/images/placeholder.png'}}" mode="aspectFill" />
+      <view class="item-right">
+        <view class="item-name">{{item.name}}</view>
+        <view class="item-unit">/{{item.unit}}</view>
+        <view class="item-bottom">
+          <view class="price">
+            <text class="price-symbol">¥</text>{{item.priceText}}
+          </view>
+          <view class="qty-control">
+            <view class="qty-btn" data-index="{{index}}" bindtap="onMinus">-</view>
+            <input class="qty-input" type="number" value="{{item.quantity}}" data-index="{{index}}" bindinput="onQtyInput" />
+            <view class="qty-btn" data-index="{{index}}" bindtap="onPlus">+</view>
+          </view>
+        </view>
+      </view>
+      <view class="delete-btn" data-index="{{index}}" bindtap="onDelete">✕</view>
+    </view>
+
+    <!-- 底部结算 -->
+    <view class="checkout-bar">
+      <view class="total-text">
+        合计：<text class="price">¥{{totalAmount}}</text>
+      </view>
+      <view class="btn-primary checkout-btn" bindtap="onCheckout">去结算</view>
+    </view>
+  </view>
+</view>

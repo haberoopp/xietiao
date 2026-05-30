@@ -1,0 +1,72 @@
+<view class="container">
+  <!-- 地址列表 -->
+  <view wx:if="{{addresses.length > 0}}" class="address-list">
+    <view
+      class="address-card card {{item.isDefault ? 'default-card' : ''}}"
+      wx:for="{{addresses}}"
+      wx:key="_id"
+      data-address="{{item}}"
+      bindtap="{{selectMode ? 'onSelect' : ''}}"
+    >
+      <view class="addr-top">
+        <view class="addr-contact">
+          <text class="addr-name">{{item.name}}</text>
+          <text class="addr-phone">{{item.phone}}</text>
+        </view>
+        <view wx:if="{{item.isDefault}}" class="default-tag">默认</view>
+      </view>
+      <view class="addr-detail">{{item.address}}</view>
+      <view class="addr-actions">
+        <view wx:if="{{!item.isDefault}}" class="addr-act" data-id="{{item._id}}" catchtap="onSetDefault">设为默认</view>
+        <view class="addr-act" data-address="{{item}}" catchtap="onEdit">编辑</view>
+        <view class="addr-act danger" data-id="{{item._id}}" catchtap="onDelete">删除</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="empty-state">
+    <text>暂无收货地址</text>
+  </view>
+
+  <!-- 添加按钮 -->
+  <view class="btn-primary add-btn" bindtap="onAdd">+ 添加新地址</view>
+
+  <!-- 表单弹窗 -->
+  <view wx:if="{{showForm}}" class="modal-mask">
+    <view class="modal-content" catchtap="">
+      <view class="modal-title">{{editingId ? '编辑地址' : '添加新地址'}}</view>
+
+      <view class="form-group">
+        <view class="form-label">联系人 / 公司名称</view>
+        <input class="form-input" placeholder="请输入" value="{{form.name}}" data-field="name" bindinput="onFormInput" />
+      </view>
+      <view class="form-group">
+        <view class="form-label">手机号</view>
+        <input class="form-input" type="number" maxlength="11" placeholder="请输入手机号" value="{{form.phone}}" data-field="phone" bindinput="onFormInput" />
+      </view>
+      <view class="form-group">
+        <view class="form-label">详细地址</view>
+        <view class="addr-search-box" bindtap="onChooseLocation">
+          <view wx:if="{{form.address}}" class="addr-search-result">
+            <text class="addr-search-text">{{form.address}}</text>
+            <text wx:if="{{pickedLocation}}" class="addr-search-tag">✓ 已定位</text>
+          </view>
+          <view wx:else class="addr-search-placeholder">
+            <text class="addr-search-icon">📍</text>
+            <text>点击搜索地址（可在地图中搜索任意地址）</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{form.address}}" class="form-group" style="margin-top: 12rpx;">
+        <view class="form-label">补充地址详情（选填）</view>
+        <input class="form-input" placeholder="如：3号楼2单元501室" value="{{form.addressDetail}}" data-field="addressDetail" bindinput="onFormInput" />
+      </view>
+
+      <view class="modal-btns">
+        <view class="btn-outline modal-cancel" bindtap="onCancel">取消</view>
+        <view class="btn-primary modal-save" bindtap="onSave">保存</view>
+      </view>
+    </view>
+  </view>
+</view>

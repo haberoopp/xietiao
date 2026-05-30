@@ -1,0 +1,39 @@
+<view class="container login-page">
+  <view class="login-header">
+    <view class="login-title">温州斜条批发</view>
+    <view class="login-subtitle">管理后台</view>
+  </view>
+
+  <view class="login-form card">
+    <view class="form-group">
+      <view class="form-label">账号</view>
+      <input
+        class="form-input"
+        placeholder="请输入管理员账号"
+        value="{{username}}"
+        data-field="username"
+        bindinput="onInput"
+      />
+    </view>
+    <view class="form-group">
+      <view class="form-label">密码</view>
+      <input
+        class="form-input"
+        type="password"
+        placeholder="请输入密码"
+        value="{{password}}"
+        data-field="password"
+        bindinput="onInput"
+      />
+    </view>
+    <view class="btn-primary login-btn" bindtap="onLogin">登 录</view>
+  </view>
+
+  <!-- 演示账号提示 -->
+  <view class="demo-hint">
+    <view class="demo-title">演示账号（真机调试可用）</view>
+    <view class="demo-row"><text class="demo-role">厂长</text> changzhang / 123456 — 全部权限</view>
+    <view class="demo-row"><text class="demo-role">送货员</text> songhuo / 123456 — 改价+改状态</view>
+    <view class="demo-row"><text class="demo-role">调货员</text> diaohuo / 123456 — 仅查看</view>
+  </view>
+</view>

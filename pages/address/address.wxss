@@ -1,0 +1,234 @@
+.address-card {
+  padding: 24rpx;
+  position: relative;
+}
+
+.default-card {
+  border: 2rpx solid #d32f2f;
+}
+
+.addr-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+
+.addr-contact {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.addr-name {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.addr-phone {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.default-tag {
+  font-size: 22rpx;
+  color: #d32f2f;
+  background: #ffebee;
+  padding: 4rpx 14rpx;
+  border-radius: 4rpx;
+}
+
+.addr-detail {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 16rpx;
+}
+
+.addr-actions {
+  display: flex;
+  gap: 30rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.addr-act {
+  font-size: 24rpx;
+  color: #2196f3;
+}
+
+.addr-act.danger {
+  color: #f44336;
+}
+
+.add-btn {
+  margin: 40rpx 0;
+  width: 100%;
+  padding: 24rpx 0;
+}
+
+/* 弹窗 */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 20rpx 20rpx 0 0;
+  width: 100%;
+  max-height: 85vh;
+  padding: 30rpx;
+  padding-bottom: 130rpx;
+  box-sizing: border-box;
+}
+
+.modal-title {
+  font-size: 34rpx;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.modal-btns {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 30rpx;
+}
+
+.modal-cancel {
+  flex: 1;
+}
+
+.modal-save {
+  flex: 1;
+}
+
+/* POI 搜索下拉 */
+.poi-dropdown {
+  background: #fff;
+  border: 1rpx solid #e0e0e0;
+  border-radius: 8rpx;
+  margin-top: 4rpx;
+  max-height: 400rpx;
+  overflow-y: auto;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
+}
+
+.poi-item {
+  padding: 16rpx 20rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.poi-item:last-child {
+  border-bottom: none;
+}
+
+.poi-name {
+  font-size: 26rpx;
+  color: #333;
+}
+
+.poi-dist {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 2rpx;
+}
+
+.searching-hint {
+  font-size: 22rpx;
+  color: #999;
+  padding: 10rpx 0;
+}
+
+/* 地址搜索框 */
+.addr-search-box {
+  padding: 20rpx 24rpx;
+  background: #f5f5f5;
+  border-radius: 8rpx;
+  min-height: 50rpx;
+  display: flex;
+  align-items: center;
+}
+
+.addr-search-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  font-size: 26rpx;
+  color: #999;
+}
+
+.addr-search-icon {
+  font-size: 30rpx;
+}
+
+.addr-search-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.addr-search-text {
+  font-size: 26rpx;
+  color: #333;
+  flex: 1;
+}
+
+.addr-search-tag {
+  font-size: 22rpx;
+  color: #4caf50;
+  background: #e8f5e9;
+  padding: 4rpx 10rpx;
+  border-radius: 4rpx;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+}
+
+.addr-manual-toggle {
+  font-size: 24rpx;
+  color: #d32f2f;
+  padding: 12rpx 0;
+  text-align: right;
+}
+
+.addr-manual-input {
+  margin-top: 8rpx;
+}
+
+/* 定位按钮 */
+.locate-btns {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 10rpx;
+}
+
+.locate-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 20rpx 0;
+  background: #f0f7ff;
+  border: 2rpx solid #e3f2fd;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #1976d2;
+}
+
+.locate-btn:active {
+  background: #e3f2fd;
+}
+
+.locate-icon {
+  font-size: 28rpx;
+}

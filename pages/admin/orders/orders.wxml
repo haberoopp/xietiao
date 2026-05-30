@@ -1,0 +1,199 @@
+<view class="container">
+  <!-- 顶部栏 -->
+  <view class="admin-top-bar">
+    <view class="top-left">
+      <text class="role-badge role-{{role}}">{{isManager ? '厂长' : isDelivery ? '送货员' : '调货员'}}</text>
+      <text class="logout-link" bindtap="onLogout">退出</text>
+    </view>
+    <view wx:if="{{isManager}}" class="top-actions">
+      <view class="go-products-btn" bindtap="onGoCustomers">客户管理</view>
+      <view class="go-products-btn" bindtap="onGoProducts">管理产品</view>
+    </view>
+  </view>
+
+  <!-- 状态筛选 -->
+  <scroll-view class="status-tabs" scroll-x enable-flex>
+    <view
+      class="tab-item {{activeStatus === item.key ? 'active' : ''}}"
+      wx:for="{{statusTabs}}"
+      wx:key="key"
+      wx:for-item="item"
+      data-status="{{item.key}}"
+      bindtap="onTabTap"
+    >{{item.label}}</view>
+  </scroll-view>
+
+  <!-- 搜索框 -->
+  <view class="search-bar" wx:if="{{!isReturnTab}}">
+    <view class="search-input-wrap">
+      <text class="search-icon">🔍</text>
+      <input class="search-input" placeholder="搜索客户姓名、电话、地址..." value="{{searchKeyword}}" bindinput="onSearchInput" confirm-type="search" />
+      <text wx:if="{{searchKeyword}}" class="search-clear" bindtap="onClearSearch">✕</text>
+    </view>
+  </view>
+
+  <!-- ===== 退换货列表 ===== -->
+  <view wx:if="{{isReturnTab}}">
+    <view wx:if="{{returnList.length === 0}}" class="empty-state">
+      <text>暂无退换货申请</text>
+    </view>
+    <view wx:elif="{{!isWarehouse}}">
+      <view class="order-card card" wx:for="{{returnList}}" wx:key="orderId">
+        <view class="order-header">
+          <view class="badge badge-return-{{item.status}}">
+            {{item.type === 'return' ? '退货' : '换货'}}-{{item.status === 'pending' ? '待处理' : item.status === 'approved' ? '已通过' : item.status === 'rejected' ? '已拒绝' : '已完成'}}
+          </view>
+        </view>
+        <view wx:if="{{item.orderInfo && item.orderInfo.customerName}}" class="order-customer-info">
+          <view class="info-row">
+            <text class="info-label">客户：</text><text>{{item.orderInfo.customerName}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">电话：</text><text class="info-phone">{{item.orderInfo.phone}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">金额：</text><text class="price">¥{{item.orderInfo.totalText}}</text>
+          </view>
+        </view>
+        <view wx:if="{{item.items && item.items.length > 0}}" class="order-remark">
+          <view class="rr-title">{{item.type === 'return' ? '退货' : '换货'}}商品：</view>
+          <view wx:for="{{item.items}}" wx:key="productId" wx:for-item="ri" class="rr-item">{{ri.name}} ×{{ri.quantity}}{{ri.unit}}</view>
+          <view wx:if="{{item.exchangeItems && item.exchangeItems.length > 0}}" class="rr-exchange">
+            换购商品：
+            <view wx:for="{{item.exchangeItems}}" wx:key="productId" wx:for-item="ei" class="rr-item">{{ei.name}} ×{{ei.quantity}}{{ei.unit}}</view>
+          </view>
+          <view wx:if="{{item.reason}}" class="rr-reason">原因：{{item.reason}}</view>
+        </view>
+        <view wx:elif="{{item.reason}}" class="order-remark">原因：{{item.reason}}</view>
+        <view wx:if="{{item.status === 'pending'}}" class="return-actions">
+          <view class="return-act reject" data-request-id="{{item._id || item.orderId}}" data-order-id="{{item.orderId}}" data-action="reject" bindtap="onHandleReturn">拒绝</view>
+          <view class="return-act approve" data-request-id="{{item._id || item.orderId}}" data-order-id="{{item.orderId}}" data-action="approve" bindtap="onHandleReturn">通过</view>
+        </view>
+        <view wx:if="{{item.status === 'approved'}}" class="return-actions">
+          <view class="return-act complete" data-request-id="{{item._id || item.orderId}}" data-order-id="{{item.orderId}}" data-action="complete" bindtap="onHandleReturn">标记完成</view>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty-state"><text>无权限查看退换货</text></view>
+  </view>
+
+  <!-- ===== 订单列表 ===== -->
+  <view wx:else>
+    <view wx:if="{{orders.length === 0}}" class="empty-state">
+      <text>暂无订单</text>
+    </view>
+
+    <view wx:else>
+      <view class="order-card card" wx:for="{{orders}}" wx:key="_id">
+        <!-- 右上角复制按钮 -->
+        <view class="copy-btn" data-order="{{item}}" catchtap="onCopyOrder">复制信息</view>
+        <!-- 头部 -->
+        <view class="order-header">
+          <text class="order-time">{{item.timeText}}</text>
+          <view class="header-badges">
+            <view wx:if="{{item.returnRequest}}" class="badge badge-return-{{item.returnRequest.status}}">
+              {{item.returnRequest.isRetry ? '二次申请-' : ''}}{{item.returnRequest.type === 'return' ? '退货' : '换货'}}-{{item.returnStatusText}}
+            </view>
+            <view wx:if="{{item.deliveryMethod === 'delivery' && (!item.returnRequest || item.returnRequest.type !== 'return')}}" class="badge badge-pickedup-{{item.pickedUp ? 'yes' : 'no'}}">{{item.pickedUp ? '已拿货' : '未拿货'}}</view>
+            <view class="badge badge-{{item.status}}">{{item.statusText}}</view>
+          </view>
+        </view>
+
+        <!-- 客户信息 -->
+        <view class="order-customer-info">
+          <view class="info-row">
+            <text class="info-label">客户：</text><text>{{item.customerName}}</text>
+          </view>
+
+          <block wx:if="{{!isWarehouse}}">
+            <view class="info-row">
+              <text class="info-label">电话：</text><text class="info-phone">{{item.phone}}</text>
+            </view>
+            <view class="info-row info-row-addr">
+              <view class="info-addr-text">
+                <text class="info-label">地址：</text><text class="addr-value">{{item.address}}</text>
+              </view>
+              <view class="navi-btn" data-address="{{item.address}}" data-lat="{{item.location.lat}}" data-lng="{{item.location.lng}}" catchtap="onNavigate">🧭 导航</view>
+            </view>
+          </block>
+          <view class="info-row">
+            <text class="info-label">拿货方式：</text><text>{{item.deliveryMethodText}}</text>
+          </view>
+        </view>
+
+        <!-- 产品明细 -->
+        <view class="order-products">
+          <view class="op-item" wx:for="{{item.items}}" wx:key="productId" wx:for-item="p">
+            <text class="op-name">{{p.name}}</text>
+            <text class="op-detail">¥{{p.priceText}} × {{p.quantity}}{{p.unit}}</text>
+          </view>
+        </view>
+
+        <!-- 退换货清单 或 备注 -->
+        <view wx:if="{{item.returnRequest && !isWarehouse}}" class="order-remark">
+          <view class="rr-badge">{{item.returnRequest.isRetry ? '二次申请-' : ''}}{{item.returnRequest.type === 'return' ? '退货' : '换货'}}-{{item.returnStatusText}}</view>
+          <view wx:if="{{item.returnRequest.items && item.returnRequest.items.length > 0}}" class="rr-list">
+            <view wx:for="{{item.returnRequest.items}}" wx:key="productId" wx:for-item="ri" class="rr-item">{{ri.name}} ×{{ri.quantity}}{{ri.unit}}</view>
+          </view>
+          <view wx:if="{{item.returnRequest.exchangeItems && item.returnRequest.exchangeItems.length > 0}}" class="rr-exchange">
+            换购商品：
+            <view wx:for="{{item.returnRequest.exchangeItems}}" wx:key="productId" wx:for-item="ei" class="rr-item">{{ei.name}} ×{{ei.quantity}}{{ei.unit}}</view>
+          </view>
+          <view wx:if="{{item.returnRequest.reason}}" class="rr-reason">原因：{{item.returnRequest.reason}}</view>
+        </view>
+        <view wx:elif="{{item.remark && !isWarehouse}}" class="order-remark">备注：{{item.remark}}</view>
+
+        <!-- 订单图片 -->
+        <view wx:if="{{item.images && item.images.length > 0}}" class="order-images">
+          <view class="oi-image-item" wx:for="{{item.images}}" wx:key="fileID" wx:for-item="img" wx:for-index="imgIdx">
+            <image class="oi-thumb" src="{{img.fileID}}" mode="aspectFill" data-url="{{img.fileID}}" bindtap="onPreviewImage" />
+            <view class="oi-img-del" data-order-id="{{item._id}}" data-img-index="{{imgIdx}}" catchtap="onDeleteImage">×</view>
+          </view>
+        </view>
+
+        <!-- 上传图片按钮（所有角色可见） -->
+        <view class="upload-row">
+          <view class="upload-btn" data-order-id="{{item._id}}" bindtap="onUploadImage">
+            📷 上传图片
+          </view>
+          <text wx:if="{{isDelivery && item.deliveryMethod === 'delivery' && (!item.images || item.images.length === 0)}}" class="upload-hint">配送前需上传凭证</text>
+          <text wx:if="{{isWarehouse && item.deliveryMethod === 'logistics' && (!item.images || item.images.length === 0)}}" class="upload-hint">物流发货需上传凭证</text>
+        </view>
+
+        <!-- 底部操作 -->
+        <view class="order-footer">
+          <view class="footer-left">
+            <text class="order-total">合计：<text class="price">¥{{item.totalText}}</text></text>
+            <!-- 改价按钮（厂长+送货员） -->
+            <text wx:if="{{!isWarehouse}}" class="edit-price-btn" data-order="{{item}}" bindtap="onOpenPriceModal">改价</text>
+          </view>
+
+          <view wx:if="{{!isWarehouse || (isWarehouse && (item.deliveryMethod === 'logistics' || item.deliveryMethod === 'delivery'))}}" class="footer-actions">
+            <!-- 配送订单：已拿货/未拿货切换 -->
+            <view wx:if="{{item.deliveryMethod === 'delivery' && (!item.returnRequest || item.returnRequest.type !== 'return')}}" class="pickedup-btn {{item.pickedUp ? 'pu-done' : ''}}" data-order-id="{{item._id}}" catchtap="onTogglePickedUp">
+              {{item.pickedUp ? '✓ 已拿货' : '未拿货'}}
+            </view>
+            <!-- 更改状态 -->
+            <view wx:if="{{!isWarehouse || (isWarehouse && item.deliveryMethod === 'logistics')}}" class="status-btn" data-order="{{item}}" bindtap="onStatusChange">更改状态</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 改价弹窗 ===== -->
+  <view wx:if="{{showPriceModal}}" class="modal-mask">
+    <view class="price-modal">
+      <view class="modal-title">修改订单价格</view>
+      <view class="price-current">当前金额：¥{{priceCurrent}}</view>
+      <view class="form-group">
+        <view class="form-label">新金额（元）</view>
+        <input class="price-input" type="digit" placeholder="请输入新金额" value="{{priceNew}}" bindinput="onPriceInput" focus="{{true}}" />
+      </view>
+      <view class="modal-btns">
+        <view class="btn-outline modal-cancel" bindtap="onClosePriceModal">取消</view>
+        <view class="btn-primary modal-save" bindtap="onConfirmPrice">确认修改</view>
+      </view>
+    </view>
+  </view>
+</view>
