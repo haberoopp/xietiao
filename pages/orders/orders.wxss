@@ -157,13 +157,11 @@
 }
 
 .copy-btn {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #C0392B;
   border: 1rpx solid #C0392B;
-  padding: 8rpx 16rpx;
-  border-radius: 6rpx;
-  min-height: 56rpx;
-  line-height: 40rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
 }
 
 .copy-btn:active {
@@ -171,13 +169,11 @@
 }
 
 .cancel-btn {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #7F8C8D;
   border: 1rpx solid #CCC;
-  padding: 8rpx 16rpx;
-  border-radius: 6rpx;
-  min-height: 56rpx;
-  line-height: 40rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
 }
 
 .cancel-btn:active {
@@ -185,13 +181,11 @@
 }
 
 .return-btn {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #E67E22;
   border: 1rpx solid #E67E22;
-  padding: 8rpx 16rpx;
-  border-radius: 6rpx;
-  min-height: 56rpx;
-  line-height: 40rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
 }
 
 .return-btn:active {
@@ -199,13 +193,11 @@
 }
 
 .rebuy-btn {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #fff;
   background: #C0392B;
-  padding: 8rpx 16rpx;
-  border-radius: 6rpx;
-  min-height: 56rpx;
-  line-height: 40rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
 }
 
 .rebuy-btn:active {
@@ -213,13 +205,11 @@
 }
 
 .edit-order-btn {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #C0392B;
   border: 1rpx solid #C0392B;
-  padding: 8rpx 16rpx;
-  border-radius: 6rpx;
-  min-height: 56rpx;
-  line-height: 40rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
 }
 
 .edit-order-btn:active {
