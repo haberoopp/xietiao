@@ -1,5 +1,6 @@
 const util = require('../../../utils/util');
 const amap = require('../../../utils/amap');
+const exportUtil = require('../../../utils/export');
 
 Page({
   data: {
@@ -606,6 +607,40 @@ Page({
     }).catch(() => {
       wx.hideLoading();
       wx.showToast({ title: '操作失败', icon: 'none' });
+    });
+  },
+
+  // 导出订单为 CSV 并分享到微信
+  onExportOrders() {
+    const orders = this.data.orders;
+    if (orders.length === 0) {
+      wx.showToast({ title: '没有订单可导出', icon: 'none' });
+      return;
+    }
+    const csv = exportUtil.ordersToCSV(orders);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    exportUtil.shareCSV(csv, '订单导出_' + dateStr + '.csv');
+  },
+
+  // 分享对账单（Canvas 生成图片后分享）
+  onShareBill(e) {
+    const order = e.currentTarget.dataset.order;
+    wx.showLoading({ title: '生成中...' });
+    exportUtil.drawBillOnCanvas(order, (err, tempFilePath) => {
+      wx.hideLoading();
+      if (err) {
+        wx.showToast({ title: '生成失败', icon: 'none' });
+        return;
+      }
+      wx.showShareImageMenu({
+        path: tempFilePath,
+        success: () => {
+          wx.showToast({ title: '可发送给客户或保存', icon: 'success' });
+        },
+        fail: () => {
+          exportUtil.shareBillImage(tempFilePath);
+        }
+      });
     });
   },
 

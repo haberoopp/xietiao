@@ -7,6 +7,7 @@
     </view>
     <view wx:if="{{isManager}}" class="top-actions">
       <view class="go-dash-btn" bindtap="onGoDashboard">📊 仪表盘</view>
+      <view class="go-export-btn" bindtap="onExportOrders">📥 导出</view>
       <view class="go-products-btn" bindtap="onGoCustomers">客户管理</view>
       <view class="go-products-btn" bindtap="onGoProducts">管理产品</view>
     </view>
@@ -181,6 +182,7 @@
             <view wx:if="{{isManager}}" class="payment-toggle-btn {{item.payment_status === 'paid' ? 'pt-paid' : 'pt-unpaid'}}" data-order-id="{{item._id}}" catchtap="onTogglePayment">
               {{item.payment_status === 'paid' ? '✓ 已付款' : '标记已付'}}
             </view>
+            <view class="share-bill-btn" data-order="{{item}}" catchtap="onShareBill">📋 对账单</view>
             <!-- 更改状态 -->
             <view wx:if="{{!isWarehouse || (isWarehouse && item.deliveryMethod === 'logistics')}}" class="status-btn" data-order="{{item}}" bindtap="onStatusChange">更改状态</view>
           </view>
@@ -204,4 +206,7 @@
       </view>
     </view>
   </view>
+
+  <!-- 对账单 Canvas（隐藏，用于后台绑图） -->
+  <canvas type="2d" id="billCanvas" class="bill-canvas"></canvas>
 </view>

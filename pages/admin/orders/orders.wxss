@@ -530,3 +530,38 @@
 /* Ensure action buttons have consistent touch targets */
 .admin-order-card { padding: 16rpx; background: #fff; border-radius: 8rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06); margin-bottom: 16rpx; }
 .action-btn { min-height: 56rpx; line-height: 40rpx; padding: 8rpx 16rpx; border-radius: 6rpx; font-size: 24rpx; }
+
+/* 导出按钮 */
+.go-export-btn {
+  font-size: 26rpx;
+  color: #1976D2;
+  padding: 10rpx 24rpx;
+  border: 1rpx solid #1976D2;
+  border-radius: 6rpx;
+}
+
+.go-export-btn:active {
+  background: #e3f2fd;
+}
+
+/* 对账单分享按钮 */
+.share-bill-btn {
+  font-size: 22rpx;
+  color: #7B1FA2;
+  border: 1rpx solid #7B1FA2;
+  padding: 8rpx 18rpx;
+  border-radius: 6rpx;
+}
+
+.share-bill-btn:active {
+  background: #f3e5f5;
+}
+
+/* 隐藏 Canvas（用于后台绑图） */
+.bill-canvas {
+  position: fixed;
+  top: -9999rpx;
+  left: -9999rpx;
+  width: 750rpx;
+  height: 1000rpx;
+}
