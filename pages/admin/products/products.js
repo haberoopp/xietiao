@@ -11,7 +11,7 @@ Page({
       category: '色丁',
       price: '',
       unit: '米',
-      stock: '',
+      status: 'sufficient',
       description: '',
       image: ''
     }
@@ -42,7 +42,8 @@ Page({
     if (app.globalData.demoMode) {
       const products = (app.globalData.demoProducts || []).map(p => ({
         ...p,
-        priceText: (p.price / 100).toFixed(2)
+        priceText: (p.price / 100).toFixed(2),
+        status: p.status || 'sufficient'
       }));
       this.setData({ products });
       this.filterProducts();
@@ -54,7 +55,8 @@ Page({
       if (res.result.code === 0) {
         const products = res.result.data.list.map(p => ({
           ...p,
-          priceText: (p.price / 100).toFixed(2)
+          priceText: (p.price / 100).toFixed(2),
+          status: p.status || 'sufficient'
         }));
         this.setData({ products });
         this.filterProducts();
@@ -68,7 +70,7 @@ Page({
     this.setData({
       showForm: true,
       editingProduct: null,
-      form: { name: '', category: '斜条', price: '', unit: '米', stock: '', description: '', image: '' }
+      form: { name: '', category: '色丁', price: '', unit: '米', status: 'sufficient', description: '', image: '' }
     });
   },
 
@@ -82,7 +84,7 @@ Page({
         category: product.category,
         price: (product.price / 100).toFixed(2),
         unit: product.unit,
-        stock: String(product.stock || ''),
+        status: product.status || 'sufficient',
         description: product.description || '',
         image: product.image || ''
       }
@@ -135,6 +137,11 @@ Page({
     this.setData({ 'form.unit': units[e.detail.value] });
   },
 
+  onStatusChange(e) {
+    const statuses = ['sufficient', 'low', 'out'];
+    this.setData({ 'form.status': statuses[e.detail.value] });
+  },
+
   onChooseImage() {
     const app = getApp();
     if (app.globalData.demoMode) {
@@ -184,7 +191,7 @@ Page({
       category,
       price: Math.round(parseFloat(price) * 100),
       unit,
-      stock: parseInt(stock) || 0,
+      status: this.data.form.status || 'sufficient',
       description: description.trim(),
       image
     };
@@ -195,7 +202,11 @@ Page({
       if (this.data.editingProduct) {
         const idx = app.globalData.demoProducts.findIndex(p => p._id === this.data.editingProduct._id);
         if (idx > -1) {
-          app.globalData.demoProducts[idx] = { ...app.globalData.demoProducts[idx], ...productData };
+          const old = app.globalData.demoProducts[idx];
+          if (productData.status === 'sufficient' && old.status !== 'sufficient') {
+            productData.last_produced_at = Date.now();
+          }
+          app.globalData.demoProducts[idx] = { ...old, ...productData };
         }
       } else {
         productData._id = 'p' + Date.now();

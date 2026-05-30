@@ -28,7 +28,11 @@
       <view class="pa-info">
         <view class="pa-name">{{item.name}}</view>
         <view class="pa-meta">{{item.category}} / {{item.unit}} / ¥{{item.priceText}}</view>
-        <view class="pa-stock" wx:if="{{item.stock}}">库存：{{item.stock}}</view>
+        <view class="pa-status-row">
+          <view class="status-dot {{item.status === 'out' ? 'dot-out' : item.status === 'low' ? 'dot-low' : 'dot-suf'}}"></view>
+          <text class="pa-status-text">{{item.status === 'out' ? '缺货' : item.status === 'low' ? '紧张' : '充足'}}</text>
+          <text wx:if="{{item.recent_sales}}" class="pa-recent-sales">近7天销量 ¥{{item.recent_sales / 100}}</text>
+        </view>
       </view>
       <view class="pa-actions">
         <view class="action-btn edit" data-product="{{item}}" bindtap="onEdit">编辑</view>
@@ -69,8 +73,13 @@
         </view>
 
         <view class="form-group">
-          <view class="form-label">库存</view>
-          <input class="form-input" type="number" placeholder="库存数量" value="{{form.stock}}" data-field="stock" bindinput="onFormInput" />
+          <view class="form-label">缺货状态</view>
+          <picker mode="selector" range="{{['充足','紧张','缺货']}}" bindchange="onStatusChange">
+            <view class="picker-val">
+              <view class="status-dot-inline {{form.status === 'out' ? 'dot-out' : form.status === 'low' ? 'dot-low' : 'dot-suf'}}"></view>
+              {{form.status === 'out' ? '缺货' : form.status === 'low' ? '紧张' : '充足'}}
+            </view>
+          </picker>
         </view>
 
         <view class="form-group">

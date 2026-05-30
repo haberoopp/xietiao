@@ -96,10 +96,42 @@
   margin-top: 4rpx;
 }
 
-.pa-stock {
+.pa-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 6rpx;
+}
+
+.status-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-suf { background: #4caf50; }
+.dot-low { background: #ff9800; }
+.dot-out { background: #f44336; }
+
+.status-dot-inline {
+  display: inline-block;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 10rpx;
+}
+
+.pa-status-text {
   font-size: 22rpx;
-  color: #2196f3;
-  margin-top: 4rpx;
+  color: #666;
+}
+
+.pa-recent-sales {
+  font-size: 22rpx;
+  color: #999;
+  margin-left: auto;
 }
 
 .pa-actions {
@@ -165,6 +197,8 @@
 }
 
 .picker-val {
+  display: flex;
+  align-items: center;
   height: 80rpx;
   line-height: 80rpx;
   background: #f8f8f8;
