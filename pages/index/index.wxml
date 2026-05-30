@@ -2,7 +2,7 @@
   <!-- 换购模式提示 -->
   <view wx:if="{{exchangeMode}}" class="exchange-banner">
     <view class="exb-info">
-      <text class="exb-icon">🔄</text>
+      <text class="exb-icon">↻</text>
       <text class="exb-text">正在选择换货商品，挑选后请点击底部"完成换购选择"</text>
     </view>
     <view class="exb-cancel" bindtap="onCancelExchange">取消</view>
@@ -11,7 +11,7 @@
   <!-- 搜索栏 -->
   <view class="search-bar">
     <view class="search-input-wrap">
-      <text class="search-icon">🔍</text>
+      <text class="search-icon">⌕</text>
       <input
         class="search-input"
         placeholder="搜索产品名称..."
@@ -127,7 +127,7 @@
       <view class="cfb-left">
         <view class="cfb-icon-wrap" bindtap="onToggleCart">
           <view class="cfb-icon-bg"></view>
-          <text class="cfb-icon-text">🛒</text>
+          <text class="cfb-icon-text">●</text>
           <text wx:if="{{cartCount > 0}}" class="cfb-count">{{cartCount > 99 ? '99+' : cartCount}}</text>
         </view>
         <text class="cfb-total">¥{{cartTotal}}</text>
