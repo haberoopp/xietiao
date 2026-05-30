@@ -1,60 +1,82 @@
 <view class="container">
-  <!-- 顶部栏 -->
   <view class="admin-top-bar">
     <view class="back-btn" bindtap="onBackToOrders">← 返回订单</view>
-    <text class="dash-title">📊 经营概览</text>
+    <text class="dash-title">📊 经营看板</text>
   </view>
 
-  <!-- 统计卡片 -->
+  <view class="date-tabs">
+    <view class="date-tab {{dateRange === 'today' ? 'active' : ''}}" data-range="today" bindtap="onDateTap">今天</view>
+    <view class="date-tab {{dateRange === '7days' ? 'active' : ''}}" data-range="7days" bindtap="onDateTap">近7天</view>
+    <view class="date-tab {{dateRange === '30days' ? 'active' : ''}}" data-range="30days" bindtap="onDateTap">近30天</view>
+  </view>
+
   <view class="stats-row">
     <view class="stat-card">
-      <view class="stat-value">{{todayOrders}}</view>
-      <view class="stat-label">今日订单</view>
+      <view class="stat-value">{{totalOrders}}</view>
+      <view class="stat-label">订单数</view>
     </view>
     <view class="stat-card">
-      <view class="stat-value">¥{{todaySales}}</view>
-      <view class="stat-label">今日销售额</view>
+      <view class="stat-value">¥{{totalSales}}</view>
+      <view class="stat-label">销售额</view>
+    </view>
+    <view class="stat-card">
+      <view class="stat-value stat-warn">{{pendingOrders}}</view>
+      <view class="stat-label">待处理</view>
+    </view>
+  </view>
+
+  <view class="stats-row">
+    <view class="stat-card stat-card-debt">
+      <view class="stat-value stat-debt">¥{{unpaidAmount}}</view>
+      <view class="stat-label">未收款</view>
     </view>
     <view class="stat-card">
       <view class="stat-value stat-warn">{{shortageCount}}</view>
       <view class="stat-label">缺货预警</view>
     </view>
+    <view class="stat-card stat-card-placeholder"></view>
   </view>
 
-  <!-- 缺货预警列表 -->
   <view class="section">
     <view class="section-header">
-      <text class="section-title">⚠️ 缺货预警</text>
-      <text class="section-more" bindtap="onFilterShortage">只看缺货/紧张</text>
+      <text class="section-title">📈 近7天趋势</text>
     </view>
-
-    <view wx:if="{{shortageProducts.length === 0}}" class="empty-state">
-      <text>所有产品库存充足 🎉</text>
+    <view class="trend-chart">
+      <view class="trend-bar-col" wx:for="{{trendDays}}" wx:key="label">
+        <view class="trend-bar-label">{{item.sales}}</view>
+        <view class="trend-bar" style="height: {{item.barHeight}}rpx"></view>
+        <view class="trend-day-label">{{item.label}}</view>
+      </view>
     </view>
+  </view>
 
-    <view wx:else class="shortage-list">
-      <view class="shortage-item {{item.status === 'out' ? 'so-out' : 'so-low'}}"
-        wx:for="{{shortageProducts}}" wx:key="_id">
-        <view class="si-status">{{item.status === 'out' ? '🔴 缺货' : '🟡 紧张'}}</view>
-        <view class="si-name">{{item.name}}</view>
-        <view class="si-meta">
-          <text>近7天销 ¥{{item.recentSalesText}}</text>
-          <text wx:if="{{item.lastProducedText}}"> · 上次生产 {{item.lastProducedText}}</text>
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">👥 客户消费排行</text>
+    </view>
+    <view wx:if="{{topCustomers.length === 0}}" class="empty-state"><text>暂无数据</text></view>
+    <view wx:else class="rank-list">
+      <view class="rank-item" wx:for="{{topCustomers}}" wx:key="phone">
+        <view class="rank-num {{index < 3 ? 'rank-top' + (index + 1) : ''}}">{{index + 1}}</view>
+        <view class="rank-info">
+          <view class="rank-name">{{item.name}}</view>
+          <view class="rank-meta">{{item.orderCount}}单 · {{item.phone}}</view>
+        </view>
+        <view class="rank-sales">
+          <view class="rank-amount">¥{{item.amountText}}</view>
+          <view class="rank-bar-bg">
+            <view class="rank-bar-fill" style="width: {{item.barPercent}}%"></view>
+          </view>
         </view>
       </view>
     </view>
   </view>
 
-  <!-- 近7天销量排行 -->
   <view class="section">
     <view class="section-header">
-      <text class="section-title">🔥 近7天销量排行</text>
+      <text class="section-title">🔥 产品销量排行</text>
     </view>
-
-    <view wx:if="{{topProducts.length === 0}}" class="empty-state">
-      <text>暂无销售数据</text>
-    </view>
-
+    <view wx:if="{{topProducts.length === 0}}" class="empty-state"><text>暂无销售数据</text></view>
     <view wx:else class="rank-list">
       <view class="rank-item" wx:for="{{topProducts}}" wx:key="_id">
         <view class="rank-num {{index < 3 ? 'rank-top' + (index + 1) : ''}}">{{index + 1}}</view>
@@ -67,6 +89,24 @@
           <view class="rank-bar-bg">
             <view class="rank-bar-fill" style="width: {{item.barPercent}}%"></view>
           </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">⚠️ 缺货预警</text>
+      <text class="section-more" bindtap="onFilterShortage">查看全部</text>
+    </view>
+    <view wx:if="{{shortageProducts.length === 0}}" class="empty-state"><text>所有产品库存充足 🎉</text></view>
+    <view wx:else class="shortage-list">
+      <view class="shortage-item {{item.status === 'out' ? 'so-out' : 'so-low'}}" wx:for="{{shortageProducts}}" wx:key="_id">
+        <view class="si-status">{{item.status === 'out' ? '🔴 缺货' : '🟡 紧张'}}</view>
+        <view class="si-name">{{item.name}}</view>
+        <view class="si-meta">
+          <text>近7天销 ¥{{item.recentSalesText}}</text>
+          <text wx:if="{{item.lastProducedText}}"> · 上次生产 {{item.lastProducedText}}</text>
         </view>
       </view>
     </view>
