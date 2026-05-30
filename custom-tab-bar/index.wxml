@@ -7,11 +7,7 @@
     data-index="{{idx}}"
     bindtap="switchTab"
   >
-    <view class="tab-icon">
-      <text wx:if="{{item.icon === 'home'}}">🏠</text>
-      <text wx:elif="{{item.icon === 'address'}}">📍</text>
-      <text wx:elif="{{item.icon === 'order'}}">📋</text>
-    </view>
+    <image class="tab-icon" src="/images/{{selected === idx ? item.selectedIconPath : item.iconPath}}" mode="aspectFit" />
     <view class="tab-text">{{item.text}}</view>
   </view>
   <view
@@ -20,7 +16,7 @@
     data-index="3"
     bindtap="switchTab"
   >
-    <view class="tab-icon">⚙</view>
+    <image class="tab-icon" src="/images/{{selected === 3 ? adminTab.selectedIconPath : adminTab.iconPath}}" mode="aspectFit" />
     <view class="tab-text">后台</view>
   </view>
 </view>

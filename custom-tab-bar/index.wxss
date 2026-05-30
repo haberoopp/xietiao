@@ -5,7 +5,7 @@
   right: 0;
   height: 100rpx;
   background: #fff;
-  border-top: 1rpx solid #e0e0e0;
+  border-top: 1rpx solid #EEEEEE;
   display: flex;
   align-items: center;
   padding-bottom: env(safe-area-inset-bottom);
@@ -23,16 +23,17 @@
 }
 
 .tab-icon {
-  font-size: 38rpx;
-  line-height: 1;
+  width: 44rpx;
+  height: 44rpx;
   margin-bottom: 2rpx;
 }
 
 .tab-text {
   font-size: 20rpx;
-  color: #999;
+  color: #7F8C8D;
 }
 
 .tab-item.active .tab-text {
-  color: #d32f2f;
+  color: #C0392B;
+  font-weight: 500;
 }

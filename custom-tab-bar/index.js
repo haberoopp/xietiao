@@ -2,11 +2,11 @@ Component({
   data: {
     selected: 0,
     list: [
-      { pagePath: '/pages/index/index', text: '首页', icon: 'home' },
-      { pagePath: '/pages/address/address', text: '收货地址', icon: 'address' },
-      { pagePath: '/pages/orders/orders', text: '我的订单', icon: 'order' }
+      { pagePath: '/pages/index/index', text: '首页', icon: 'home', iconPath: 'home.png', selectedIconPath: 'home-active.png' },
+      { pagePath: '/pages/address/address', text: '收货地址', icon: 'address', iconPath: 'cart.png', selectedIconPath: 'cart-active.png' },
+      { pagePath: '/pages/orders/orders', text: '我的订单', icon: 'order', iconPath: 'order.png', selectedIconPath: 'order-active.png' }
     ],
-    adminTab: { pagePath: '/pages/admin/login/login', text: '后台', icon: 'admin' },
+    adminTab: { pagePath: '/pages/admin/login/login', text: '后台', icon: 'admin', iconPath: 'placeholder.png', selectedIconPath: 'placeholder.png' },
     showAdmin: false
   },
 
