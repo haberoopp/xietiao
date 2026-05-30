@@ -495,3 +495,34 @@
 
 .modal-cancel { flex: 1; }
 .modal-save { flex: 1; }
+
+.badge-payment-paid {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-payment-unpaid {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.payment-toggle-btn {
+  font-size: 22rpx;
+  padding: 8rpx 18rpx;
+  border-radius: 6rpx;
+}
+
+.pt-unpaid {
+  color: #ff9800;
+  border: 1rpx solid #ff9800;
+}
+
+.pt-unpaid:active {
+  background: #fff3e0;
+}
+
+.pt-paid {
+  color: #2e7d32;
+  background: #e8f5e9;
+  border: 1rpx solid #a5d6a7;
+}

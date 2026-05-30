@@ -88,7 +88,8 @@ Page({
           timeText: util.formatDate(order.createdAt),
           deliveryMethodText: util.getDeliveryMethodText(order.deliveryMethod),
           pickedUp: order.pickedUp || false,
-          returnStatusText: order.returnRequest ? util.getReturnStatusText(order.returnRequest.status) : ''
+          returnStatusText: order.returnRequest ? util.getReturnStatusText(order.returnRequest.status) : '',
+          paymentStatusText: (order.payment_status === 'paid' ? '已付款' : order.payment_status === 'unpaid' ? '未付款' : '未付款')
         }));
         // 客户搜索过滤
         if (this.data.searchKeyword) {
@@ -127,7 +128,8 @@ Page({
             timeText: util.formatDate(order.createdAt),
             deliveryMethodText: util.getDeliveryMethodText(order.deliveryMethod),
             pickedUp: order.pickedUp || false,
-            returnStatusText: order.returnRequest ? util.getReturnStatusText(order.returnRequest.status) : ''
+            returnStatusText: order.returnRequest ? util.getReturnStatusText(order.returnRequest.status) : '',
+            paymentStatusText: (order.payment_status === 'paid' ? '已付款' : order.payment_status === 'unpaid' ? '未付款' : '未付款')
           }));
           // 客户搜索过滤
           if (this.data.searchKeyword) {
@@ -492,6 +494,49 @@ Page({
       }
     } catch (err) {
       wx.showToast({ title: '网络错误', icon: 'none' });
+    }
+  },
+
+  async onTogglePayment(e) {
+    const { orderId } = e.currentTarget.dataset;
+    const app = getApp();
+
+    if (app.globalData.demoMode) {
+      const update = (list) => {
+        const o = list.find(o => o._id === orderId);
+        if (o) {
+          if (o.payment_status === 'paid') {
+            o.payment_status = 'unpaid';
+            o.paid_amount = 0;
+          } else {
+            o.payment_status = 'paid';
+            o.paid_amount = o.totalAmount;
+          }
+        }
+      };
+      update(app.globalData.demoOrders);
+      const saved = wx.getStorageSync('demoOrders') || [];
+      update(saved);
+      wx.setStorageSync('demoOrders', saved);
+      wx.showToast({ title: '已更新', icon: 'success' });
+      this.loadOrders();
+      return;
+    }
+
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'adminUpdateOrderStatus',
+        data: {
+          orderId,
+          payment_status: this.data.orders.find(o => o._id === orderId).payment_status === 'paid' ? 'unpaid' : 'paid'
+        }
+      });
+      if (res.result.code === 0) {
+        wx.showToast({ title: '已更新', icon: 'success' });
+        this.loadOrders();
+      }
+    } catch (err) {
+      wx.showToast({ title: '操作失败', icon: 'none' });
     }
   },
 

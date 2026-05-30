@@ -97,6 +97,7 @@
             </view>
             <view wx:if="{{item.deliveryMethod === 'delivery' && (!item.returnRequest || item.returnRequest.type !== 'return')}}" class="badge badge-pickedup-{{item.pickedUp ? 'yes' : 'no'}}">{{item.pickedUp ? '已拿货' : '未拿货'}}</view>
             <view class="badge badge-{{item.status}}">{{item.statusText}}</view>
+            <view class="badge badge-payment-{{item.payment_status}}">{{item.paymentStatusText}}</view>
           </view>
         </view>
 
@@ -176,6 +177,9 @@
             <!-- 配送订单：已拿货/未拿货切换 -->
             <view wx:if="{{item.deliveryMethod === 'delivery' && (!item.returnRequest || item.returnRequest.type !== 'return')}}" class="pickedup-btn {{item.pickedUp ? 'pu-done' : ''}}" data-order-id="{{item._id}}" catchtap="onTogglePickedUp">
               {{item.pickedUp ? '✓ 已拿货' : '未拿货'}}
+            </view>
+            <view wx:if="{{isManager}}" class="payment-toggle-btn {{item.payment_status === 'paid' ? 'pt-paid' : 'pt-unpaid'}}" data-order-id="{{item._id}}" catchtap="onTogglePayment">
+              {{item.payment_status === 'paid' ? '✓ 已付款' : '标记已付'}}
             </view>
             <!-- 更改状态 -->
             <view wx:if="{{!isWarehouse || (isWarehouse && item.deliveryMethod === 'logistics')}}" class="status-btn" data-order="{{item}}" bindtap="onStatusChange">更改状态</view>
