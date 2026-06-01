@@ -80,8 +80,15 @@ const mockCustomers = [
   { _id: 'c002', name: '陈大明', phone: '13900139002', discount: 0.85, totalOrders: 1, totalAmount: 15000, debt: 15000, createdAt: Date.now() - 86400000 * 15 },
 ];
 
+const demoAdminAccounts = {
+  manager:   { username: 'changzhang', password: '123456', role: 'manager',   nickname: '厂长' },
+  delivery:  { username: 'songhuo',    password: '123456', role: 'delivery',  nickname: '送货员' },
+  warehouse: { username: 'diaohuo',    password: '123456', role: 'warehouse', nickname: '仓库调货员' }
+};
+
 module.exports = {
   mockProducts,
   mockOrders,
   mockCustomers,
+  demoAdminAccounts,
 };

@@ -1,3 +1,5 @@
+const mock = require('../../../utils/mock');
+
 Page({
   data: {
     username: '',
@@ -30,11 +32,7 @@ Page({
     const app = getApp();
 
     if (app.globalData.demoMode) {
-      const demoAccounts = {
-        'manager': { username: 'changzhang', password: '123456', role: 'manager', nickname: '厂长' },
-        'delivery': { username: 'songhuo', password: '123456', role: 'delivery', nickname: '送货员' },
-        'warehouse': { username: 'diaohuo', password: '123456', role: 'warehouse', nickname: '仓库调货员' }
-      };
+      const demoAccounts = mock.demoAdminAccounts;
 
       const u = username.trim();
       const p = password.trim();
