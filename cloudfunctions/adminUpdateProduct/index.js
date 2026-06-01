@@ -1,14 +1,14 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
-const { createVerifyAdmin } = require('./auth');
-const verifyAdmin = createVerifyAdmin(db);
 
 exports.main = async (event) => {
-  const auth = await verifyAdmin();
-  if (auth.error) return auth.error;
+  const wxContext = cloud.getWXContext();
+  if (!wxContext.OPENID) return { code: -1, msg: '未登录' };
+  const admin = await db.collection('admins').where({ lastLoginOpenid: wxContext.OPENID, loggedIn: true }).get();
+  if (admin.data.length === 0) return { code: -1, msg: '无管理员权限' };
 
-  const { productId, name, category, price, unit, stock, status, description, image } = event;
+  const { productId, name, category, price, unit, stock, description, image } = event;
 
   if (!productId) {
     return { code: -1, msg: '缺少产品ID' };
@@ -21,7 +21,6 @@ exports.main = async (event) => {
     if (price !== undefined) data.price = Math.round(parseFloat(price) * 100);
     if (unit !== undefined) data.unit = unit;
     if (stock !== undefined) data.stock = parseInt(stock) || 0;
-    if (status !== undefined) data.status = status;
     if (description !== undefined) data.description = description;
     if (image !== undefined) data.image = image;
 

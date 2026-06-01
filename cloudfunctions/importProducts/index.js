@@ -51,7 +51,6 @@ exports.main = async (event) => {
             category,
             price: Math.round(price * 100),
             unit,
-            status: 'sufficient',
             stock,
             description,
             image: '',

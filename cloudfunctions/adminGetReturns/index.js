@@ -1,12 +1,12 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
-const { createVerifyAdmin } = require('./auth');
-const verifyAdmin = createVerifyAdmin(db);
 
 exports.main = async (event) => {
-  const auth = await verifyAdmin();
-  if (auth.error) return auth.error;
+  const wxContext = cloud.getWXContext();
+  if (!wxContext.OPENID) return { code: -1, msg: '未登录' };
+  const admin = await db.collection('admins').where({ lastLoginOpenid: wxContext.OPENID, loggedIn: true }).get();
+  if (admin.data.length === 0) return { code: -1, msg: '无管理员权限' };
 
   const { status } = event;
   const where = {};

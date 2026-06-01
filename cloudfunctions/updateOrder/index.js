@@ -16,14 +16,6 @@ exports.main = async (event) => {
     if (!order.data) return { code: -1, msg: '订单不存在' };
     if (order.data._openid !== openid) return { code: -1, msg: '无权操作' };
 
-    // 已取消和已完成的订单不允许修改
-    if (order.data.status === 'cancelled') {
-      return { code: -1, msg: '订单已取消，无法修改' };
-    }
-    if (order.data.status === 'completed') {
-      return { code: -1, msg: '订单已完成，无法修改' };
-    }
-
     const data = { updatedAt: db.serverDate() };
     if (customerName !== undefined) data.customerName = customerName.trim();
     if (phone !== undefined) data.phone = phone.trim();
