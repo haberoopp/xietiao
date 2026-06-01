@@ -87,7 +87,9 @@
     </view>
 
     <view wx:else>
-      <view class="order-card card" wx:for="{{orders}}" wx:key="_id">
+      <scroll-view scroll-y class="vl-scroll" style="height: 100vh" bindscroll="onScroll" bindscrolltolower="onLoadMore" lower-threshold="200">
+        <view style="height: {{topPad}}px"></view>
+        <view class="order-card card" wx:for="{{visibleItems}}" wx:key="_id">
         <!-- 右上角复制按钮 -->
         <view class="copy-btn" data-order="{{item}}" catchtap="onCopyOrder">复制信息</view>
         <!-- 头部 -->
@@ -189,7 +191,10 @@
           </view>
         </view>
       </view>
-    </view>
+      <view style="height: {{bottomPad}}px"></view>
+      <view wx:if="{{loadingMore}}" class="load-more-tip">加载中...</view>
+      <view wx:elif="{{!hasMore}}" class="load-more-tip">— 没有更多了 —</view>
+    </scroll-view>
   </view>
 
   <!-- ===== 改价弹窗 ===== -->
