@@ -1,6 +1,8 @@
+const constants = require('../../utils/constants');
+
 Page({
   data: {
-    categories: ['全部', '色丁', '凉感丝', '丝纹', '全棉', '圆盘', '其他'],
+    categories: constants.PRODUCT_CATEGORIES_WITH_ALL,
     activeCategory: '全部',
     keyword: '',
     products: [],

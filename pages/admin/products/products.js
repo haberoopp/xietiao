@@ -1,9 +1,11 @@
+const constants = require('../../../utils/constants');
+
 Page({
   data: {
     products: [],
     filteredProducts: [],
     searchKeyword: '',
-    categories: ['色丁', '凉感丝', '丝纹', '全棉', '圆盘', '其他'],
+    categories: constants.PRODUCT_CATEGORIES,
     showForm: false,
     editingProduct: null,
     form: {
@@ -133,12 +135,12 @@ Page({
   },
 
   onUnitChange(e) {
-    const units = ['米', '卷', '个', '公斤', '包'];
+    const units = constants.PRODUCT_UNITS;
     this.setData({ 'form.unit': units[e.detail.value] });
   },
 
   onStatusChange(e) {
-    const statuses = ['sufficient', 'low', 'out'];
+    const statuses = constants.PRODUCT_STATUSES;
     this.setData({ 'form.status': statuses[e.detail.value] });
   },
 
