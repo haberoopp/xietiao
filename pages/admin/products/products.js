@@ -102,6 +102,7 @@ Page({
             updates[`filteredProducts[${fprodStart + i}]`] = item;
           });
           updates.hasMore = newList.length >= pageSize;
+          updates.loadingMore = false;
           this.setData(updates);
         }
         this.filterProducts();

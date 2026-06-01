@@ -172,6 +172,7 @@ Page({
               });
               updates.returnList = [];
               updates.hasMore = newOrders.length >= pageSize;
+              updates.loadingMore = false;
               this.setData(updates);
             }
           }
