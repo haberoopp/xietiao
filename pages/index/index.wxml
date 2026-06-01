@@ -47,20 +47,8 @@
     <text wx:else>暂无产品</text>
   </view>
 
-  <scroll-view
-    wx:else
-    scroll-y
-    class="vl-scroll"
-    style="height: 100vh"
-    bindscroll="onScroll"
-    bindscrolltolower="onLoadMore"
-    lower-threshold="200"
-  >
-    <!-- 上方占位 -->
-    <view style="height: {{topPad}}px;"></view>
-
-    <!-- 可见项 -->
-    <view class="product-card card {{item.status === 'out' ? 'product-out' : ''}} {{item.status === 'low' ? 'product-low' : ''}}" wx:for="{{visibleItems}}" wx:key="_id">
+  <view wx:else class="product-list">
+    <view class="product-card card {{item.status === 'out' ? 'product-out' : ''}} {{item.status === 'low' ? 'product-low' : ''}}" wx:for="{{products}}" wx:key="_id">
       <image
         class="product-image {{item.status === 'out' ? 'img-out' : ''}}"
         src="{{item.image || '/images/placeholder.png'}}"
@@ -89,14 +77,7 @@
         </view>
       </view>
     </view>
-
-    <!-- 下方占位 -->
-    <view style="height: {{bottomPad}}px;"></view>
-
-    <!-- 加载状态 -->
-    <view wx:if="{{loadingMore}}" class="vl-footer"><text>加载中...</text></view>
-    <view wx:elif="{{!hasMore && products.length > 0}}" class="vl-footer"><text>— 已加载全部 —</text></view>
-  </scroll-view>
+  </view>
 
   <!-- 数量输入弹窗 -->
   <view wx:if="{{showQtyModal}}" class="modal-mask" catchtouchmove="preventMove">

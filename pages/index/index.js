@@ -1,6 +1,5 @@
 const constants = require('../../utils/constants');
 const demoStore = require('../../utils/demoStore');
-const { VirtualScroll } = require('../../utils/virtual-scroll');
 
 Page({
   data: {
@@ -9,13 +8,6 @@ Page({
     keyword: '',
     products: [],
     allProducts: [],
-    visibleItems: [],
-    topPad: 0,
-    bottomPad: 0,
-    page: 1,
-    pageSize: 20,
-    hasMore: true,
-    loadingMore: false,
     loading: false,
     cartCount: 0,
     cartItems: [],
@@ -29,8 +21,6 @@ Page({
   },
 
   onLoad() {
-    this._vs = new VirtualScroll({ itemHeight: 240, buffer: 3 });
-    this._vs.init();
     this.loadProducts();
   },
 
@@ -52,24 +42,8 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.setData({ keyword: '', page: 1, hasMore: true });
+    this.setData({ keyword: '' });
     this.loadProducts().then(() => wx.stopPullDownRefresh());
-  },
-
-  onScroll(e) {
-    if (!this.data.products || this.data.products.length === 0) return;
-    const r = this._vs.calc(e.detail.scrollTop, this.data.products);
-    this.setData({
-      visibleItems: r.visibleItems,
-      topPad: r.topPad,
-      bottomPad: r.bottomPad
-    });
-  },
-
-  onLoadMore() {
-    if (!this.data.hasMore || this.data.loadingMore) return;
-    this.setData({ page: this.data.page + 1, loadingMore: true });
-    this.loadProducts();
   },
 
   loadCart() {
@@ -164,48 +138,27 @@ Page({
     const app = getApp();
 
     if (app.globalData.demoMode) {
-      const { page, pageSize } = this.data;
-      const source = demoStore.getAll(demoStore.KEYS.products);
-      const start = (page - 1) * pageSize;
-      const slice = source.slice(start, start + pageSize).map(p => ({
+      const products = demoStore.getAll(demoStore.KEYS.products).map(p => ({
         ...p, priceText: (p.price / 100).toFixed(2)
       }));
-      if (page === 1) {
-        this.setData({ products: slice, allProducts: slice, loading: false, hasMore: start + pageSize < source.length });
-      } else {
-        const products = this.data.products.concat(slice);
-        const allProducts = this.data.allProducts.concat(slice);
-        this.setData({ products, allProducts, loading: false, hasMore: start + pageSize < source.length });
-      }
-      // Initialize visible items for virtual scroll
-      const r = this._vs.calc(0, page === 1 ? slice : this.data.products);
-      this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad, loadingMore: false });
+      this.setData({ products, allProducts: products, loading: false });
       this.filterProducts();
       return;
     }
 
     try {
-      const { page, pageSize } = this.data;
-      const res = await wx.cloud.callFunction({ name: 'getProducts', data: { page, pageSize } });
+      const res = await wx.cloud.callFunction({ name: 'getProducts', data: { page: 1, pageSize: 500 } });
       if (res.result.code === 0) {
-        const newList = res.result.data.list.map(p => ({
+        const products = res.result.data.list.map(p => ({
           ...p, priceText: (p.price / 100).toFixed(2)
         }));
-        const total = res.result.data.total || 0;
-        if (page === 1) {
-          this.setData({ products: newList, allProducts: newList, hasMore: newList.length < total });
-        } else {
-          const products = this.data.products.concat(newList);
-          const allProducts = this.data.allProducts.concat(newList);
-          this.setData({ products, allProducts, hasMore: products.length < total });
-        }
-        const r = this._vs.calc(0, page === 1 ? newList : this.data.products);
-        this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad });
+        this.setData({ products, allProducts: products });
       }
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' });
     }
-    this.setData({ loadingMore: false, loading: false });
+    this.filterProducts();
+    this.setData({ loading: false });
   },
 
   // 显示数量输入弹窗
