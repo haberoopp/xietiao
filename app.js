@@ -17,22 +17,22 @@ App({
 
     try {
       wx.cloud.init({ env: envId, traceUser: true });
-      // 云环境已配置，默认走云端模式，失败时回退演示
-      this.globalData.demoMode = false;
       console.log('云开发已连接');
 
-      // 后台确认云函数可达性，不可达时回退演示模式
-      wx.cloud.callFunction({ name: 'getProducts', data: { pageSize: 1 } })
-        .then(res => {
-          if (res.result && res.result.code === 0) {
-            console.log('云函数连通验证通过');
-          }
-        })
-        .catch(() => {
-          this.globalData.demoMode = true;
-          this.loadMockData();
-          console.warn('云函数不可达，回退演示模式');
-        });
+      // 延迟验证云函数，避免阻塞启动
+      setTimeout(() => {
+        wx.cloud.callFunction({ name: 'getProducts', data: { pageSize: 1 } })
+          .then(res => {
+            if (res.result && res.result.code === 0) {
+              this.globalData.demoMode = false;
+              console.log('云函数连通验证通过');
+            }
+          })
+          .catch(() => {
+            this.loadMockData();
+            console.warn('云函数不可达，保持演示模式');
+          });
+      }, 2000);
     } catch (e) {
       this.globalData.demoMode = true;
       this.loadMockData();
