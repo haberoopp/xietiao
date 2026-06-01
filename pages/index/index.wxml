@@ -47,16 +47,8 @@
     <text wx:else>暂无产品</text>
   </view>
 
-  <scroll-view
-    wx:else
-    scroll-y
-    style="height: calc(100vh - 200rpx)"
-    bindscroll="onScroll"
-    bindscrolltolower="onLoadMore"
-    lower-threshold="200"
-  >
-    <view style="height: {{topPad}}px;"></view>
-    <view class="product-card card {{item.status === 'out' ? 'product-out' : ''}}" wx:for="{{visibleItems}}" wx:key="_id">
+  <view wx:else class="product-list">
+    <view class="product-card card {{item.status === 'out' ? 'product-out' : ''}} {{item.status === 'low' ? 'product-low' : ''}}" wx:for="{{products}}" wx:key="_id">
       <image
         class="product-image {{item.status === 'out' ? 'img-out' : ''}}"
         src="{{item.image || '/images/placeholder.png'}}"
@@ -64,7 +56,10 @@
       />
       <view class="product-info">
         <view class="product-name">{{item.name}}</view>
-        <view class="product-meta">{{item.category}} / {{item.unit}}</view>
+        <view class="product-meta">
+          <text class="product-category">{{item.category}}</text>
+          <text class="product-unit">/{{item.unit}}</text>
+        </view>
         <view class="product-bottom">
           <view class="price">
             <text class="price-symbol">¥</text>{{item.priceText}}
@@ -77,15 +72,12 @@
             wx:else
             class="add-cart-btn"
             data-product="{{item}}"
-            catchtap="showQtyInput"
-          >加入</view>
+            bindtap="showQtyInput"
+          >+ 加入</view>
         </view>
       </view>
     </view>
-    <view style="height: {{bottomPad}}px;"></view>
-    <view wx:if="{{loadingMore}}" style="text-align:center;padding:24rpx;color:#999;font-size:24rpx">加载中...</view>
-    <view wx:elif="{{!hasMore && products.length > 0}}" style="text-align:center;padding:24rpx;color:#999;font-size:24rpx">— 已加载全部 —</view>
-  </scroll-view>
+  </view>
 
   <!-- 数量输入弹窗 -->
   <view wx:if="{{showQtyModal}}" class="modal-mask" catchtouchmove="preventMove">

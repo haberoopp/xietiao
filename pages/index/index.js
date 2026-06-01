@@ -1,6 +1,5 @@
 const constants = require('../../utils/constants');
 const demoStore = require('../../utils/demoStore');
-const { VirtualScroll } = require('../../utils/virtual-scroll');
 
 Page({
   data: {
@@ -18,19 +17,10 @@ Page({
     qtyProduct: {},
     qtyValue: 1,
     qtyInputFocus: false,
-    exchangeMode: false,
-    page: 1,
-    pageSize: 20,
-    hasMore: true,
-    loadingMore: false,
-    visibleItems: [],
-    topPad: 0,
-    bottomPad: 0
+    exchangeMode: false
   },
 
   onLoad() {
-    this._vs = new VirtualScroll({ itemHeight: 208, buffer: 4 });
-    this._vs.init();
     this.loadProducts();
   },
 
@@ -52,25 +42,8 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.setData({ keyword: '', page: 1, hasMore: true });
+    this.setData({ keyword: '' });
     this.loadProducts().then(() => wx.stopPullDownRefresh());
-  },
-
-  onScroll(e) {
-    const items = this.data.products;
-    if (!items || items.length === 0) return;
-    const r = this._vs.calc(e.detail.scrollTop, items);
-    this.setData({
-      visibleItems: r.visibleItems,
-      topPad: r.topPad,
-      bottomPad: r.bottomPad
-    });
-  },
-
-  onLoadMore() {
-    if (!this.data.hasMore || this.data.loadingMore) return;
-    this.setData({ page: this.data.page + 1, loadingMore: true });
-    this.loadProducts();
   },
 
   loadCart() {
@@ -125,22 +98,33 @@ Page({
   },
 
   filterProducts() {
-    const { keyword, activeCategory, allProducts } = this.data;
-    let products = allProducts;
+    const { keyword, activeCategory, allProducts, products } = this.data;
 
+    // 无筛选条件：只追加 allProducts 比 products 多出的新 item（避免全量替换导致滚动跳顶）
+    if ((!keyword || !keyword.trim()) && activeCategory === '全部') {
+      if (products && allProducts && products.length < allProducts.length) {
+        const pStart = products.length;
+        const updates = {};
+        for (let i = pStart; i < allProducts.length; i++) {
+          updates[`products[${i}]`] = { ...allProducts[i], priceText: (allProducts[i].price / 100).toFixed(2) };
+        }
+        if (Object.keys(updates).length > 0) {
+          this.setData(updates);
+        }
+      }
+      return;
+    }
+
+    // 有筛选条件时需要全量替换（过滤导致 item 位置发生变化）
+    let filtered = allProducts;
     if (keyword && keyword.trim()) {
       const kw = keyword.trim().toLowerCase();
-      products = products.filter(p => p.name.toLowerCase().includes(kw));
+      filtered = filtered.filter(p => p.name.toLowerCase().includes(kw));
     }
     if (activeCategory !== '全部') {
-      products = products.filter(p => p.category === activeCategory);
+      filtered = filtered.filter(p => p.category === activeCategory);
     }
-
-    this.setData({ products: products.map(p => ({ ...p, priceText: (p.price / 100).toFixed(2) })) });
-    if (this._vs) {
-      const r = this._vs.calc(0, products);
-      this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad });
-    }
+    this.setData({ products: filtered.map(p => ({ ...p, priceText: (p.price / 100).toFixed(2) })) });
   },
 
   onCategoryTap(e) {
@@ -154,44 +138,27 @@ Page({
     const app = getApp();
 
     if (app.globalData.demoMode) {
-      const { page, pageSize } = this.data;
-      const source = demoStore.getAll(demoStore.KEYS.products).map(p => ({
+      const products = demoStore.getAll(demoStore.KEYS.products).map(p => ({
         ...p, priceText: (p.price / 100).toFixed(2)
       }));
-      const start = (page - 1) * pageSize;
-      const slice = source.slice(start, start + pageSize);
-      if (page === 1) {
-        this.setData({ products: slice, allProducts: source, hasMore: start + pageSize < source.length });
-      } else {
-        const products = this.data.products.concat(slice);
-        this.setData({ products, allProducts: source, hasMore: products.length < source.length });
-      }
-      const r = this._vs.calc(0, this.data.products);
-      this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad, loading: false, loadingMore: false });
+      this.setData({ products, allProducts: products, loading: false });
+      this.filterProducts();
       return;
     }
 
     try {
-      const { page, pageSize } = this.data;
-      const res = await wx.cloud.callFunction({ name: 'getProducts', data: { page, pageSize } });
+      const res = await wx.cloud.callFunction({ name: 'getProducts', data: { page: 1, pageSize: 500 } });
       if (res.result.code === 0) {
-        const newList = res.result.data.list.map(p => ({
+        const products = res.result.data.list.map(p => ({
           ...p, priceText: (p.price / 100).toFixed(2)
         }));
-        const total = res.result.data.total || 0;
-        if (page === 1) {
-          this.setData({ products: newList, hasMore: newList.length < total });
-        } else {
-          const products = this.data.products.concat(newList);
-          this.setData({ products, hasMore: products.length < total });
-        }
-        const r = this._vs.calc(0, this.data.products);
-        this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad });
+        this.setData({ products, allProducts: products });
       }
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' });
     }
-    this.setData({ loading: false, loadingMore: false });
+    this.filterProducts();
+    this.setData({ loading: false });
   },
 
   // 显示数量输入弹窗
