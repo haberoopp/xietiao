@@ -10,8 +10,7 @@ Page({
       { key: 'processing', label: '处理中' },
       { key: 'completed', label: '已完成' },
       { key: 'cancelled', label: '已取消' },
-      { key: 'returns', label: '退换货' },
-      { key: 'tools', label: '功能' }
+      { key: 'returns', label: '退换货' }
     ],
     activeStatus: '',
     orders: [],
@@ -54,12 +53,13 @@ Page({
 
   onTabTap(e) {
     const tab = e.currentTarget.dataset.status;
-    if (tab === 'tools') {
-      this.setData({ isToolsTab: true });
-      return;
-    }
-    this.setData({ activeStatus: tab, isReturnTab: tab === 'returns', isToolsTab: false });
+    this.setData({ activeStatus: tab, isReturnTab: tab === 'returns' });
     this.loadOrders();
+  },
+
+  onAdminTab(e) {
+    const tab = e.currentTarget.dataset.tab;
+    this.setData({ isToolsTab: tab === 'tools' });
   },
 
   async loadOrders() {
