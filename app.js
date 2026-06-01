@@ -45,7 +45,7 @@ App({
     adminLoggedIn: false,
     adminRole: '',
     adminNickname: '',
-    demoMode: true,
+    demoMode: false,
     demoProducts: [],
     demoOrders: [],
     exchangeMode: false,
