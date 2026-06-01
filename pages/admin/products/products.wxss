@@ -34,7 +34,7 @@
 }
 .search-clear {
   font-size: 28rpx;
-  color: #7F8C8D;
+  color: var(--color-text-secondary);
   padding: 10rpx;
   flex-shrink: 0;
 }
@@ -48,7 +48,7 @@
 .add-btn {
   font-size: 26rpx;
   color: #fff;
-  background: #C0392B;
+  background: var(--color-primary);
   padding: 10rpx 24rpx;
   border-radius: 6rpx;
 }
@@ -92,7 +92,7 @@
 
 .pa-meta {
   font-size: 22rpx;
-  color: #7F8C8D;
+  color: var(--color-text-secondary);
   margin-top: 4rpx;
 }
 
@@ -130,7 +130,7 @@
 
 .pa-recent-sales {
   font-size: 22rpx;
-  color: #7F8C8D;
+  color: var(--color-text-secondary);
   margin-left: auto;
 }
 
@@ -232,7 +232,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7F8C8D;
+  color: var(--color-text-secondary);
   font-size: 28rpx;
 }
 
