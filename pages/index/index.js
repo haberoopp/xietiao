@@ -142,9 +142,17 @@ Page({
       if (page === 1) {
         this.setData({ products: slice, allProducts: slice, loading: false, loadingMore: false, hasMore: start + pageSize < source.length });
       } else {
-        const products = [...this.data.products, ...slice];
-        const allProducts = [...this.data.allProducts, ...slice];
-        this.setData({ products, allProducts, loading: false, loadingMore: false, hasMore: start + pageSize < source.length });
+        const prodStart = this.data.products.length;
+        const allStart = this.data.allProducts.length;
+        const updates = {};
+        slice.forEach((item, i) => {
+          updates[`products[${prodStart + i}]`] = item;
+          updates[`allProducts[${allStart + i}]`] = item;
+        });
+        updates.loading = false;
+        updates.loadingMore = false;
+        updates.hasMore = start + pageSize < source.length;
+        this.setData(updates);
       }
       this.filterProducts();
       return;
@@ -163,11 +171,15 @@ Page({
         if (page === 1) {
           this.setData({ products: newList, allProducts: newList, hasMore: newList.length < total });
         } else {
-          this.setData({
-            products: [...this.data.products, ...newList],
-            allProducts: [...this.data.allProducts, ...newList],
-            hasMore: newList.length >= pageSize
+          const prodStart = this.data.products.length;
+          const allStart = this.data.allProducts.length;
+          const updates = {};
+          newList.forEach((item, i) => {
+            updates[`products[${prodStart + i}]`] = item;
+            updates[`allProducts[${allStart + i}]`] = item;
           });
+          updates.hasMore = newList.length >= pageSize;
+          this.setData(updates);
         }
       }
     } catch (err) {
