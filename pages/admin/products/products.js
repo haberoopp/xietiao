@@ -65,8 +65,16 @@ Page({
       if (page === 1) {
         this.setData({ products: slice, hasMore: start + pageSize < source.length, loadingMore: false });
       } else {
-        const products = [...this.data.products, ...slice];
-        this.setData({ products, hasMore: start + pageSize < source.length, loadingMore: false });
+        const prodStart = this.data.products.length;
+        const fprodStart = this.data.filteredProducts ? this.data.filteredProducts.length : 0;
+        const updates = {};
+        slice.forEach((item, i) => {
+          updates[`products[${prodStart + i}]`] = item;
+          updates[`filteredProducts[${fprodStart + i}]`] = item;
+        });
+        updates.hasMore = start + pageSize < source.length;
+        updates.loadingMore = false;
+        this.setData(updates);
       }
       this.filterProducts();
       return;
@@ -86,10 +94,15 @@ Page({
         if (page === 1) {
           this.setData({ products: newList, hasMore: newList.length < total });
         } else {
-          this.setData({
-            products: [...this.data.products, ...newList],
-            hasMore: newList.length >= pageSize
+          const prodStart = this.data.products.length;
+          const fprodStart = this.data.filteredProducts ? this.data.filteredProducts.length : 0;
+          const updates = {};
+          newList.forEach((item, i) => {
+            updates[`products[${prodStart + i}]`] = item;
+            updates[`filteredProducts[${fprodStart + i}]`] = item;
           });
+          updates.hasMore = newList.length >= pageSize;
+          this.setData(updates);
         }
         this.filterProducts();
       }
@@ -531,11 +544,22 @@ Page({
   },
 
   filterProducts() {
-    const { products, searchKeyword } = this.data;
+    const { products, searchKeyword, filteredProducts } = this.data;
     if (!searchKeyword) {
-      this.setData({ filteredProducts: products });
+      // 无搜索：只追加 products 比 filteredProducts 多出的新 item，避免全量替换导致滚动跳顶
+      if (filteredProducts && filteredProducts.length < products.length) {
+        const fStart = filteredProducts.length;
+        const updates = {};
+        for (let i = fStart; i < products.length; i++) {
+          updates[`filteredProducts[${i}]`] = products[i];
+        }
+        if (Object.keys(updates).length > 0) {
+          this.setData(updates);
+        }
+      }
       return;
     }
+    // 有搜索关键词时需要全量替换（过滤导致 item 位置发生变化）
     const kw = searchKeyword.toLowerCase();
     this.setData({
       filteredProducts: products.filter(p =>
