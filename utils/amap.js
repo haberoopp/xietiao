@@ -3,9 +3,14 @@
  * 使用高德 Web API，不需要额外下载 SDK 文件
  *
  * 使用前：前往 https://console.amap.com/ 申请 Web服务 Key
- * 将 Key 填入下方 AMAP_KEY
+ * 将 Key 填入 utils/config.js 中
  */
-const config = require('./config');
+let config = {};
+try {
+  config = require('./config');
+} catch (e) {
+  console.warn('config.js 未找到。请复制 config.example.js 为 config.js 并填入你的 AMAP_KEY。');
+}
 const AMAP_KEY = config.AMAP_KEY || '';
 
 /**
