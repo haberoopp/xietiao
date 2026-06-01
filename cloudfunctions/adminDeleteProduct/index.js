@@ -1,7 +1,8 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
-const { verifyAdmin } = require('../lib/auth');
+const { createVerifyAdmin } = require('./auth');
+const verifyAdmin = createVerifyAdmin(db);
 
 exports.main = async (event) => {
   const auth = await verifyAdmin();

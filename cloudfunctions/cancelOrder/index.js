@@ -2,6 +2,10 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 
+// 安全加载 notify 模块
+var notify;
+try { notify = require('./notify'); } catch(e) { notify = null; }
+
 exports.main = async (event) => {
   const { orderId } = event;
   const wxContext = cloud.getWXContext();
@@ -28,6 +32,11 @@ exports.main = async (event) => {
     await db.collection('orders').doc(orderId).update({
       data: { status: 'cancelled', updatedAt: db.serverDate() }
     });
+
+    // 通知管理员（fire-and-forget）
+    if (notify) {
+      notify.sendToAdmins(db, 'ORDER_CANCELLED', { ...order.data, status: 'cancelled' }, {}).catch(function() {});
+    }
 
     return { code: 0 };
   } catch (err) {

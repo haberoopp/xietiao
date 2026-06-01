@@ -24,14 +24,15 @@ exports.main = async (event) => {
       .get();
 
     // 计算每个产品近7天销量
-    const sevenDaysAgo = Date.now() - 7 * 86400000;
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const productIds = list.data.map(p => p._id);
 
     if (productIds.length > 0) {
       const ordersRes = await db.collection('orders')
         .where({
           status: _.neq('cancelled'),
-          createdAt: _.gte(new Date(sevenDaysAgo).toISOString())
+          createdAt: _.gte(sevenDaysAgo)
         })
         .field({ items: true })
         .get();
@@ -39,8 +40,8 @@ exports.main = async (event) => {
       const salesMap = {};
       ordersRes.data.forEach(order => {
         (order.items || []).forEach(item => {
-          if (productIds.includes(item.productId)) {
-            salesMap[item.productId] = (salesMap[item.productId] || 0) + item.price * item.quantity;
+          if (item.productId && productIds.includes(item.productId)) {
+            salesMap[item.productId] = (salesMap[item.productId] || 0) + (item.price || 0) * (item.quantity || 0);
           }
         });
       });

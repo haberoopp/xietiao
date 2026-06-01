@@ -1,7 +1,8 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
-const { verifyAdmin } = require('../lib/auth');
+const { createVerifyAdmin } = require('./auth');
+const verifyAdmin = createVerifyAdmin(db);
 
 exports.main = async (event) => {
   const auth = await verifyAdmin();
@@ -19,6 +20,7 @@ exports.main = async (event) => {
       category,
       price: Math.round(parseFloat(price) * 100),
       unit,
+      status: event.status || 'sufficient',
       stock: parseInt(stock) || 0,
       description: description || '',
       image: image || '',

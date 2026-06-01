@@ -1,7 +1,12 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
-const { verifyAdmin } = require('../lib/auth');
+const { createVerifyAdmin } = require('./auth');
+const verifyAdmin = createVerifyAdmin(db);
+
+// 安全加载 notify 模块
+var notify;
+try { notify = require('./notify'); } catch(e) { notify = null; }
 
 exports.main = async (event) => {
   const auth = await verifyAdmin();
@@ -58,6 +63,21 @@ exports.main = async (event) => {
     await db.collection('orders').doc(req.data.orderId).update({
       data: orderUpdate
     });
+
+    // 通知（fire-and-forget）
+    if (notify) {
+      const updatedOrder = await db.collection('orders').doc(req.data.orderId).get();
+      notify.sendToCustomer(db, updatedOrder.data, 'RETURN_RESULT', {
+        result: newStatus,
+        returnType: req.data.type,
+        requestId: requestId
+      }).catch(function() {});
+      notify.sendToAdmins(db, 'RETURN', updatedOrder.data, {
+        result: newStatus,
+        returnType: req.data.type,
+        requestId: requestId
+      }).catch(function() {});
+    }
 
     return { code: 0 };
   } catch (err) {
