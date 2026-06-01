@@ -196,6 +196,7 @@
       <view wx:elif="{{!hasMore}}" class="load-more-tip">— 没有更多了 —</view>
     </scroll-view>
   </view>
+  </view>
 
   <!-- ===== 改价弹窗 ===== -->
   <view wx:if="{{showPriceModal}}" class="modal-mask">
