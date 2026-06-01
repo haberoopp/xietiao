@@ -56,11 +56,7 @@ Page({
     this.loadOrders().then(() => wx.stopPullDownRefresh());
   },
 
-  onPageScroll(e) {
-    this._scrollTop = e.scrollTop;
-  },
-
-  onReachBottom() {
+  onLoadMore() {
     if (this.data.isReturnTab || !this.data.hasMore || this.data.loadingMore) return;
     this.setData({ page: this.data.page + 1, loadingMore: true });
     this.loadOrders();
@@ -75,12 +71,6 @@ Page({
   async loadOrders() {
     this.setData({ loading: true });
     const app = getApp();
-    const restoreScroll = () => {
-      if (this._scrollTop > 0) {
-        wx.pageScrollTo({ scrollTop: this._scrollTop, duration: 0 });
-        this._scrollTop = 0;
-      }
-    };
 
     if (app.globalData.demoMode) {
       const returnReqs = demoStore.getAll(demoStore.KEYS.returnRequests);
@@ -184,7 +174,6 @@ Page({
               updates.hasMore = newOrders.length >= pageSize;
               updates.loadingMore = false;
               this.setData(updates);
-              restoreScroll();
             }
           }
         }

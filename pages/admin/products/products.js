@@ -39,16 +39,12 @@ Page({
     this.loadProducts();
   },
 
-  onPageScroll(e) {
-    this._scrollTop = e.scrollTop;
-  },
-
   onPullDownRefresh() {
     this.setData({ page: 1, hasMore: true });
     this.loadProducts().then(() => wx.stopPullDownRefresh());
   },
 
-  onReachBottom() {
+  onLoadMore() {
     if (!this.data.hasMore || this.data.loadingMore) return;
     this.setData({ page: this.data.page + 1, loadingMore: true });
     this.loadProducts();
@@ -56,12 +52,6 @@ Page({
 
   async loadProducts() {
     const app = getApp();
-    const restoreScroll = () => {
-      if (this._scrollTop > 0) {
-        wx.pageScrollTo({ scrollTop: this._scrollTop, duration: 0 });
-        this._scrollTop = 0;
-      }
-    };
 
     if (app.globalData.demoMode) {
       const { page, pageSize } = this.data;
@@ -87,7 +77,6 @@ Page({
         this.setData(updates);
       }
       this.filterProducts();
-      restoreScroll();
       return;
     }
 
@@ -115,8 +104,7 @@ Page({
           updates.hasMore = newList.length >= pageSize;
           updates.loadingMore = false;
           this.setData(updates);
-          restoreScroll();
-        }
+            }
         this.filterProducts();
       }
     } catch (err) {

@@ -11,6 +11,7 @@
       <view class="go-products-btn" bindtap="onGoCustomers">客户管理</view>
       <view class="go-products-btn" bindtap="onGoProducts">管理产品</view>
     </view>
+    <view class="subscribe-btn" bindtap="onSubscribeAdmin">🔔 订阅通知</view>
   </view>
 
   <!-- 状态筛选 -->
@@ -190,6 +191,9 @@
       </view>
       <view class="load-more" wx:if="{{loadingMore}}">
         <text>加载中...</text>
+      </view>
+      <view class="load-more load-more-btn" wx:elif="{{hasMore && !isReturnTab}}" bindtap="onLoadMore">
+        <text>— 点击加载更多 —</text>
       </view>
       <view class="load-more" wx:elif="{{!hasMore && orders.length > 0}}">
         <text>— 已加载全部 —</text>

@@ -181,3 +181,9 @@ page {
   color: var(--color-text-secondary);
   font-size: var(--text-sm);
 }
+
+.load-more-btn {
+  color: #d32f2f;
+  font-weight: 500;
+  padding: 24rpx 0;
+}

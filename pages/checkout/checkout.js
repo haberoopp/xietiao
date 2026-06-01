@@ -342,6 +342,18 @@ Page({
     }
 
     try {
+      // 先查询是否已存在相同地址，避免重复
+      const listRes = await wx.cloud.callFunction({
+        name: 'addressCRUD',
+        data: { action: 'list' }
+      });
+      if (listRes.result && listRes.result.code === 0) {
+        const exists = (listRes.result.data || []).find(a =>
+          a.name === newAddr.name && a.phone === newAddr.phone && a.address === newAddr.address
+        );
+        if (exists) return;
+      }
+
       await wx.cloud.callFunction({
         name: 'addressCRUD',
         data: { action: 'add', ...newAddr, location: this.data.pickedLocation || undefined }
@@ -527,10 +539,33 @@ Page({
 
     wx.showModal({
       title: '下单成功',
-      content: '您的订单已提交，我们会尽快处理！',
-      showCancel: false,
-      success: () => {
-        wx.switchTab({ url: '/pages/orders/orders' });
+      content: '您的订单已提交！\n\n开启订单通知，第一时间掌握订单状态变更。',
+      confirmText: '开启通知',
+      cancelText: '暂不',
+      success: (res) => {
+        if (res.confirm) {
+          this.requestCustomerSubscription(() => {
+            wx.switchTab({ url: '/pages/orders/orders' });
+          });
+        } else {
+          wx.switchTab({ url: '/pages/orders/orders' });
+        }
+      }
+    });
+  },
+
+  requestCustomerSubscription(callback) {
+    const constants = require('../../utils/constants');
+    wx.requestSubscribeMessage({
+      tmplIds: constants.NOTIFY_TEMPLATES.CUSTOMER,
+      success: function(res) {
+        console.log('Customer subscription result:', res);
+      },
+      fail: function(err) {
+        console.warn('requestSubscribeMessage failed:', err);
+      },
+      complete: function() {
+        if (callback) callback();
       }
     });
   }
