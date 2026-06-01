@@ -199,13 +199,13 @@
             <view wx:if="{{item.deliveryMethod === 'delivery' && (!item.returnRequest || item.returnRequest.type !== 'return')}}" class="pickedup-btn {{item.pickedUp ? 'pu-done' : ''}}" data-order-id="{{item._id}}" catchtap="onTogglePickedUp">
               {{item.pickedUp ? '✓ 已拿货' : '未拿货'}}
             </view>
-            <view wx:if="{{isManager}}" class="payment-toggle-btn {{item.payment_status === 'paid' ? 'pt-paid' : 'pt-unpaid'}}" data-order-id="{{item._id}}" catchtap="onTogglePayment">
-              {{item.payment_status === 'paid' ? '✓ 已付款' : '标记已付'}}
-            </view>
+            <view wx:if="{{!isWarehouse || (isWarehouse && item.deliveryMethod === 'logistics')}}" class="status-btn" data-order="{{item}}" bindtap="onStatusChange">更改状态</view>
           </view>
         </view>
         <view class="bill-row">
-          <view wx:if="{{!isWarehouse || (isWarehouse && item.deliveryMethod === 'logistics')}}" class="status-btn" data-order="{{item}}" bindtap="onStatusChange">更改状态</view>
+          <view wx:if="{{isManager}}" class="payment-toggle-btn {{item.payment_status === 'paid' ? 'pt-paid' : 'pt-unpaid'}}" data-order-id="{{item._id}}" catchtap="onTogglePayment">
+            {{item.payment_status === 'paid' ? '✓ 已付款' : '标记已付'}}
+          </view>
           <view class="share-bill-btn" data-order="{{item}}" catchtap="onShareBill">📋 对账单</view>
         </view>
       </view>
