@@ -1,4 +1,3 @@
-const { VirtualScroll } = require('../../../utils/virtual-scroll');
 const util = require('../../../utils/util');
 const amap = require('../../../utils/amap');
 const exportUtil = require('../../../utils/export');
@@ -18,13 +17,6 @@ Page({
     returnList: [],
     loading: false,
     isReturnTab: false,
-    visibleItems: [],
-    topPad: 0,
-    bottomPad: 0,
-    page: 1,
-    pageSize: 20,
-    hasMore: true,
-    loadingMore: false,
     // 角色
     role: '',
     isManager: false,
@@ -51,33 +43,16 @@ Page({
       isDelivery: role === 'delivery',
       isWarehouse: role === 'warehouse'
     });
-    if (!this._vs) {
-      this._vs = new VirtualScroll({ itemHeight: 350, buffer: 4 });
-      this._vs.init();
-    }
-    this.loadOrders();
-  },
-
-  onScroll(e) {
-    if (!this.data.orders || this.data.orders.length === 0) return;
-    const r = this._vs.calc(e.detail.scrollTop, this.data.orders);
-    this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad });
-  },
-
-  onLoadMore() {
-    if (this.data.isReturnTab || !this.data.hasMore || this.data.loadingMore) return;
-    this.setData({ page: this.data.page + 1, loadingMore: true });
     this.loadOrders();
   },
 
   onPullDownRefresh() {
-    this.setData({ page: 1, hasMore: true });
     this.loadOrders().then(() => wx.stopPullDownRefresh());
   },
 
   onTabTap(e) {
     const tab = e.currentTarget.dataset.status;
-    this.setData({ activeStatus: tab, isReturnTab: tab === 'returns', page: 1, hasMore: true });
+    this.setData({ activeStatus: tab, isReturnTab: tab === 'returns' });
     this.loadOrders();
   },
 
@@ -121,10 +96,6 @@ Page({
           );
         }
         this.setData({ orders, returnList: [], loading: false });
-        if (orders.length > 0) {
-          const r = this._vs.calc(0, orders);
-          this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad });
-        }
       }
       return;
     }
@@ -140,11 +111,11 @@ Page({
           this.setData({ returnList, orders: [] });
         }
       } else {
-        const params = { page: this.data.page, pageSize: this.data.pageSize };
+        const params = { page: 1, pageSize: 500 };
         if (this.data.activeStatus) params.status = this.data.activeStatus;
         const res = await wx.cloud.callFunction({ name: 'adminGetOrders', data: params });
         if (res.result.code === 0) {
-          const newOrders = res.result.data.list.map(order => ({
+          let orders = res.result.data.list.map(order => ({
             ...order,
             items: (order.items || []).map(i => ({ ...i, priceText: ((i.price || 0) / 100).toFixed(2) })),
             statusText: util.getOrderStatusText(order.status),
@@ -155,13 +126,6 @@ Page({
             returnStatusText: order.returnRequest ? util.getReturnStatusText(order.returnRequest.status) : '',
             paymentStatusText: (order.payment_status === 'paid' ? '已付款' : order.payment_status === 'unpaid' ? '未付款' : '未付款')
           }));
-          const total = res.result.data.total || 0;
-          let orders;
-          if (this.data.page === 1) {
-            orders = newOrders;
-          } else {
-            orders = this.data.orders.concat(newOrders);
-          }
           if (this.data.searchKeyword) {
             const kw = this.data.searchKeyword.toLowerCase();
             orders = orders.filter(o =>
@@ -170,24 +134,22 @@ Page({
               (o.address || '').toLowerCase().includes(kw)
             );
           }
-          this.setData({ orders, returnList: [], hasMore: orders.length < total });
-          const r = this._vs.calc(0, orders);
-          this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad });
+          this.setData({ orders, returnList: [] });
         }
       }
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' });
     }
-    this.setData({ loading: false, loadingMore: false });
+    this.setData({ loading: false });
   },
 
   onSearchInput(e) {
-    this.setData({ searchKeyword: e.detail.value, page: 1, hasMore: true });
+    this.setData({ searchKeyword: e.detail.value });
     this.loadOrders();
   },
 
   onClearSearch() {
-    this.setData({ searchKeyword: '', page: 1, hasMore: true });
+    this.setData({ searchKeyword: '' });
     this.loadOrders();
   },
 
