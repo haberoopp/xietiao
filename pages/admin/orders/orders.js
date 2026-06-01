@@ -558,9 +558,14 @@ Page({
     const app = getApp();
 
     if (app.globalData.demoMode) {
-      const p = app.globalData.demoProducts.find(p => p._id === productId);
+      const products = demoStore.getAll(demoStore.KEYS.products);
+      const p = products.find(p => p._id === productId);
       if (p && p.status === 'sufficient') {
-        p.status = 'low';
+        demoStore.update(demoStore.KEYS.products, (prods) => {
+          const prod = prods.find(pr => pr._id === productId);
+          if (prod) prod.status = 'low';
+          return prods;
+        });
         wx.showToast({ title: '已标记"' + productName + '"为紧张', icon: 'success' });
         this.loadOrders();
       } else if (p && p.status === 'low') {
