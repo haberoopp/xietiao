@@ -34,6 +34,6 @@
 }
 
 .tab-item.active .tab-text {
-  color: #C0392B;
+  color: #E8594B;
   font-weight: 500;
 }

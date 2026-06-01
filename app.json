@@ -13,14 +13,14 @@
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#d32f2f",
+    "navigationBarBackgroundColor": "#FFFFFF",
     "navigationBarTitleText": "温州斜条批发",
-    "navigationBarTextStyle": "white"
+    "navigationBarTextStyle": "black"
   },
   "tabBar": {
     "custom": true,
     "color": "#999999",
-    "selectedColor": "#d32f2f",
+    "selectedColor": "#E8594B",
     "backgroundColor": "#ffffff",
     "borderStyle": "black",
     "list": [
