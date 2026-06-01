@@ -98,33 +98,18 @@ Page({
   },
 
   filterProducts() {
-    const { keyword, activeCategory, allProducts, products } = this.data;
+    const { keyword, activeCategory, allProducts } = this.data;
+    let products = allProducts;
 
-    // 无筛选条件：只追加 allProducts 比 products 多出的新 item（避免全量替换导致滚动跳顶）
-    if ((!keyword || !keyword.trim()) && activeCategory === '全部') {
-      if (products && allProducts && products.length < allProducts.length) {
-        const pStart = products.length;
-        const updates = {};
-        for (let i = pStart; i < allProducts.length; i++) {
-          updates[`products[${i}]`] = { ...allProducts[i], priceText: (allProducts[i].price / 100).toFixed(2) };
-        }
-        if (Object.keys(updates).length > 0) {
-          this.setData(updates);
-        }
-      }
-      return;
-    }
-
-    // 有筛选条件时需要全量替换（过滤导致 item 位置发生变化）
-    let filtered = allProducts;
     if (keyword && keyword.trim()) {
       const kw = keyword.trim().toLowerCase();
-      filtered = filtered.filter(p => p.name.toLowerCase().includes(kw));
+      products = products.filter(p => p.name.toLowerCase().includes(kw));
     }
     if (activeCategory !== '全部') {
-      filtered = filtered.filter(p => p.category === activeCategory);
+      products = products.filter(p => p.category === activeCategory);
     }
-    this.setData({ products: filtered.map(p => ({ ...p, priceText: (p.price / 100).toFixed(2) })) });
+
+    this.setData({ products: products.map(p => ({ ...p, priceText: (p.price / 100).toFixed(2) })) });
   },
 
   onCategoryTap(e) {
