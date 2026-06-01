@@ -39,6 +39,10 @@ Page({
     this.loadProducts();
   },
 
+  onPageScroll(e) {
+    this._scrollTop = e.scrollTop;
+  },
+
   onPullDownRefresh() {
     this.setData({ page: 1, hasMore: true });
     this.loadProducts().then(() => wx.stopPullDownRefresh());
@@ -47,10 +51,6 @@ Page({
   onReachBottom() {
     if (!this.data.hasMore || this.data.loadingMore) return;
     this.setData({ page: this.data.page + 1, loadingMore: true });
-    // 保存当前滚动位置
-    wx.createSelectorQuery().selectViewport().scrollOffset((res) => {
-      this._scrollTop = res.scrollTop;
-    }).exec();
     this.loadProducts();
   },
 

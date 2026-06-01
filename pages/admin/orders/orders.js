@@ -56,12 +56,13 @@ Page({
     this.loadOrders().then(() => wx.stopPullDownRefresh());
   },
 
+  onPageScroll(e) {
+    this._scrollTop = e.scrollTop;
+  },
+
   onReachBottom() {
     if (this.data.isReturnTab || !this.data.hasMore || this.data.loadingMore) return;
     this.setData({ page: this.data.page + 1, loadingMore: true });
-    wx.createSelectorQuery().selectViewport().scrollOffset((res) => {
-      this._scrollTop = res.scrollTop;
-    }).exec();
     this.loadOrders();
   },
 
