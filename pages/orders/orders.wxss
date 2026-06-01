@@ -1,6 +1,6 @@
 .go-shopping {
   margin-top: 16rpx;
-  color: #C0392B;
+  color: var(--color-primary);
   font-size: 28rpx;
 }
 
@@ -116,7 +116,7 @@
 
 .order-delivery {
   font-size: 24rpx;
-  color: #C0392B;
+  color: var(--color-primary);
   margin-bottom: 12rpx;
 }
 
@@ -158,8 +158,8 @@
 
 .copy-btn {
   font-size: 22rpx;
-  color: #C0392B;
-  border: 1rpx solid #C0392B;
+  color: var(--color-primary);
+  border: 1rpx solid var(--color-primary);
   padding: 4rpx 12rpx;
   border-radius: 4rpx;
 }
@@ -170,7 +170,7 @@
 
 .cancel-btn {
   font-size: 22rpx;
-  color: #7F8C8D;
+  color: var(--color-text-secondary);
   border: 1rpx solid #CCC;
   padding: 4rpx 12rpx;
   border-radius: 4rpx;
@@ -195,19 +195,19 @@
 .rebuy-btn {
   font-size: 22rpx;
   color: #fff;
-  background: #C0392B;
+  background: var(--color-primary);
   padding: 4rpx 12rpx;
   border-radius: 4rpx;
 }
 
 .rebuy-btn:active {
-  background: #A93226;
+  background: var(--color-primary-dark);
 }
 
 .edit-order-btn {
   font-size: 22rpx;
-  color: #C0392B;
-  border: 1rpx solid #C0392B;
+  color: var(--color-primary);
+  border: 1rpx solid var(--color-primary);
   padding: 4rpx 12rpx;
   border-radius: 4rpx;
 }
@@ -230,7 +230,7 @@
 }
 
 .bottom-link:active {
-  color: #C0392B;
+  color: var(--color-primary);
 }
 
 .admin-link {
@@ -295,7 +295,7 @@
 }
 
 .type-option.active {
-  border-color: #C0392B;
+  border-color: var(--color-primary);
   background: #fff5f5;
 }
 
@@ -310,7 +310,7 @@
 }
 
 .type-option.active .type-label {
-  color: #C0392B;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -339,8 +339,8 @@
 }
 
 .ri-check.checked {
-  background: #C0392B;
-  border-color: #C0392B;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .ri-info {
@@ -397,8 +397,8 @@
 .ex-shop-btn {
   width: 100%;
   margin-top: 8rpx;
-  border: 2rpx dashed #C0392B;
-  color: #C0392B;
+  border: 2rpx dashed var(--color-primary);
+  color: var(--color-primary);
   font-size: 28rpx;
   padding: 16rpx 0;
   text-align: center;
@@ -458,7 +458,7 @@
 .ex-item-subtotal {
   font-size: 26rpx;
   font-weight: 500;
-  color: #C0392B;
+  color: var(--color-primary);
   flex-shrink: 0;
   margin-left: 12rpx;
 }
@@ -482,7 +482,7 @@
 }
 
 .ex-amount.plus {
-  color: #C0392B;
+  color: var(--color-primary);
 }
 
 .ex-diff {

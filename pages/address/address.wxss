@@ -4,7 +4,7 @@
 }
 
 .default-card {
-  border: 2rpx solid #C0392B;
+  border: 2rpx solid var(--color-primary);
 }
 
 .addr-top {
@@ -27,13 +27,13 @@
 
 .addr-phone {
   font-size: 28rpx;
-  color: #7F8C8D;
+  color: var(--color-text-secondary);
 }
 
 .default-tag {
   font-size: 22rpx;
-  color: #C0392B;
-  background: #FDF2F2;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
   padding: 2rpx 10rpx;
   border-radius: 6rpx;
 }
@@ -137,13 +137,13 @@
 
 .poi-dist {
   font-size: 22rpx;
-  color: #7F8C8D;
+  color: var(--color-text-secondary);
   margin-top: 2rpx;
 }
 
 .searching-hint {
   font-size: 22rpx;
-  color: #7F8C8D;
+  color: var(--color-text-secondary);
   padding: 10rpx 0;
 }
 
@@ -162,7 +162,7 @@
   align-items: center;
   gap: 10rpx;
   font-size: 26rpx;
-  color: #7F8C8D;
+  color: var(--color-text-secondary);
 }
 
 .addr-search-icon {
@@ -194,7 +194,7 @@
 
 .addr-manual-toggle {
   font-size: 24rpx;
-  color: #C0392B;
+  color: var(--color-primary);
   padding: 12rpx 0;
   text-align: right;
 }
@@ -235,17 +235,17 @@
 /* Address card */
 .addr-item { padding: 16rpx; background: #fff; border-radius: 8rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06); margin-bottom: 16rpx; }
 .addr-name { font-size: 32rpx; font-weight: 500; }
-.addr-phone { font-size: 28rpx; color: #7F8C8D; }
+.addr-phone { font-size: 28rpx; color: var(--color-text-secondary); }
 .addr-detail { font-size: 28rpx; color: #1A1A1A; margin-top: 4rpx; }
-.addr-default-tag { background: #FDF2F2; color: #C0392B; font-size: 22rpx; padding: 2rpx 10rpx; border-radius: 6rpx; }
+.addr-default-tag { background: var(--color-primary-light); color: var(--color-primary); font-size: 22rpx; padding: 2rpx 10rpx; border-radius: 6rpx; }
 
 /* Add address button */
 .add-addr-btn {
   width: 100%; padding: 16rpx 0;
-  border: 2rpx dashed #C0392B; border-radius: 8rpx;
-  text-align: center; font-size: 28rpx; color: #C0392B;
+  border: 2rpx dashed var(--color-primary); border-radius: 8rpx;
+  text-align: center; font-size: 28rpx; color: var(--color-primary);
   background: #fff;
 }
 
 /* Delete button */
-.del-btn { color: #C0392B; font-size: 24rpx; padding: 8rpx; }
+.del-btn { color: var(--color-primary); font-size: 24rpx; padding: 8rpx; }
