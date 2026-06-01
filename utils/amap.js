@@ -5,7 +5,8 @@
  * 使用前：前往 https://console.amap.com/ 申请 Web服务 Key
  * 将 Key 填入下方 AMAP_KEY
  */
-const AMAP_KEY = 'your-amap-key-here'; // TODO: 替换为你的高德 Key
+const config = require('./config');
+const AMAP_KEY = config.AMAP_KEY || '';
 
 /**
  * POI 搜索建议（输入提示）
