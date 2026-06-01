@@ -1,10 +1,18 @@
 const constants = require('../../../utils/constants');
 const demoStore = require('../../../utils/demoStore');
+const { VirtualScroll } = require('../../../utils/virtual-scroll');
 
 Page({
   data: {
     products: [],
     filteredProducts: [],
+    visibleItems: [],
+    topPad: 0,
+    bottomPad: 0,
+    page: 1,
+    pageSize: 20,
+    hasMore: true,
+    loadingMore: false,
     searchKeyword: '',
     categories: constants.PRODUCT_CATEGORIES,
     showForm: false,
@@ -32,36 +40,73 @@ Page({
       wx.redirectTo({ url: '/pages/admin/orders/orders' });
       return;
     }
+    if (!this._vs) {
+      this._vs = new VirtualScroll({ itemHeight: 160, buffer: 4 });
+      this._vs.init();
+    }
     this.loadProducts();
   },
 
   onPullDownRefresh() {
+    this.setData({ page: 1, hasMore: true });
     this.loadProducts().then(() => wx.stopPullDownRefresh());
+  },
+
+  onScroll(e) {
+    const items = this.data.filteredProducts || this.data.products;
+    if (!items || items.length === 0) return;
+    const r = this._vs.calc(e.detail.scrollTop, items);
+    this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad });
+  },
+
+  onLoadMore() {
+    if (!this.data.hasMore || this.data.loadingMore) return;
+    this.setData({ page: this.data.page + 1, loadingMore: true });
+    this.loadProducts();
   },
 
   async loadProducts() {
     const app = getApp();
 
     if (app.globalData.demoMode) {
-      const products = demoStore.getAll(demoStore.KEYS.products).map(p => ({
+      const { page, pageSize } = this.data;
+      const source = demoStore.getAll(demoStore.KEYS.products);
+      const start = (page - 1) * pageSize;
+      const slice = source.slice(start, start + pageSize).map(p => ({
         ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient'
       }));
-      this.setData({ products });
+      if (page === 1) {
+        this.setData({ products: slice, hasMore: start + pageSize < source.length });
+      } else {
+        this.setData({ products: this.data.products.concat(slice), hasMore: start + pageSize < source.length });
+      }
       this.filterProducts();
+      const displayItems = this.data.searchKeyword ? this.data.filteredProducts : this.data.products;
+      const r = this._vs.calc(0, displayItems);
+      this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad, loadingMore: false });
       return;
     }
 
     try {
-      const res = await wx.cloud.callFunction({ name: 'getProducts', data: { page: 1, pageSize: 500 } });
+      const { page, pageSize } = this.data;
+      const res = await wx.cloud.callFunction({ name: 'getProducts', data: { page, pageSize } });
       if (res.result.code === 0) {
-        const products = res.result.data.list.map(p => ({
+        const slice = res.result.data.list.map(p => ({
           ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient'
         }));
-        this.setData({ products });
+        if (page === 1) {
+          this.setData({ products: slice, hasMore: slice.length >= pageSize });
+        } else {
+          this.setData({ products: this.data.products.concat(slice), hasMore: slice.length >= pageSize });
+        }
         this.filterProducts();
+        const displayItems = this.data.searchKeyword ? this.data.filteredProducts : this.data.products;
+        const r = this._vs.calc(0, displayItems);
+        this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad, loadingMore: false });
       }
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' });
+      this.setData({ loadingMore: false });
     }
   },
 
@@ -510,15 +555,25 @@ Page({
           this.setData(updates);
         }
       }
+      // Update visible items for virtual scroll
+      const displayItems = this.data.products;
+      if (this._vs) {
+        const r = this._vs.calc(0, displayItems);
+        this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad });
+      }
       return;
     }
     // 有搜索关键词时需要全量替换（过滤导致 item 位置发生变化）
     const kw = searchKeyword.toLowerCase();
-    this.setData({
-      filteredProducts: products.filter(p =>
-        (p.name || '').toLowerCase().includes(kw) ||
-        (p.category || '').toLowerCase().includes(kw)
-      )
-    });
+    const result = products.filter(p =>
+      (p.name || '').toLowerCase().includes(kw) ||
+      (p.category || '').toLowerCase().includes(kw)
+    );
+    this.setData({ filteredProducts: result });
+    // Update visible items for virtual scroll
+    if (this._vs) {
+      const r = this._vs.calc(0, result);
+      this.setData({ visibleItems: r.visibleItems, topPad: r.topPad, bottomPad: r.bottomPad });
+    }
   }
 });
