@@ -17,11 +17,7 @@ Page({
       status: 'sufficient',
       description: '',
       image: ''
-    },
-    page: 1,
-    pageSize: 20,
-    hasMore: true,
-    loadingMore: false
+    }
   },
 
   onShow() {
@@ -40,77 +36,33 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.setData({ page: 1, hasMore: true });
     this.loadProducts().then(() => wx.stopPullDownRefresh());
-  },
-
-  onLoadMore() {
-    if (!this.data.hasMore || this.data.loadingMore) return;
-    this.setData({ page: this.data.page + 1, loadingMore: true });
-    this.loadProducts();
   },
 
   async loadProducts() {
     const app = getApp();
 
     if (app.globalData.demoMode) {
-      const { page, pageSize } = this.data;
-      const source = demoStore.getAll(demoStore.KEYS.products);
-      const start = (page - 1) * pageSize;
-      const slice = source.slice(start, start + pageSize).map(p => ({
-        ...p,
-        priceText: (p.price / 100).toFixed(2),
-        status: p.status || 'sufficient'
+      const products = demoStore.getAll(demoStore.KEYS.products).map(p => ({
+        ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient'
       }));
-      if (page === 1) {
-        this.setData({ products: slice, hasMore: start + pageSize < source.length, loadingMore: false });
-      } else {
-        const prodStart = this.data.products.length;
-        const fprodStart = this.data.filteredProducts ? this.data.filteredProducts.length : 0;
-        const updates = {};
-        slice.forEach((item, i) => {
-          updates[`products[${prodStart + i}]`] = item;
-          updates[`filteredProducts[${fprodStart + i}]`] = item;
-        });
-        updates.hasMore = start + pageSize < source.length;
-        updates.loadingMore = false;
-        this.setData(updates);
-      }
+      this.setData({ products });
       this.filterProducts();
       return;
     }
 
     try {
-      const { page, pageSize } = this.data;
-      const params = { page, pageSize };
-      const res = await wx.cloud.callFunction({ name: 'getProducts', data: params });
+      const res = await wx.cloud.callFunction({ name: 'getProducts', data: { page: 1, pageSize: 500 } });
       if (res.result.code === 0) {
-        const newList = res.result.data.list.map(p => ({
-          ...p,
-          priceText: (p.price / 100).toFixed(2),
-          status: p.status || 'sufficient'
+        const products = res.result.data.list.map(p => ({
+          ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient'
         }));
-        const total = res.result.data.total || 0;
-        if (page === 1) {
-          this.setData({ products: newList, hasMore: newList.length < total });
-        } else {
-          const prodStart = this.data.products.length;
-          const fprodStart = this.data.filteredProducts ? this.data.filteredProducts.length : 0;
-          const updates = {};
-          newList.forEach((item, i) => {
-            updates[`products[${prodStart + i}]`] = item;
-            updates[`filteredProducts[${fprodStart + i}]`] = item;
-          });
-          updates.hasMore = newList.length >= pageSize;
-          updates.loadingMore = false;
-          this.setData(updates);
-            }
+        this.setData({ products });
         this.filterProducts();
       }
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' });
     }
-    this.setData({ loadingMore: false });
   },
 
   onAdd() {
