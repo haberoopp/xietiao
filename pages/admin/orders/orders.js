@@ -161,9 +161,9 @@ Page({
                 (o.phone || '').toLowerCase().includes(kw) ||
                 (o.address || '').toLowerCase().includes(kw)
               );
-              this.setData({ orders: filtered, returnList: [], hasMore: combined.length < total });
+              this.setData({ orders: filtered, returnList: [], hasMore: newOrders.length >= pageSize });
             } else {
-              this.setData({ orders: combined, returnList: [], hasMore: combined.length < total });
+              this.setData({ orders: combined, returnList: [], hasMore: newOrders.length >= pageSize });
             }
           }
         }
@@ -175,12 +175,12 @@ Page({
   },
 
   onSearchInput(e) {
-    this.setData({ searchKeyword: e.detail.value });
+    this.setData({ searchKeyword: e.detail.value, page: 1, hasMore: true });
     this.loadOrders();
   },
 
   onClearSearch() {
-    this.setData({ searchKeyword: '' });
+    this.setData({ searchKeyword: '', page: 1, hasMore: true });
     this.loadOrders();
   },
 

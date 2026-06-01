@@ -74,17 +74,39 @@ function shareCSV(content, fileName) {
     data: content,
     encoding: 'utf8',
     success: () => {
+      // 先尝试分享文件（仅真机支持）
       wx.shareFileMessage({
         filePath,
         fileName,
+        success: () => {
+          wx.showToast({ title: '已分享', icon: 'success' });
+        },
         fail: (err) => {
-          if (err.errMsg.includes('cancel')) return;
-          wx.showToast({ title: '分享失败', icon: 'none' });
+          if (err.errMsg && err.errMsg.includes('cancel')) return;
+          // 分享不可用时（模拟器/不支持的文件分享），降级为复制内容
+          copyCSVToClipboard(content);
         }
       });
     },
     fail: () => {
-      wx.showToast({ title: '生成文件失败', icon: 'none' });
+      // 文件写入失败也尝试直接复制
+      copyCSVToClipboard(content);
+    }
+  });
+}
+
+function copyCSVToClipboard(content) {
+  wx.setClipboardData({
+    data: content,
+    success: () => {
+      wx.showModal({
+        title: '已复制到剪贴板',
+        content: 'CSV 数据已复制，可粘贴到 Excel 或记事本中保存。',
+        showCancel: false
+      });
+    },
+    fail: () => {
+      wx.showToast({ title: '分享失败，请重试', icon: 'none' });
     }
   });
 }

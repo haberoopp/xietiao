@@ -166,7 +166,7 @@ Page({
           this.setData({
             products: [...this.data.products, ...newList],
             allProducts: [...this.data.allProducts, ...newList],
-            hasMore: (this.data.products.length + newList.length) < total
+            hasMore: newList.length >= pageSize
           });
         }
       }

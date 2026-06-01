@@ -88,7 +88,7 @@ Page({
         } else {
           this.setData({
             products: [...this.data.products, ...newList],
-            hasMore: (this.data.products.length + newList.length) < total
+            hasMore: newList.length >= pageSize
           });
         }
         this.filterProducts();
