@@ -1,4 +1,5 @@
 const constants = require('../../utils/constants');
+const demoStore = require('../../utils/demoStore');
 
 Page({
   data: {
@@ -16,7 +17,11 @@ Page({
     qtyProduct: {},
     qtyValue: 1,
     qtyInputFocus: false,
-    exchangeMode: false
+    exchangeMode: false,
+    page: 1,
+    pageSize: 20,
+    hasMore: true,
+    loadingMore: false
   },
 
   onLoad() {
@@ -41,8 +46,14 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.setData({ keyword: '' });
+    this.setData({ keyword: '', page: 1, hasMore: true });
     this.loadProducts().then(() => wx.stopPullDownRefresh());
+  },
+
+  onReachBottom() {
+    if (!this.data.hasMore || this.data.loadingMore) return;
+    this.setData({ page: this.data.page + 1, loadingMore: true });
+    this.loadProducts();
   },
 
   loadCart() {
@@ -122,27 +133,47 @@ Page({
     const app = getApp();
 
     if (app.globalData.demoMode) {
-      const products = (app.globalData.demoProducts || []).map(p => ({
+      const { page, pageSize } = this.data;
+      const source = demoStore.getAll(demoStore.KEYS.products);
+      const start = (page - 1) * pageSize;
+      const slice = source.slice(start, start + pageSize).map(p => ({
         ...p, priceText: (p.price / 100).toFixed(2)
       }));
-      this.setData({ products, allProducts: [...products], loading: false });
+      if (page === 1) {
+        this.setData({ products: slice, allProducts: slice, loading: false, loadingMore: false, hasMore: start + pageSize < source.length });
+      } else {
+        const products = [...this.data.products, ...slice];
+        const allProducts = [...this.data.allProducts, ...slice];
+        this.setData({ products, allProducts, loading: false, loadingMore: false, hasMore: start + pageSize < source.length });
+      }
       this.filterProducts();
       return;
     }
 
     try {
-      const params = { page: 1, pageSize: 200 };
+      const { page, pageSize } = this.data;
+      const params = { page, pageSize };
       const res = await wx.cloud.callFunction({ name: 'getProducts', data: params });
       if (res.result.code === 0) {
-        const products = res.result.data.list.map(p => ({
+        const newList = res.result.data.list.map(p => ({
           ...p,
           priceText: (p.price / 100).toFixed(2)
         }));
-        this.setData({ products, allProducts: [...products] });
+        const total = res.result.data.total || 0;
+        if (page === 1) {
+          this.setData({ products: newList, allProducts: newList, hasMore: newList.length < total });
+        } else {
+          this.setData({
+            products: [...this.data.products, ...newList],
+            allProducts: [...this.data.allProducts, ...newList],
+            hasMore: (this.data.products.length + newList.length) < total
+          });
+        }
       }
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' });
     }
+    this.setData({ loadingMore: false });
     this.filterProducts();
     this.setData({ loading: false });
   },

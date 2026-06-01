@@ -28,7 +28,12 @@ Page({
     priceCurrent: '',
     priceNew: '',
     // 搜索
-    searchKeyword: ''
+    searchKeyword: '',
+    // 分页
+    page: 1,
+    pageSize: 20,
+    hasMore: true,
+    loadingMore: false
   },
 
   onShow() {
@@ -47,12 +52,19 @@ Page({
   },
 
   onPullDownRefresh() {
+    this.setData({ page: 1, hasMore: true });
     this.loadOrders().then(() => wx.stopPullDownRefresh());
+  },
+
+  onReachBottom() {
+    if (this.data.isReturnTab || !this.data.hasMore || this.data.loadingMore) return;
+    this.setData({ page: this.data.page + 1, loadingMore: true });
+    this.loadOrders();
   },
 
   onTabTap(e) {
     const tab = e.currentTarget.dataset.status;
-    this.setData({ activeStatus: tab, isReturnTab: tab === 'returns' });
+    this.setData({ activeStatus: tab, isReturnTab: tab === 'returns', page: 1, hasMore: true });
     this.loadOrders();
   },
 
@@ -69,7 +81,7 @@ Page({
           const order = orders.find(o => o._id === rr.orderId) || {};
           return { ...rr, orderInfo: { ...order, totalText: ((order.totalAmount || 0) / 100).toFixed(2) } };
         });
-        this.setData({ returnList: enriched, orders: [], loading: false });
+        this.setData({ returnList: enriched, orders: [], loading: false, hasMore: false, loadingMore: false });
       } else {
         if (this.data.activeStatus) {
           orders = orders.filter(o => o.status === this.data.activeStatus);
@@ -95,7 +107,7 @@ Page({
             (o.address || '').toLowerCase().includes(kw)
           );
         }
-        this.setData({ orders, returnList: [], loading: false });
+        this.setData({ orders, returnList: [], loading: false, hasMore: false, loadingMore: false });
       }
       return;
     }
@@ -111,11 +123,11 @@ Page({
           this.setData({ returnList, orders: [] });
         }
       } else {
-        const params = { page: 1, pageSize: 100 };
+        const params = { page: this.data.page, pageSize: this.data.pageSize };
         if (this.data.activeStatus) params.status = this.data.activeStatus;
         const res = await wx.cloud.callFunction({ name: 'adminGetOrders', data: params });
         if (res.result.code === 0) {
-          const orders = res.result.data.list.map(order => ({
+          const newOrders = res.result.data.list.map(order => ({
             ...order,
             items: (order.items || []).map(i => ({ ...i, priceText: ((i.price || 0) / 100).toFixed(2) })),
             statusText: util.getOrderStatusText(order.status),
@@ -126,24 +138,40 @@ Page({
             returnStatusText: order.returnRequest ? util.getReturnStatusText(order.returnRequest.status) : '',
             paymentStatusText: (order.payment_status === 'paid' ? '已付款' : order.payment_status === 'unpaid' ? '未付款' : '未付款')
           }));
-          // 客户搜索过滤
-          if (this.data.searchKeyword) {
-            const kw = this.data.searchKeyword.toLowerCase();
-            const filtered = orders.filter(o =>
-              (o.customerName || '').toLowerCase().includes(kw) ||
-              (o.phone || '').toLowerCase().includes(kw) ||
-              (o.address || '').toLowerCase().includes(kw)
-            );
-            this.setData({ orders: filtered, returnList: [] });
+          const total = res.result.data.total || 0;
+          if (this.data.page === 1) {
+            // 客户搜索过滤
+            if (this.data.searchKeyword) {
+              const kw = this.data.searchKeyword.toLowerCase();
+              const filtered = newOrders.filter(o =>
+                (o.customerName || '').toLowerCase().includes(kw) ||
+                (o.phone || '').toLowerCase().includes(kw) ||
+                (o.address || '').toLowerCase().includes(kw)
+              );
+              this.setData({ orders: filtered, returnList: [], hasMore: filtered.length < total });
+            } else {
+              this.setData({ orders: newOrders, returnList: [], hasMore: newOrders.length < total });
+            }
           } else {
-            this.setData({ orders, returnList: [] });
+            const combined = [...this.data.orders, ...newOrders];
+            if (this.data.searchKeyword) {
+              const kw = this.data.searchKeyword.toLowerCase();
+              const filtered = combined.filter(o =>
+                (o.customerName || '').toLowerCase().includes(kw) ||
+                (o.phone || '').toLowerCase().includes(kw) ||
+                (o.address || '').toLowerCase().includes(kw)
+              );
+              this.setData({ orders: filtered, returnList: [], hasMore: combined.length < total });
+            } else {
+              this.setData({ orders: combined, returnList: [], hasMore: combined.length < total });
+            }
           }
         }
       }
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' });
     }
-    this.setData({ loading: false });
+    this.setData({ loading: false, loadingMore: false });
   },
 
   onSearchInput(e) {

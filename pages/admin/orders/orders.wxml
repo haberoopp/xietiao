@@ -188,6 +188,12 @@
           </view>
         </view>
       </view>
+      <view class="load-more" wx:if="{{loadingMore}}">
+        <text>加载中...</text>
+      </view>
+      <view class="load-more" wx:elif="{{!hasMore && orders.length > 0}}">
+        <text>— 已加载全部 —</text>
+      </view>
     </view>
   </view>
 

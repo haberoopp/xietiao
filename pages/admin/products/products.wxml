@@ -39,6 +39,12 @@
         <view class="action-btn delete" data-product="{{item}}" bindtap="onDelete">删除</view>
       </view>
     </view>
+    <view class="load-more" wx:if="{{loadingMore}}">
+      <text>加载中...</text>
+    </view>
+    <view class="load-more" wx:elif="{{!hasMore && filteredProducts.length > 0}}">
+      <text>— 已加载全部 —</text>
+    </view>
   </view>
 
   <!-- 添加/编辑表单弹窗 -->

@@ -171,3 +171,13 @@ page {
 .badge-processing { background-color: #1976D2; }
 .badge-completed { background-color: var(--color-success); }
 .badge-cancelled { background-color: var(--color-text-secondary); }
+
+/* Load More */
+.load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30rpx 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}

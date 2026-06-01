@@ -77,6 +77,12 @@
         </view>
       </view>
     </view>
+    <view class="load-more" wx:if="{{loadingMore}}">
+      <text>加载中...</text>
+    </view>
+    <view class="load-more" wx:elif="{{!hasMore && products.length > 0}}">
+      <text>— 已加载全部 —</text>
+    </view>
   </view>
 
   <!-- 数量输入弹窗 -->
