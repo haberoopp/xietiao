@@ -5,13 +5,6 @@
       <text class="role-badge role-{{role}}">{{isManager ? '厂长' : isDelivery ? '送货员' : '调货员'}}</text>
       <text class="logout-link" bindtap="onLogout">退出</text>
     </view>
-    <view wx:if="{{isManager}}" class="top-actions">
-      <view class="go-dash-btn" bindtap="onGoDashboard">📊 仪表盘</view>
-      <view class="go-export-btn" bindtap="onExportOrders">📥 导出</view>
-      <view class="go-products-btn" bindtap="onGoCustomers">客户管理</view>
-      <view class="go-products-btn" bindtap="onGoProducts">管理产品</view>
-    </view>
-    <view class="subscribe-btn" bindtap="onSubscribeAdmin">🔔 订阅通知</view>
   </view>
 
   <!-- 状态筛选 -->
@@ -78,6 +71,35 @@
       </view>
     </view>
     <view wx:else class="empty-state"><text>无权限查看退换货</text></view>
+  </view>
+
+  <!-- ===== 功能面板 ===== -->
+  <view wx:elif="{{isToolsTab}}" class="tools-panel">
+    <view class="tool-item" bindtap="onGoDashboard">
+      <text class="tool-icon">📊</text>
+      <text class="tool-label">仪表盘</text>
+      <text class="tool-arrow">›</text>
+    </view>
+    <view class="tool-item" bindtap="onExportOrders">
+      <text class="tool-icon">📥</text>
+      <text class="tool-label">导出订单</text>
+      <text class="tool-arrow">›</text>
+    </view>
+    <view class="tool-item" bindtap="onGoCustomers">
+      <text class="tool-icon">👥</text>
+      <text class="tool-label">客户管理</text>
+      <text class="tool-arrow">›</text>
+    </view>
+    <view class="tool-item" bindtap="onGoProducts">
+      <text class="tool-icon">📦</text>
+      <text class="tool-label">产品管理</text>
+      <text class="tool-arrow">›</text>
+    </view>
+    <view class="tool-item" bindtap="onSubscribeAdmin">
+      <text class="tool-icon">🔔</text>
+      <text class="tool-label">订阅通知</text>
+      <text class="tool-arrow">›</text>
+    </view>
   </view>
 
   <!-- ===== 订单列表 ===== -->
@@ -183,10 +205,12 @@
             <view wx:if="{{isManager}}" class="payment-toggle-btn {{item.payment_status === 'paid' ? 'pt-paid' : 'pt-unpaid'}}" data-order-id="{{item._id}}" catchtap="onTogglePayment">
               {{item.payment_status === 'paid' ? '✓ 已付款' : '标记已付'}}
             </view>
-            <view class="share-bill-btn" data-order="{{item}}" catchtap="onShareBill">📋 对账单</view>
             <!-- 更改状态 -->
             <view wx:if="{{!isWarehouse || (isWarehouse && item.deliveryMethod === 'logistics')}}" class="status-btn" data-order="{{item}}" bindtap="onStatusChange">更改状态</view>
           </view>
+        </view>
+        <view class="bill-row">
+          <view class="share-bill-btn" data-order="{{item}}" catchtap="onShareBill">📋 对账单</view>
         </view>
       </view>
     </view>

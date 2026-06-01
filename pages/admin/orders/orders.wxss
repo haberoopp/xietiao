@@ -18,7 +18,7 @@
   border-radius: 4rpx;
 }
 
-.role-badge.role-manager { background: #C0392B; }
+.role-badge.role-manager { background: var(--color-primary); }
 .role-badge.role-delivery { background: #2196f3; }
 .role-badge.role-warehouse { background: #27AE60; }
 
@@ -28,7 +28,7 @@
 }
 
 .logout-link:active {
-  color: #C0392B;
+  color: var(--color-primary);
 }
 
 .top-actions {
@@ -46,9 +46,9 @@
 
 .go-products-btn {
   font-size: 26rpx;
-  color: #C0392B;
+  color: var(--color-primary);
   padding: 10rpx 20rpx;
-  border: 1rpx solid #C0392B;
+  border: 1rpx solid var(--color-primary);
   border-radius: 6rpx;
 }
 
@@ -69,7 +69,7 @@
 }
 
 .tab-item.active {
-  background: #C0392B;
+  background: var(--color-primary);
   color: #fff;
 }
 
@@ -237,7 +237,7 @@
 
 .rr-badge {
   font-size: 22rpx;
-  color: #C0392B;
+  color: var(--color-primary);
   font-weight: 500;
   margin-bottom: 6rpx;
 }
@@ -310,8 +310,8 @@
   top: 16rpx;
   right: 16rpx;
   font-size: 22rpx;
-  color: #C0392B;
-  border: 1rpx solid #C0392B;
+  color: var(--color-primary);
+  border: 1rpx solid var(--color-primary);
   padding: 4rpx 12rpx;
   border-radius: 4rpx;
   z-index: 1;
@@ -478,12 +478,12 @@
 .price-input {
   width: 100%;
   height: 90rpx;
-  border: 2rpx solid #C0392B;
+  border: 2rpx solid var(--color-primary);
   border-radius: 8rpx;
   text-align: center;
   font-size: 40rpx;
   font-weight: bold;
-  color: #C0392B;
+  color: var(--color-primary);
   box-sizing: border-box;
 }
 
@@ -564,4 +564,42 @@
   left: -9999rpx;
   width: 750rpx;
   height: 1000rpx;
+}
+
+/* 功能面板 */
+.tools-panel {
+  padding: 16rpx 0;
+}
+
+.tool-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 16rpx;
+  background: #fff;
+  border-radius: var(--radius-md);
+  margin-bottom: 8rpx;
+  box-shadow: var(--shadow-card);
+}
+
+.tool-icon {
+  font-size: 40rpx;
+  margin-right: 16rpx;
+}
+
+.tool-label {
+  flex: 1;
+  font-size: var(--text-base);
+  color: var(--color-text);
+}
+
+.tool-arrow {
+  font-size: 36rpx;
+  color: var(--color-text-secondary);
+}
+
+/* 对账单独立行 */
+.bill-row {
+  padding: 0 32rpx 24rpx;
+  display: flex;
+  justify-content: flex-end;
 }
