@@ -153,8 +153,9 @@ Page({
               this.setData({ orders: newOrders, returnList: [], hasMore: newOrders.length < total });
             }
           } else {
-            const combined = [...this.data.orders, ...newOrders];
             if (this.data.searchKeyword) {
+              // 有搜索关键词：需要重新过滤全部已加载数据（全量替换不可避免）
+              const combined = [...this.data.orders, ...newOrders];
               const kw = this.data.searchKeyword.toLowerCase();
               const filtered = combined.filter(o =>
                 (o.customerName || '').toLowerCase().includes(kw) ||
@@ -163,7 +164,15 @@ Page({
               );
               this.setData({ orders: filtered, returnList: [], hasMore: newOrders.length >= pageSize });
             } else {
-              this.setData({ orders: combined, returnList: [], hasMore: newOrders.length >= pageSize });
+              // 无搜索过滤：索引追加，避免滚动跳顶
+              const start = this.data.orders.length;
+              const updates = {};
+              newOrders.forEach((item, i) => {
+                updates[`orders[${start + i}]`] = item;
+              });
+              updates.returnList = [];
+              updates.hasMore = newOrders.length >= pageSize;
+              this.setData(updates);
             }
           }
         }
@@ -650,6 +659,40 @@ Page({
           exportUtil.shareBillImage(tempFilePath);
         }
       });
+    });
+  },
+
+  onSubscribeAdmin() {
+    const constants = require('../../../utils/constants');
+    wx.requestSubscribeMessage({
+      tmplIds: constants.NOTIFY_TEMPLATES.ADMIN,
+      success: async (res) => {
+        const accepted = Object.values(res).some(v => v === 'accept');
+        if (accepted) {
+          wx.showLoading({ title: '保存中...' });
+          try {
+            const result = await wx.cloud.callFunction({
+              name: 'subscribeAdmin',
+              data: {
+                action: 'subscribe',
+                categories: ['new_order', 'status_change', 'cancelled', 'return']
+              }
+            });
+            wx.hideLoading();
+            if (result.result && result.result.code === 0) {
+              wx.showToast({ title: '通知订阅成功', icon: 'success' });
+            } else {
+              wx.showToast({ title: '保存失败', icon: 'none' });
+            }
+          } catch (err) {
+            wx.hideLoading();
+            wx.showToast({ title: '网络错误', icon: 'none' });
+          }
+        }
+      },
+      fail: function(err) {
+        console.warn('Admin subscribe failed:', err);
+      }
     });
   },
 
