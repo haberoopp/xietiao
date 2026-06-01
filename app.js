@@ -17,22 +17,7 @@ App({
 
     try {
       wx.cloud.init({ env: envId, traceUser: true });
-      console.log('云开发已连接');
-
-      // 延迟验证云函数，避免阻塞启动
-      setTimeout(() => {
-        wx.cloud.callFunction({ name: 'getProducts', data: { pageSize: 1 } })
-          .then(res => {
-            if (res.result && res.result.code === 0) {
-              this.globalData.demoMode = false;
-              console.log('云函数连通验证通过');
-            }
-          })
-          .catch(() => {
-            this.loadMockData();
-            console.warn('云函数不可达，保持演示模式');
-          });
-      }, 2000);
+      console.log('云开发 SDK 已初始化（演示模式运行中）');
     } catch (e) {
       this.globalData.demoMode = true;
       this.loadMockData();
