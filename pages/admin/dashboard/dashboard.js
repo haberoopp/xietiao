@@ -1,3 +1,5 @@
+const demoStore = require('../../../utils/demoStore');
+
 Page({
   data: {
     dateRange: 'today',
@@ -34,21 +36,38 @@ Page({
       this.loadDemoDashboard();
       return;
     }
-    this.loadDemoDashboard();
+    this.loadCloudDashboard();
   },
 
   loadDemoDashboard() {
-    const app = getApp();
-    const saved = wx.getStorageSync('demoOrders') || [];
-    const allOrders = [...saved, ...(app.globalData.demoOrders || [])];
-    const unique = [];
-    const seen = new Set();
-    allOrders.forEach(o => {
-      if (!seen.has(o._id)) { seen.add(o._id); unique.push(o); }
-    });
+    const orders = demoStore.getAll(demoStore.KEYS.orders);
+    const products = demoStore.getAll(demoStore.KEYS.products);
+    this.renderDashboard(orders, products);
+  },
 
-    const products = app.globalData.demoProducts || [];
+  async loadCloudDashboard() {
+    wx.showLoading({ title: '加载中...' });
+    try {
+      const [ordersRes, productsRes] = await Promise.all([
+        wx.cloud.callFunction({ name: 'adminGetOrders', data: { page: 1, pageSize: 500 } }),
+        wx.cloud.callFunction({ name: 'getProducts', data: { pageSize: 200 } })
+      ]);
 
+      const orders = (ordersRes.result && ordersRes.result.code === 0)
+        ? (ordersRes.result.data.list || [])
+        : [];
+      const products = (productsRes.result && productsRes.result.code === 0)
+        ? (productsRes.result.data.list || [])
+        : [];
+
+      this.renderDashboard(orders, products);
+    } catch (err) {
+      wx.showToast({ title: '加载失败', icon: 'none' });
+    }
+    wx.hideLoading();
+  },
+
+  renderDashboard(orders, products) {
     const now = Date.now();
     let rangeStart;
     if (this.data.dateRange === 'today') {
@@ -61,7 +80,7 @@ Page({
       rangeStart = now - 30 * 86400000;
     }
 
-    const rangeOrders = unique.filter(o => new Date(o.createdAt).getTime() >= rangeStart);
+    const rangeOrders = orders.filter(o => new Date(o.createdAt).getTime() >= rangeStart);
 
     // 近7天趋势
     const trendDays = [];
@@ -71,7 +90,7 @@ Page({
       dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(dayStart);
       dayEnd.setDate(dayEnd.getDate() + 1);
-      const dayOrders = unique.filter(o => {
+      const dayOrders = orders.filter(o => {
         const t = new Date(o.createdAt).getTime();
         return t >= dayStart.getTime() && t < dayEnd.getTime();
       });
@@ -87,7 +106,7 @@ Page({
     const totalOrders = rangeOrders.length;
     const totalSales = rangeOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
     const pendingOrders = rangeOrders.filter(o => o.status === 'processing').length;
-    const unpaidAmount = unique.filter(o => o.payment_status === 'unpaid').reduce((sum, o) => sum + (o.totalAmount || 0) - (o.paid_amount || 0), 0);
+    const unpaidAmount = orders.filter(o => o.payment_status === 'unpaid').reduce((sum, o) => sum + (o.totalAmount || 0) - (o.paid_amount || 0), 0);
 
     // 缺货
     const shortageProducts = products

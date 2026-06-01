@@ -1,4 +1,5 @@
 const util = require('../../utils/util');
+const demoStore = require('../../utils/demoStore');
 
 Page({
   data: {
@@ -56,15 +57,9 @@ Page({
     const app = getApp();
 
     if (app.globalData.demoMode) {
-      const saved = wx.getStorageSync('demoOrders') || [];
-      const returnReqs = wx.getStorageSync('returnRequests') || [];
-      const allOrders = [...saved, ...(app.globalData.demoOrders || [])];
-      const unique = [];
-      const seen = new Set();
-      allOrders.forEach(o => {
-        if (!seen.has(o._id)) { seen.add(o._id); unique.push(o); }
-      });
-      const orders = unique.map(order => {
+      const returnReqs = demoStore.getAll(demoStore.KEYS.returnRequests);
+      let orders = demoStore.getAll(demoStore.KEYS.orders);
+      orders = orders.map(order => {
         const rr = returnReqs.find(r => r.orderId === order._id);
         const returnReq = rr || order.returnRequest || null;
         if (returnReq && returnReq.exchangeItems) {
@@ -297,8 +292,8 @@ Page({
     }));
 
     if (app.globalData.demoMode) {
-      const returnReqs = wx.getStorageSync('returnRequests') || [];
-      const allOrders = [...(wx.getStorageSync('demoOrders') || []), ...(app.globalData.demoOrders || [])];
+      let returnReqs = demoStore.getAll(demoStore.KEYS.returnRequests);
+      const allOrders = demoStore.getAll(demoStore.KEYS.orders);
       const order = allOrders.find(o => o._id === returnOrderId);
       const prevRejectionCount = (order && order.returnRequest && order.returnRequest.rejectionCount) || 0;
       const rr = {
@@ -314,7 +309,7 @@ Page({
         createdAt: new Date().toISOString()
       };
       returnReqs.push(rr);
-      wx.setStorageSync('returnRequests', returnReqs);
+      demoStore.setAll(demoStore.KEYS.returnRequests, returnReqs);
       this.updateOrderReturnFlag(returnOrderId, returnType, returnReason.trim(), 'pending', retItems, exItems, prevRejectionCount);
       wx.hideLoading();
       wx.showToast({ title: '申请已提交', icon: 'success' });
@@ -353,30 +348,22 @@ Page({
 
   // Demo: 更新订单状态
   updateOrderStatus(orderId, newStatus) {
-    const app = getApp();
-    const update = (list) => {
-      const order = list.find(o => o._id === orderId);
+    demoStore.update(demoStore.KEYS.orders, (orders) => {
+      const order = orders.find(o => o._id === orderId);
       if (order) order.status = newStatus;
-    };
-    update(app.globalData.demoOrders);
-    const saved = wx.getStorageSync('demoOrders') || [];
-    update(saved);
-    wx.setStorageSync('demoOrders', saved);
-    wx.showToast({ title: '已取消（演示模式）', icon: 'success' });
+      return orders;
+    });
+    wx.showToast({ title: '已取消', icon: 'success' });
     this.loadOrders();
   },
 
   // Demo: 更新退换货标记
   updateOrderReturnFlag(orderId, type, reason, status, items, exchangeItems, rejectionCount) {
-    const app = getApp();
-    const update = (list) => {
-      const order = list.find(o => o._id === orderId);
+    demoStore.update(demoStore.KEYS.orders, (orders) => {
+      const order = orders.find(o => o._id === orderId);
       if (order) order.returnRequest = { type, reason, status, items, exchangeItems, rejectionCount: rejectionCount || 0, isRetry: (rejectionCount || 0) > 0 };
-    };
-    update(app.globalData.demoOrders);
-    const saved = wx.getStorageSync('demoOrders') || [];
-    update(saved);
-    wx.setStorageSync('demoOrders', saved);
+      return orders;
+    });
   },
 
   goAddress() {

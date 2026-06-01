@@ -1,6 +1,7 @@
 const util = require('../../../utils/util');
 const amap = require('../../../utils/amap');
 const exportUtil = require('../../../utils/export');
+const demoStore = require('../../../utils/demoStore');
 
 Page({
   data: {
@@ -60,23 +61,16 @@ Page({
     const app = getApp();
 
     if (app.globalData.demoMode) {
-      const returnReqs = wx.getStorageSync('returnRequests') || [];
-      const saved = wx.getStorageSync('demoOrders') || [];
-      const allOrders = [...saved, ...(app.globalData.demoOrders || [])];
-      const unique = [];
-      const seen = new Set();
-      allOrders.forEach(o => {
-        if (!seen.has(o._id)) { seen.add(o._id); unique.push(o); }
-      });
+      const returnReqs = demoStore.getAll(demoStore.KEYS.returnRequests);
+      let orders = demoStore.getAll(demoStore.KEYS.orders);
 
       if (this.data.isReturnTab) {
         const enriched = returnReqs.slice().reverse().map(rr => {
-          const order = unique.find(o => o._id === rr.orderId) || {};
+          const order = orders.find(o => o._id === rr.orderId) || {};
           return { ...rr, orderInfo: { ...order, totalText: ((order.totalAmount || 0) / 100).toFixed(2) } };
         });
         this.setData({ returnList: enriched, orders: [], loading: false });
       } else {
-        let orders = unique;
         if (this.data.activeStatus) {
           orders = orders.filter(o => o.status === this.data.activeStatus);
         }
@@ -188,14 +182,11 @@ Page({
     const app = getApp();
 
     if (app.globalData.demoMode) {
-      const update = (list) => {
-        const o = list.find(o => o._id === priceOrderId);
+      demoStore.update(demoStore.KEYS.orders, (orders) => {
+        const o = orders.find(o => o._id === priceOrderId);
         if (o) o.totalAmount = Math.round(newAmount * 100);
-      };
-      update(app.globalData.demoOrders);
-      const saved = wx.getStorageSync('demoOrders') || [];
-      update(saved);
-      wx.setStorageSync('demoOrders', saved);
+        return orders;
+      });
       wx.showToast({ title: '价格已更新', icon: 'success' });
       this.setData({ showPriceModal: false });
       this.loadOrders();
@@ -240,17 +231,14 @@ Page({
 
         if (app.globalData.demoMode) {
           const imgData = { fileID: tempPath, uploadedAt: new Date().toISOString() };
-          const update = (list) => {
-            const o = list.find(o => o._id === orderId);
+          demoStore.update(demoStore.KEYS.orders, (orders) => {
+            const o = orders.find(o => o._id === orderId);
             if (o) {
               o.images = o.images || [];
               o.images.push(imgData);
             }
-          };
-          update(app.globalData.demoOrders);
-          const saved = wx.getStorageSync('demoOrders') || [];
-          update(saved);
-          wx.setStorageSync('demoOrders', saved);
+            return orders;
+          });
           wx.showToast({ title: '已上传（演示模式）', icon: 'success' });
           this.loadOrders();
           return;
@@ -306,14 +294,11 @@ Page({
         if (!res.confirm) return;
 
         if (app.globalData.demoMode) {
-          const update = (list) => {
-            const o = list.find(o => o._id === orderId);
+          demoStore.update(demoStore.KEYS.orders, (orders) => {
+            const o = orders.find(o => o._id === orderId);
             if (o && o.images) o.images.splice(imgIndex, 1);
-          };
-          update(app.globalData.demoOrders);
-          const saved = wx.getStorageSync('demoOrders') || [];
-          update(saved);
-          wx.setStorageSync('demoOrders', saved);
+            return orders;
+          });
           wx.showToast({ title: '已删除', icon: 'success' });
           this.loadOrders();
           return;
@@ -360,11 +345,11 @@ Page({
         const newStatus = statusKeys[res.tapIndex];
 
         if (app.globalData.demoMode) {
-          const update = (list) => { const o = list.find(o => o._id === order._id); if (o) o.status = newStatus; };
-          update(app.globalData.demoOrders);
-          const saved = wx.getStorageSync('demoOrders') || [];
-          update(saved);
-          wx.setStorageSync('demoOrders', saved);
+          demoStore.update(demoStore.KEYS.orders, (orders) => {
+            const o = orders.find(o => o._id === order._id);
+            if (o) o.status = newStatus;
+            return orders;
+          });
           wx.showToast({ title: '已更新', icon: 'success' });
           this.loadOrders();
           return;
@@ -399,7 +384,7 @@ Page({
         if (!res.confirm) return;
 
         if (app.globalData.demoMode) {
-          let returnReqs = wx.getStorageSync('returnRequests') || [];
+          let returnReqs = demoStore.getAll(demoStore.KEYS.returnRequests);
           const rr = returnReqs.find(r => r._id === requestId || r.orderId === orderId);
           if (rr) {
             rr.status = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'completed';
@@ -407,10 +392,10 @@ Page({
               rr.rejectionCount = (rr.rejectionCount || 0) + 1;
             }
           }
-          wx.setStorageSync('returnRequests', returnReqs);
-          const updateOrder = (list) => {
-            const order = list.find(o => o._id === orderId);
-            if (!order) return;
+          demoStore.setAll(demoStore.KEYS.returnRequests, returnReqs);
+          demoStore.update(demoStore.KEYS.orders, (orders) => {
+            const order = orders.find(o => o._id === orderId);
+            if (!order) return orders;
             const newStatus = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'completed';
             if (order.returnRequest) {
               order.returnRequest.status = newStatus;
@@ -438,11 +423,8 @@ Page({
                 order.totalAmount = Math.max(0, order.totalAmount + diff);
               }
             }
-          };
-          updateOrder(app.globalData.demoOrders);
-          const saved = wx.getStorageSync('demoOrders') || [];
-          updateOrder(saved);
-          wx.setStorageSync('demoOrders', saved);
+            return orders;
+          });
           wx.showToast({ title: '已处理', icon: 'success' });
           this.loadOrders();
           return;
@@ -471,14 +453,11 @@ Page({
     const app = getApp();
 
     if (app.globalData.demoMode) {
-      const update = (list) => {
-        const o = list.find(o => o._id === orderId);
+      demoStore.update(demoStore.KEYS.orders, (orders) => {
+        const o = orders.find(o => o._id === orderId);
         if (o) o.pickedUp = !o.pickedUp;
-      };
-      update(app.globalData.demoOrders);
-      const saved = wx.getStorageSync('demoOrders') || [];
-      update(saved);
-      wx.setStorageSync('demoOrders', saved);
+        return orders;
+      });
       this.loadOrders();
       return;
     }
@@ -503,8 +482,8 @@ Page({
     const app = getApp();
 
     if (app.globalData.demoMode) {
-      const update = (list) => {
-        const o = list.find(o => o._id === orderId);
+      demoStore.update(demoStore.KEYS.orders, (orders) => {
+        const o = orders.find(o => o._id === orderId);
         if (o) {
           if (o.payment_status === 'paid') {
             o.payment_status = 'unpaid';
@@ -514,11 +493,8 @@ Page({
             o.paid_amount = o.totalAmount;
           }
         }
-      };
-      update(app.globalData.demoOrders);
-      const saved = wx.getStorageSync('demoOrders') || [];
-      update(saved);
-      wx.setStorageSync('demoOrders', saved);
+        return orders;
+      });
       wx.showToast({ title: '已更新', icon: 'success' });
       this.loadOrders();
       return;

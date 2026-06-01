@@ -7,39 +7,45 @@ App({
   },
 
   initCloud() {
-    const envId = 'your-env-id';
-
-    // 先加载演示数据兜底，避免首页首次加载空白
-    this.loadMockData();
+    const envId = 'cloudbase-d3gutw6xz1d7cef25';
 
     if (!wx.cloud) {
       console.warn('云开发不可用，使用演示模式');
+      this.loadMockData();
       return;
     }
 
     try {
       wx.cloud.init({ env: envId, traceUser: true });
-      // 尝试调用云函数检测是否已配置
+      // 云环境已配置，默认走云端模式，失败时回退演示
+      this.globalData.demoMode = false;
+      console.log('云开发已连接');
+
+      // 后台确认云函数可达性，不可达时回退演示模式
       wx.cloud.callFunction({ name: 'getProducts', data: { pageSize: 1 } })
         .then(res => {
           if (res.result && res.result.code === 0) {
-            this.globalData.demoMode = false;
-            console.log('云开发已连接');
+            console.log('云函数连通验证通过');
           }
         })
         .catch(() => {
           this.globalData.demoMode = true;
-          console.log('云函数未部署，使用演示模式');
+          this.loadMockData();
+          console.warn('云函数不可达，回退演示模式');
         });
     } catch (e) {
       this.globalData.demoMode = true;
+      this.loadMockData();
       console.warn('云开发初始化失败，使用演示模式');
     }
   },
 
   loadMockData() {
-    this.globalData.demoProducts = mock.mockProducts;
-    this.globalData.demoOrders = mock.mockOrders;
+    const demoStore = require('./utils/demoStore');
+    demoStore.initAll();
+    // 保留 globalData 引用以兼容旧代码（逐步迁移后可移除）
+    this.globalData.demoProducts = demoStore.getAll(demoStore.KEYS.products);
+    this.globalData.demoOrders = demoStore.getAll(demoStore.KEYS.orders);
   },
 
   initCart() {
