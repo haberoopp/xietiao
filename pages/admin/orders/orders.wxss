@@ -270,7 +270,7 @@
   justify-content: space-between;
   align-items: center;
   border-top: 1rpx solid #f0f0f0;
-  padding-top: 16rpx;
+  padding-top: 12rpx;
 }
 
 .footer-actions {
@@ -278,12 +278,14 @@
   align-items: center;
   gap: 8rpx;
   flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .footer-left {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 12rpx;
+  flex-shrink: 0;
 }
 
 .order-total {
@@ -294,8 +296,10 @@
   font-size: 22rpx;
   color: #E67E22;
   border: 1rpx solid #E67E22;
-  padding: 4rpx 12rpx;
-  border-radius: 4rpx;
+  padding: 6rpx 14rpx;
+  border-radius: 6rpx;
+  white-space: nowrap;
+  line-height: 1;
 }
 
 .edit-price-btn:active {
@@ -326,9 +330,10 @@
   font-size: 22rpx;
   color: #fff;
   background: #2196f3;
-  padding: 6rpx 14rpx;
+  padding: 8rpx 14rpx;
   border-radius: 6rpx;
   white-space: nowrap;
+  line-height: 1;
 }
 
 .status-btn:active {
@@ -337,16 +342,18 @@
 
 .pickedup-btn {
   font-size: 22rpx;
-  padding: 6rpx 14rpx;
+  padding: 8rpx 14rpx;
   border-radius: 6rpx;
   white-space: nowrap;
+  line-height: 1;
 }
 
 .payment-toggle-btn {
   font-size: 22rpx;
-  padding: 6rpx 14rpx;
+  padding: 8rpx 14rpx;
   border-radius: 6rpx;
   white-space: nowrap;
+  line-height: 1;
 }
 
 /* 订单头部标签 */
@@ -615,9 +622,13 @@
 
 /* 对账单独立行 */
 .bill-row {
-  padding: 0 32rpx 24rpx;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 12rpx;
+  border-top: 1rpx solid #f0f0f0;
+  padding-top: 14rpx;
+  margin-top: 4rpx;
 }
 
 /* 后台底部 Tab 栏 */

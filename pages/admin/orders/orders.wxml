@@ -193,23 +193,19 @@
         <view class="order-footer">
           <view class="footer-left">
             <text class="order-total">合计：<text class="price">¥{{item.totalText}}</text></text>
-            <!-- 改价按钮（厂长+送货员） -->
             <text wx:if="{{!isWarehouse}}" class="edit-price-btn" data-order="{{item}}" bindtap="onOpenPriceModal">改价</text>
           </view>
-
-          <view wx:if="{{!isWarehouse || (isWarehouse && (item.deliveryMethod === 'logistics' || item.deliveryMethod === 'delivery'))}}" class="footer-actions">
-            <!-- 配送订单：已拿货/未拿货切换 -->
+          <view class="footer-actions">
             <view wx:if="{{item.deliveryMethod === 'delivery' && (!item.returnRequest || item.returnRequest.type !== 'return')}}" class="pickedup-btn {{item.pickedUp ? 'pu-done' : ''}}" data-order-id="{{item._id}}" catchtap="onTogglePickedUp">
               {{item.pickedUp ? '✓ 已拿货' : '未拿货'}}
             </view>
             <view wx:if="{{isManager}}" class="payment-toggle-btn {{item.payment_status === 'paid' ? 'pt-paid' : 'pt-unpaid'}}" data-order-id="{{item._id}}" catchtap="onTogglePayment">
               {{item.payment_status === 'paid' ? '✓ 已付款' : '标记已付'}}
             </view>
-            <!-- 更改状态 -->
-            <view wx:if="{{!isWarehouse || (isWarehouse && item.deliveryMethod === 'logistics')}}" class="status-btn" data-order="{{item}}" bindtap="onStatusChange">更改状态</view>
           </view>
         </view>
         <view class="bill-row">
+          <view wx:if="{{!isWarehouse || (isWarehouse && item.deliveryMethod === 'logistics')}}" class="status-btn" data-order="{{item}}" bindtap="onStatusChange">更改状态</view>
           <view class="share-bill-btn" data-order="{{item}}" catchtap="onShareBill">📋 对账单</view>
         </view>
       </view>
