@@ -46,7 +46,7 @@ Page({
         wx.setStorageSync('customers', customers);
       }
       // 从订单计算欠款（兼容旧客户数据无debt字段）
-      const allOrders = [...(wx.getStorageSync('demoOrders') || []), ...(app.globalData.demoOrders || [])];
+      const allOrders = [...(wx.getStorageSync('demo_orders') || []), ...(app.globalData.demoOrders || [])];
       customers = customers.map(c => {
         if (c.debt === undefined) {
           c.debt = allOrders

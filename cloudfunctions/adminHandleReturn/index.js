@@ -1,23 +1,24 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const res = require('./response');
+const logger = require('./logger');
+const auth = require('./auth');
 
 exports.main = async (event) => {
-  const wxContext = cloud.getWXContext();
-  if (!wxContext.OPENID) return { code: -1, msg: '未登录' };
-  const admin = await db.collection('admins').where({ lastLoginOpenid: wxContext.OPENID, loggedIn: true }).get();
-  if (admin.data.length === 0) return { code: -1, msg: '无管理员权限' };
+  const authResult = await auth.requireAdmin();
+  if (!authResult.authorized) return authResult.response;
 
   const { requestId, action } = event;
 
-  if (!requestId || !action) return { code: -1, msg: '参数错误' };
+  if (!requestId || !action) return res.badRequest('参数错误');
   if (!['approve', 'reject', 'complete'].includes(action)) {
-    return { code: -1, msg: '无效操作' };
+    return res.badRequest('无效操作');
   }
 
   try {
     const req = await db.collection('returnRequests').doc(requestId).get();
-    if (!req.data) return { code: -1, msg: '申请不存在' };
+    if (!req.data) return res.notFound('申请不存在');
 
     const newStatus = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'completed';
 
@@ -60,8 +61,10 @@ exports.main = async (event) => {
       data: orderUpdate
     });
 
-    return { code: 0 };
+    logger.info('adminHandleReturn', { requestId, action });
+    return res.ok();
   } catch (err) {
-    return { code: -1, msg: err.message };
+    logger.error('adminHandleReturn', err, { requestId, action });
+    return res.internalError();
   }
 };

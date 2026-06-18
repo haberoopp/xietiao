@@ -1,6 +1,9 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const res = require('./response');
+const logger = require('./logger');
+const auth = require('./auth');
 
 exports.main = async (event) => {
   const { orderId, customerName, phone, address, addressDetail, items, totalAmount, deliveryMethod, remark, images, location } = event;
@@ -8,13 +11,13 @@ exports.main = async (event) => {
   const openid = wxContext.OPENID;
 
   if (!orderId) {
-    return { code: -1, msg: '缺少订单ID' };
+    return res.badRequest('缺少订单ID');
   }
 
   try {
     const order = await db.collection('orders').doc(orderId).get();
-    if (!order.data) return { code: -1, msg: '订单不存在' };
-    if (order.data._openid !== openid) return { code: -1, msg: '无权操作' };
+    if (!order.data) return res.notFound('订单不存在');
+    if (order.data._openid !== openid) return res.forbidden('无权操作');
 
     const data = { updatedAt: db.serverDate() };
     if (customerName !== undefined) data.customerName = customerName.trim();
@@ -29,8 +32,10 @@ exports.main = async (event) => {
     if (location !== undefined) data.location = location;
 
     await db.collection('orders').doc(orderId).update({ data });
-    return { code: 0 };
+    logger.info('updateOrder', { orderId, openid });
+    return res.ok();
   } catch (err) {
-    return { code: -1, msg: err.message };
+    logger.error('updateOrder', err, { orderId, openid });
+    return res.internalError();
   }
 };

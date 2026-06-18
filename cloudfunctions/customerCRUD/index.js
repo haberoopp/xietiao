@@ -2,44 +2,56 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
+const res = require('./response');
+const logger = require('./logger');
+const auth = require('./auth');
 
 exports.main = async (event) => {
   const { action } = event;
   // 仅管理操作需要鉴权（list/add/update/delete）
   if (action !== 'getByPhone' && action !== 'upsert') {
-    const wxContext = cloud.getWXContext();
-    if (!wxContext.OPENID) return { code: -1, msg: '未登录' };
-    const admin = await db.collection('admins').where({ lastLoginOpenid: wxContext.OPENID, loggedIn: true }).get();
-    if (admin.data.length === 0) return { code: -1, msg: '无管理员权限' };
+    const authResult = auth.requireOpenid();
+    const admin = await db.collection('admins').where({ lastLoginOpenid: authResult.openid, loggedIn: true }).get();
+    if (admin.data.length === 0) return res.forbidden('无管理员权限');
   }
 
   try {
     switch (action) {
       case 'list': {
-        const res = await db.collection('customers')
-          .orderBy('createdAt', 'desc')
-          .limit(200)
-          .get();
-        return { code: 0, data: res.data };
+        const page = parseInt(event.page) || 1;
+        const pageSize = Math.min(parseInt(event.pageSize) || 20, 100);
+        const skip = (page - 1) * pageSize;
+        const [countResult, listResult] = await Promise.all([
+          db.collection('customers').count(),
+          db.collection('customers')
+            .orderBy('createdAt', 'desc')
+            .skip(skip)
+            .limit(pageSize)
+            .get()
+        ]);
+        logger.info('List customers', { page, pageSize, total: countResult.total });
+        return res.list(listResult.data, countResult.total, page, pageSize);
       }
 
       case 'getByPhone': {
         const { phone } = event;
-        if (!phone) return { code: -1, msg: '手机号不能为空' };
-        const res = await db.collection('customers')
+        if (!phone) return res.badRequest('手机号不能为空');
+        const result = await db.collection('customers')
           .where({ phone })
           .limit(1)
           .get();
-        return { code: 0, data: res.data[0] || null };
+        const customer = result.data[0] || null;
+        logger.info('Get customer by phone', { phone, found: !!customer });
+        return res.record(customer);
       }
 
       case 'add': {
         const { name, phone, discount } = event;
         const existing = await db.collection('customers').where({ phone }).count();
         if (existing.total > 0) {
-          return { code: -1, msg: '该手机号已存在' };
+          return res.conflict('该手机号已存在');
         }
-        const res = await db.collection('customers').add({
+        const result = await db.collection('customers').add({
           data: {
             name: name.trim(),
             phone: phone.trim(),
@@ -50,7 +62,8 @@ exports.main = async (event) => {
             updatedAt: db.serverDate()
           }
         });
-        return { code: 0, data: { _id: res._id } };
+        logger.info('Customer added', { customerId: result._id, phone });
+        return res.record({ _id: result._id });
       }
 
       case 'update': {
@@ -60,7 +73,8 @@ exports.main = async (event) => {
         if (phone !== undefined) data.phone = phone.trim();
         if (discount !== undefined) data.discount = parseFloat(discount);
         await db.collection('customers').doc(customerId).update({ data });
-        return { code: 0 };
+        logger.info('Customer updated', { customerId });
+        return res.ok();
       }
 
       // 下单后自动录入/更新客户统计
@@ -90,19 +104,22 @@ exports.main = async (event) => {
             }
           });
         }
-        return { code: 0 };
+        logger.info('Customer upserted', { phone: cPhone });
+        return res.ok();
       }
 
       case 'delete': {
         const { customerId } = event;
         await db.collection('customers').doc(customerId).remove();
-        return { code: 0 };
+        logger.info('Customer deleted', { customerId });
+        return res.ok();
       }
 
       default:
-        return { code: -1, msg: '未知操作' };
+        return res.badRequest('未知操作');
     }
   } catch (err) {
-    return { code: -1, msg: err.message };
+    logger.error('customerCRUD error', { error: err.message, action: event.action });
+    return res.internalError();
   }
 };

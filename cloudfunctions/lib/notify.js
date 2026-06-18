@@ -14,14 +14,14 @@
 // ============================================================
 const TEMPLATES = {
   // 客户侧
-  ORDER_STATUS_CHANGE: '75qtI8wJVA6ocFKzJavAptlVwStWeJSyAt2-5fMFtx0',  // thing1+phrase2+amount3+thing4
-  PAYMENT_CHANGE:      'qg1JsVy5f-CrmBj_2HyY9SIr5yZKFj0_7GXJqXryDIA',  // thing1+phrase2+amount3
-  RETURN_RESULT:       '5Z74_S8f7RM4aWLg-cwTXAPxAfTvnNpHStXAdlXJtQY',  // thing1+phrase2 (仅2字段)
+  ORDER_STATUS_CHANGE: 'vcuCn2dNTkgg6Xf-P3xqYvXYLJJgtSqf_hhO7wRqiE0',  // thing1+phrase2+amount3+thing4
+  PAYMENT_CHANGE:      'vcuCn2dNTkgg6Xf-P3xqYtrKc9DgUcN3g7LmZirw4Kw',  // thing1+phrase2+amount3
+  RETURN_RESULT:       'tlxN0JZIJyzJQbYrZZ5XTQMGorYXll2rBhRkRqgwBFg',  // thing1+phrase2
   // 管理侧
-  NEW_ORDER_ADMIN:     'xyc9X25If8igknu5ZKIKCdJ_ZCK_RKgIZ3fOVirVtMI',  // thing1+thing2+amount3
-  ORDER_STATUS_ADMIN:  '75qtI8wJVA6ocFKzJavAptfD6u0f5aN2RIAh74kZi0s',  // thing1+phrase2+amount3+thing4
-  ORDER_CANCEL_ADMIN:  'aZVEXaOmez6UvEg6Xas5lxGfXYRL0cpnssmkcQp7v5c',  // thing1+thing2+thing3
-  RETURN_ADMIN:        '5Z74_S8f7RM4aWLg-cwTXIBweaqx_3gI9TsqHl2kYt0',  // thing1+thing2+thing3
+  NEW_ORDER_ADMIN:     'XGD06qwAdw5mN9Nxu9NMkv0ywwtEluVnoRIb5hxIGGk',  // thing1+thing2+amount3
+  ORDER_STATUS_ADMIN:  'vcuCn2dNTkgg6Xf-P3xqYsQHCNH7oyZmYfbUzGn-d0Q',  // thing1+phrase2+amount3+thing4
+  ORDER_CANCEL_ADMIN:  'XGD06qwAdw5mN9Nxu9NMkvNS4DskjFB6njCzhuTziQA',  // thing1+thing2+thing3
+  RETURN_ADMIN:        'tlxN0JZIJyzJQbYrZZ5XTS8lL882gPR5wwMgSxE8iGQ',  // thing1+thing2+thing3
 };
 
 var MAX_LEN = 20;

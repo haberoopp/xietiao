@@ -1,39 +1,53 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const res = require('./response');
+const logger = require('./logger');
+const auth = require('./auth');
+const _ = db.command;
 
 exports.main = async (event) => {
-  const wxContext = cloud.getWXContext();
-  if (!wxContext.OPENID) return { code: -1, msg: '未登录' };
-  const admin = await db.collection('admins').where({ lastLoginOpenid: wxContext.OPENID, loggedIn: true }).get();
-  if (admin.data.length === 0) return { code: -1, msg: '无管理员权限' };
+  const authResult = await auth.requireAdmin();
+  if (!authResult.authorized) return authResult.response;
 
-  const { status } = event;
+  const { status, page = 1, pageSize = 50 } = event;
   const where = {};
   if (status) where.status = status;
 
   try {
-    const list = await db.collection('returnRequests')
-      .where(where)
-      .orderBy('createdAt', 'desc')
-      .get();
+    const [countRes, listRes] = await Promise.all([
+      db.collection('returnRequests').where(where).count(),
+      db.collection('returnRequests')
+        .where(where)
+        .orderBy('createdAt', 'desc')
+        .skip((page - 1) * pageSize)
+        .limit(Math.min(pageSize, 100))
+        .get()
+    ]);
 
-    // 关联订单信息
-    const enriched = [];
-    for (const req of list.data) {
+    // 批量查关联订单（一次查询替代 N+1）
+    const orderIds = [...new Set(listRes.data.map(r => r.orderId).filter(Boolean))];
+    let orderMap = {};
+    if (orderIds.length > 0) {
       try {
-        const order = await db.collection('orders').doc(req.orderId).get();
-        enriched.push({
-          ...req,
-          orderInfo: order.data || null
-        });
+        const orderRes = await db.collection('orders')
+          .where({ _id: _.in(orderIds) })
+          .get();
+        (orderRes.data || []).forEach(o => { orderMap[o._id] = o; });
       } catch (e) {
-        enriched.push({ ...req, orderInfo: null });
+        console.warn('[adminGetReturns] batch order lookup failed:', e.message);
       }
     }
 
-    return { code: 0, data: enriched };
+    const enriched = listRes.data.map(req => ({
+      ...req,
+      orderInfo: orderMap[req.orderId] || null
+    }));
+
+    logger.info('adminGetReturns', { status, page });
+    return res.list(enriched, countRes.total);
   } catch (err) {
-    return { code: -1, msg: err.message };
+    logger.error('adminGetReturns', err, { status, page });
+    return res.internalError();
   }
 };

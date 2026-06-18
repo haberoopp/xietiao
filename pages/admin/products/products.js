@@ -52,14 +52,32 @@ Page({
     }
 
     try {
-      const res = await wx.cloud.callFunction({ name: 'getProducts', data: { page: 1, pageSize: 500 } });
-      if (res.result.code === 0) {
-        const products = res.result.data.list.map(p => ({
-          ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient'
+      // 先查总数
+      const countRes = await wx.cloud.callFunction({
+        name: 'getProducts',
+        data: { page: 1, pageSize: 1 }
+      });
+      if (countRes.result.code !== 0) throw new Error('count failed');
+      const total = countRes.result.data.total;
+      const PAGE = 200;
+      const pages = Math.ceil(total / PAGE);
+
+      // 并行拉取全部
+      const calls = [];
+      for (let i = 0; i < pages; i++) {
+        calls.push(wx.cloud.callFunction({
+          name: 'getProducts',
+          data: { page: i + 1, pageSize: PAGE }
         }));
-        this.setData({ products });
-        this.filterProducts();
       }
+      const results = await Promise.all(calls);
+      const products = results
+        .filter(r => r.result && r.result.code === 0)
+        .flatMap(r => r.result.data.list)
+        .map(p => ({ ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient' }));
+
+      this.setData({ products });
+      this.filterProducts();
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' });
     }
@@ -100,7 +118,9 @@ Page({
         const app = getApp();
 
         if (app.globalData.demoMode) {
-          app.globalData.demoProducts = app.globalData.demoProducts.filter(p => p._id !== product._id);
+          const current = demoStore.getAll(demoStore.KEYS.products);
+          const updated = current.filter(p => p._id !== product._id);
+          demoStore.setAll(demoStore.KEYS.products, updated);
           wx.showToast({ title: '已删除（演示模式）', icon: 'success' });
           this.loadProducts();
           return;
@@ -214,6 +234,7 @@ Page({
         productData.createdAt = Date.now();
         app.globalData.demoProducts.unshift(productData);
       }
+      demoStore.setAll(demoStore.KEYS.products, [...app.globalData.demoProducts]);
       wx.showToast({ title: '保存成功（演示模式）', icon: 'success' });
       this.setData({ showForm: false });
       this.loadProducts();
@@ -451,6 +472,7 @@ Page({
 
       if (app.globalData.demoMode) {
         app.globalData.demoProducts.unshift(productData);
+        demoStore.setAll(demoStore.KEYS.products, [...app.globalData.demoProducts]);
       } else {
         // Non-demo: save to cloud directly
         this.saveImportedProduct(productData);
@@ -497,19 +519,9 @@ Page({
   },
 
   filterProducts() {
-    const { products, searchKeyword, filteredProducts } = this.data;
+    const { products, searchKeyword } = this.data;
     if (!searchKeyword) {
-      // 无搜索：只追加 products 比 filteredProducts 多出的新 item，避免全量替换导致滚动跳顶
-      if (filteredProducts && filteredProducts.length < products.length) {
-        const fStart = filteredProducts.length;
-        const updates = {};
-        for (let i = fStart; i < products.length; i++) {
-          updates[`filteredProducts[${i}]`] = products[i];
-        }
-        if (Object.keys(updates).length > 0) {
-          this.setData(updates);
-        }
-      }
+      this.setData({ filteredProducts: products });
       return;
     }
     // 有搜索关键词时需要全量替换（过滤导致 item 位置发生变化）

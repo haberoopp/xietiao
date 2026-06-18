@@ -1,20 +1,21 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const res = require('./response');
+const logger = require('./logger');
+const auth = require('./auth');
 
 exports.main = async (event) => {
-  const wxContext = cloud.getWXContext();
-  if (!wxContext.OPENID) return { code: -1, msg: '未登录' };
-  const admin = await db.collection('admins').where({ lastLoginOpenid: wxContext.OPENID, loggedIn: true }).get();
-  if (admin.data.length === 0) return { code: -1, msg: '无管理员权限' };
-
-  const { productId, name, category, price, unit, stock, description, image } = event;
-
-  if (!productId) {
-    return { code: -1, msg: '缺少产品ID' };
-  }
-
   try {
+    const authResult = await auth.requireAdmin();
+    if (!authResult.authorized) return authResult.response;
+
+    const { productId, name, category, price, unit, stock, description, image } = event;
+
+    if (!productId) {
+      return res.badRequest('缺少产品ID');
+    }
+
     const data = { updatedAt: db.serverDate() };
     if (name !== undefined) data.name = name.trim();
     if (category !== undefined) data.category = category;
@@ -25,8 +26,10 @@ exports.main = async (event) => {
     if (image !== undefined) data.image = image;
 
     await db.collection('products').doc(productId).update({ data });
-    return { code: 0 };
+    logger.info('Product updated', { productId });
+    return res.ok();
   } catch (err) {
-    return { code: -1, msg: err.message };
+    logger.error('adminUpdateProduct error', err);
+    return res.internalError();
   }
 };

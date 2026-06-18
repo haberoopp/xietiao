@@ -1,12 +1,13 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const res = require('./response');
+const logger = require('./logger');
+const auth = require('./auth');
 
 exports.main = async (event) => {
-  const wxContext = cloud.getWXContext();
-  if (!wxContext.OPENID) return { code: -1, msg: '未登录' };
-  const admin = await db.collection('admins').where({ lastLoginOpenid: wxContext.OPENID, loggedIn: true }).get();
-  if (admin.data.length === 0) return { code: -1, msg: '无管理员权限' };
+  const authResult = await auth.requireAdmin();
+  if (!authResult.authorized) return authResult.response;
 
   const { status, page = 1, pageSize = 50 } = event;
   const where = {};
@@ -24,8 +25,10 @@ exports.main = async (event) => {
       .limit(pageSize)
       .get();
 
-    return { code: 0, data: { list: list.data, total: total.total } };
+    logger.info('adminGetOrders', { status, page });
+    return res.list(list.data, total.total);
   } catch (err) {
-    return { code: -1, msg: err.message };
+    logger.error('adminGetOrders', err, { status, page });
+    return res.internalError();
   }
 };

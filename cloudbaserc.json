@@ -1,0 +1,33 @@
+{
+  "version": "2.0",
+  "envId": "cloudbase-d6g98vaoyb7ec331a",
+  "functionRoot": "./cloudfunctions",
+  "functions": [
+    { "name": "getProducts",             "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "getMyOrders",             "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "submitOrder",             "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "updateOrder",             "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "cancelOrder",             "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "requestReturn",           "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "addressCRUD",             "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "customerCRUD",            "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminLogin",              "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminLogout",             "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminGetOrders",          "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminGetReturns",         "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminUpdateOrderStatus",  "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminUpdateOrderPrice",   "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminHandleReturn",       "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminAddProduct",         "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminUpdateProduct",      "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminDeleteProduct",      "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminOrderImage",         "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminDeleteOrderImage",   "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminTogglePickedUp",     "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "importProducts",          "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "subscribeAdmin",          "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "seedAdmin",               "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "initAdminAccounts",       "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "healthCheck",             "timeout": 10, "runtime": "Nodejs18.15", "handler": "index.main" }
+  ]
+}

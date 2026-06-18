@@ -1,17 +1,18 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const res = require('./response');
+const logger = require('./logger');
+const auth = require('./auth');
 
 exports.main = async (event) => {
-  const wxContext = cloud.getWXContext();
-  if (!wxContext.OPENID) return { code: -1, msg: '未登录' };
-  const admin = await db.collection('admins').where({ lastLoginOpenid: wxContext.OPENID, loggedIn: true }).get();
-  if (admin.data.length === 0) return { code: -1, msg: '无管理员权限' };
+  const authResult = await auth.requireAdmin();
+  if (!authResult.authorized) return authResult.response;
 
   const { name, category, price, unit, stock, description, image } = event;
 
   if (!name || !category || price === undefined || !unit) {
-    return { code: -1, msg: '缺少必填字段' };
+    return res.badRequest('缺少必填字段');
   }
 
   try {
@@ -27,9 +28,11 @@ exports.main = async (event) => {
       updatedAt: db.serverDate()
     };
 
-    const res = await db.collection('products').add({ data });
-    return { code: 0, data: { _id: res._id } };
+    const result = await db.collection('products').add({ data });
+    logger.info('adminAddProduct', { name, category });
+    return res.record({ _id: result._id });
   } catch (err) {
-    return { code: -1, msg: err.message };
+    logger.error('adminAddProduct', err, { name, category });
+    return res.internalError();
   }
 };

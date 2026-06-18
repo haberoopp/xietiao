@@ -1,11 +1,14 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const res = require('./response');
+const logger = require('./logger');
+const auth = require('./auth');
 
 exports.main = async (event) => {
   const { action, categories } = event;
-  const openid = cloud.getWXContext().OPENID;
-  if (!openid) return { code: -1, msg: '未登录' };
+  const authResult = auth.requireOpenid();
+  const openid = authResult.openid;
 
   try {
     if (action === 'subscribe') {
@@ -23,18 +26,21 @@ exports.main = async (event) => {
           updatedAt: db.serverDate()
         }
       });
-      return { code: 0 };
+      logger.info('Admin subscribed', { openid, categories });
+      return res.ok();
     }
 
     if (action === 'unsubscribe') {
       await db.collection('adminSubscriptions').where({ _openid: openid }).update({
         data: { subscribed: false, updatedAt: db.serverDate() }
       });
-      return { code: 0 };
+      logger.info('Admin unsubscribed', { openid });
+      return res.ok();
     }
 
-    return { code: -1, msg: '未知操作' };
+    return res.badRequest('未知操作');
   } catch (err) {
-    return { code: -1, msg: err.message };
+    logger.error('subscribeAdmin error', { error: err.message, action: event.action, openid });
+    return res.internalError();
   }
 };

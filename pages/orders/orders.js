@@ -85,9 +85,9 @@ Page({
     }
 
     try {
-      const res = await wx.cloud.callFunction({ name: 'getMyOrders' });
+      const res = await wx.cloud.callFunction({ name: 'getMyOrders', data: { page: 1, pageSize: 500 } });
       if (res.result.code === 0) {
-        const orders = res.result.data.map(order => {
+        const orders = (res.result.data.list || []).map(order => {
           const rr = order.returnRequest;
           if (rr && rr.exchangeItems) {
             rr.exchangeItems = rr.exchangeItems.map(ei => ({

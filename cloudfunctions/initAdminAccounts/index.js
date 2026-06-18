@@ -2,6 +2,9 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const crypto = require('crypto');
+const res = require('./response');
+const logger = require('./logger');
+const auth = require('./auth');
 
 function hashPassword(password, salt) {
   return crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
@@ -18,37 +21,43 @@ const ACCOUNTS = [
 ];
 
 exports.main = async () => {
-  const results = [];
-  for (const account of ACCOUNTS) {
-    const existing = await db.collection('admins')
-      .where({ username: account.username })
-      .get();
+  try {
+    const results = [];
+    for (const account of ACCOUNTS) {
+      const existing = await db.collection('admins')
+        .where({ username: account.username })
+        .get();
 
-    if (existing.data.length > 0) {
-      results.push({ username: account.username, status: 'skipped', reason: 'already exists' });
-      continue;
-    }
-
-    const salt = generateSalt();
-    const passwordHash = hashPassword(account.password, salt);
-
-    await db.collection('admins').add({
-      data: {
-        username: account.username,
-        passwordHash,
-        salt,
-        role: account.role,
-        nickname: account.nickname,
-        failedAttempts: 0,
-        lockedUntil: null,
-        loggedIn: false,
-        lastLoginOpenid: null,
-        lastLoginAt: null,
-        createdAt: db.serverDate(),
-        updatedAt: db.serverDate()
+      if (existing.data.length > 0) {
+        results.push({ username: account.username, status: 'skipped', reason: 'already exists' });
+        continue;
       }
-    });
-    results.push({ username: account.username, status: 'created' });
+
+      const salt = generateSalt();
+      const passwordHash = hashPassword(account.password, salt);
+
+      await db.collection('admins').add({
+        data: {
+          username: account.username,
+          passwordHash,
+          salt,
+          role: account.role,
+          nickname: account.nickname,
+          failedAttempts: 0,
+          lockedUntil: null,
+          loggedIn: false,
+          lastLoginOpenid: null,
+          lastLoginAt: null,
+          createdAt: db.serverDate(),
+          updatedAt: db.serverDate()
+        }
+      });
+      results.push({ username: account.username, status: 'created' });
+    }
+    logger.info('Admin accounts initialized', { count: results.length });
+    return res.record(results);
+  } catch (err) {
+    logger.error('initAdminAccounts error', { error: err.message });
+    return res.internalError();
   }
-  return { code: 0, data: results };
 };

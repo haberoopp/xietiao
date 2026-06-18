@@ -270,10 +270,11 @@ Page({
     }
     if (field === 'address') data.pickedLocation = null;
     this.setData(data);
-    // 手机号变化时匹配客户折扣
+    // 手机号变化时防抖匹配客户折扣
     if (field === 'phone') {
       if (value.length >= 11) {
-        this.matchCustomer(value);
+        if (this._matchTimer) clearTimeout(this._matchTimer);
+        this._matchTimer = setTimeout(() => this.matchCustomer(value), 500);
       } else if (this.data.matchedCustomer) {
         this.setData({ customerDiscount: 1.0, matchedCustomer: null });
         this.setData({ items: this.formatItems(this.data.items) });
@@ -418,7 +419,7 @@ Page({
     if (app.globalData.demoMode) {
       orderData._id = 'o' + Date.now();
       app.globalData.demoOrders.unshift(orderData);
-      wx.setStorageSync('demoOrders', app.globalData.demoOrders);
+      wx.setStorageSync('demo_orders', app.globalData.demoOrders);
       // 提交成功后保存地址和客户
       if (this.data.saveAddress) await this.saveCurrentAddress(app);
       await this.saveCustomer(app, customerName.trim(), phone.trim(), parseFloat(this.data.totalAmount) * 100);
@@ -456,9 +457,9 @@ Page({
         }
       };
       update(app.globalData.demoOrders);
-      const saved = wx.getStorageSync('demoOrders') || [];
+      const saved = wx.getStorageSync('demo_orders') || [];
       update(saved);
-      wx.setStorageSync('demoOrders', saved);
+      wx.setStorageSync('demo_orders', saved);
       wx.hideLoading();
       wx.showModal({
         title: '修改成功',

@@ -108,20 +108,36 @@ Page({
 
     try {
       if (this.data.isReturnTab) {
-        const res = await wx.cloud.callFunction({ name: 'adminGetReturns' });
+        const res = await wx.cloud.callFunction({ name: 'adminGetReturns', data: { page: 1, pageSize: 200 } });
         if (res.result.code === 0) {
-          const returnList = res.result.data.map(rr => ({
+          const returnList = (res.result.data.list || []).map(rr => ({
             ...rr,
             orderInfo: { ...(rr.orderInfo || {}), totalText: (((rr.orderInfo || {}).totalAmount || 0) / 100).toFixed(2) }
           }));
           this.setData({ returnList, orders: [] });
         }
       } else {
-        const params = { page: 1, pageSize: 500 };
-        if (this.data.activeStatus) params.status = this.data.activeStatus;
-        const res = await wx.cloud.callFunction({ name: 'adminGetOrders', data: params });
-        if (res.result.code === 0) {
-          let orders = res.result.data.list.map(order => ({
+        // 先查总数，再并行拉取全部
+        const countRes = await wx.cloud.callFunction({
+          name: 'adminGetOrders',
+          data: Object.assign({ page: 1, pageSize: 1 }, this.data.activeStatus ? { status: this.data.activeStatus } : {})
+        });
+        if (countRes.result.code !== 0) throw new Error('count failed');
+        const total = countRes.result.data.total;
+        const PAGE = 200;
+        const pages = Math.ceil(total / PAGE);
+
+        const calls = [];
+        for (let i = 0; i < pages; i++) {
+          const params = { page: i + 1, pageSize: PAGE };
+          if (this.data.activeStatus) params.status = this.data.activeStatus;
+          calls.push(wx.cloud.callFunction({ name: 'adminGetOrders', data: params }));
+        }
+        const results = await Promise.all(calls);
+        let orders = results
+          .filter(r => r.result && r.result.code === 0)
+          .flatMap(r => r.result.data.list)
+          .map(order => ({
             ...order,
             items: (order.items || []).map(i => ({ ...i, priceText: ((i.price || 0) / 100).toFixed(2) })),
             statusText: util.getOrderStatusText(order.status),
@@ -141,7 +157,6 @@ Page({
             );
           }
           this.setData({ orders, returnList: [] });
-        }
       }
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' });

@@ -1,7 +1,9 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
-const _ = db.command;
+const res = require('./response');
+const logger = require('./logger');
+const auth = require('./auth');
 
 exports.main = async (event) => {
   const { category, keyword, page = 1, pageSize = 20 } = event;
@@ -15,43 +17,20 @@ exports.main = async (event) => {
   }
 
   try {
-    const total = await db.collection('products').where(where).count();
-    const list = await db.collection('products')
-      .where(where)
-      .orderBy('createdAt', 'desc')
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
-      .get();
+    const [totalRes, listRes] = await Promise.all([
+      db.collection('products').where(where).count(),
+      db.collection('products')
+        .where(where)
+        .orderBy('createdAt', 'desc')
+        .skip((page - 1) * pageSize)
+        .limit(Math.min(pageSize, 100))
+        .get()
+    ]);
 
-    // 计算每个产品近7天销量
-    const sevenDaysAgo = Date.now() - 7 * 86400000;
-    const productIds = list.data.map(p => p._id);
-
-    if (productIds.length > 0) {
-      const ordersRes = await db.collection('orders')
-        .where({
-          status: _.neq('cancelled'),
-          createdAt: _.gte(new Date(sevenDaysAgo).toISOString())
-        })
-        .field({ items: true })
-        .get();
-
-      const salesMap = {};
-      ordersRes.data.forEach(order => {
-        (order.items || []).forEach(item => {
-          if (productIds.includes(item.productId)) {
-            salesMap[item.productId] = (salesMap[item.productId] || 0) + item.price * item.quantity;
-          }
-        });
-      });
-
-      list.data.forEach(p => {
-        p.recent_sales = salesMap[p._id] || 0;
-      });
-    }
-
-    return { code: 0, data: { list: list.data, total: total.total } };
+    logger.info('getProducts', { category, keyword, page, total: totalRes.total });
+    return res.list(listRes.data, totalRes.total);
   } catch (err) {
-    return { code: -1, msg: err.message };
+    logger.error('getProducts', err, { category, keyword, page });
+    return res.internalError();
   }
 };

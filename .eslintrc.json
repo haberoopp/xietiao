@@ -1,0 +1,82 @@
+{
+  "env": {
+    "browser": true,
+    "es2020": true,
+    "node": true
+  },
+  "globals": {
+    "wx": "readonly",
+    "getApp": "readonly",
+    "getCurrentPages": "readonly",
+    "Page": "readonly",
+    "App": "readonly",
+    "Component": "readonly",
+    "require": "readonly",
+    "module": "readonly",
+    "console": "readonly",
+    "Promise": "readonly",
+    "setTimeout": "readonly",
+    "clearTimeout": "readonly",
+    "parseInt": "readonly",
+    "parseFloat": "readonly",
+    "isNaN": "readonly",
+    "Math": "readonly",
+    "Date": "readonly",
+    "JSON": "readonly",
+    "Object": "readonly",
+    "Array": "readonly",
+    "String": "readonly",
+    "Number": "readonly",
+    "RegExp": "readonly",
+    "Map": "readonly",
+    "Set": "readonly",
+    "Error": "readonly",
+    "undefined": "readonly"
+  },
+  "rules": {
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-undef": "error",
+    "no-dupe-keys": "error",
+    "no-duplicate-case": "error",
+    "no-empty": ["warn", { "allowEmptyCatch": true }],
+    "no-extra-semi": "error",
+    "no-irregular-whitespace": "error",
+    "no-unreachable": "warn",
+    "eqeqeq": ["warn", "smart"],
+    "no-array-constructor": "error",
+    "no-new-object": "error",
+    "no-new-wrappers": "error",
+    "no-throw-literal": "error",
+    "curly": ["warn", "multi-line"],
+    "no-debugger": "error",
+    "no-alert": "error",
+    "no-console": "off",
+    "camelcase": ["warn", { "properties": "never", "ignoreDestructuring": true }],
+    "max-depth": ["warn", 4],
+    "max-lines-per-function": ["warn", { "max": 80, "skipBlankLines": true, "skipComments": true }],
+    "complexity": ["warn", 10],
+    "no-trailing-spaces": "warn",
+    "eol-last": ["warn", "always"],
+    "indent": ["warn", 2, { "SwitchCase": 1 }],
+    "quotes": ["warn", "single", { "avoidEscape": true }],
+    "semi": ["error", "always"],
+    "comma-dangle": ["warn", "only-multiline"]
+  },
+  "overrides": [
+    {
+      "files": ["**/notify.js"],
+      "rules": {
+        "no-var": "off",
+        "prefer-const": "off"
+      }
+    },
+    {
+      "files": ["**/cloudfunctions/**/*.js"],
+      "rules": {
+        "camelcase": "off"
+      }
+    }
+  ]
+}

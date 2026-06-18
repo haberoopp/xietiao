@@ -48,17 +48,37 @@ Page({
   async loadCloudDashboard() {
     wx.showLoading({ title: '加载中...' });
     try {
-      const [ordersRes, productsRes] = await Promise.all([
-        wx.cloud.callFunction({ name: 'adminGetOrders', data: { page: 1, pageSize: 500 } }),
-        wx.cloud.callFunction({ name: 'getProducts', data: { pageSize: 200 } })
+      // 先查总数，再并行拉取全部
+      const [orderCountRes, productCountRes] = await Promise.all([
+        wx.cloud.callFunction({ name: 'adminGetOrders', data: { page: 1, pageSize: 1 } }),
+        wx.cloud.callFunction({ name: 'getProducts', data: { page: 1, pageSize: 1 } })
+      ]);
+      const orderTotal = orderCountRes.result && orderCountRes.result.code === 0 ? orderCountRes.result.data.total : 0;
+      const productTotal = productCountRes.result && productCountRes.result.code === 0 ? productCountRes.result.data.total : 0;
+      const PAGE = 200;
+      const orderPages = Math.ceil(orderTotal / PAGE);
+      const productPages = Math.ceil(productTotal / PAGE);
+
+      const orderCalls = [];
+      const productCalls = [];
+      for (let i = 0; i < orderPages; i++) {
+        orderCalls.push(wx.cloud.callFunction({ name: 'adminGetOrders', data: { page: i + 1, pageSize: PAGE } }));
+      }
+      for (let i = 0; i < productPages; i++) {
+        productCalls.push(wx.cloud.callFunction({ name: 'getProducts', data: { page: i + 1, pageSize: PAGE } }));
+      }
+
+      const [orderResults, productResults] = await Promise.all([
+        Promise.all(orderCalls),
+        Promise.all(productCalls)
       ]);
 
-      const orders = (ordersRes.result && ordersRes.result.code === 0)
-        ? (ordersRes.result.data.list || [])
-        : [];
-      const products = (productsRes.result && productsRes.result.code === 0)
-        ? (productsRes.result.data.list || [])
-        : [];
+      const orders = orderResults
+        .filter(r => r.result && r.result.code === 0)
+        .flatMap(r => r.result.data.list || []);
+      const products = productResults
+        .filter(r => r.result && r.result.code === 0)
+        .flatMap(r => r.result.data.list || []);
 
       this.renderDashboard(orders, products);
     } catch (err) {
@@ -108,6 +128,16 @@ Page({
     const pendingOrders = rangeOrders.filter(o => o.status === 'processing').length;
     const unpaidAmount = orders.filter(o => o.payment_status === 'unpaid').reduce((sum, o) => sum + (o.totalAmount || 0) - (o.paid_amount || 0), 0);
 
+    // 从订单数据中计算各产品销售额（替代云函数中的 recent_sales）
+    const productSales = {};
+    rangeOrders.forEach(o => {
+      (o.items || []).forEach(item => {
+        const pid = item.productId;
+        if (!pid) return;
+        productSales[pid] = (productSales[pid] || 0) + (item.price || 0) * (item.quantity || 0);
+      });
+    });
+
     // 缺货
     const shortageProducts = products
       .filter(p => p.status === 'out' || p.status === 'low')
@@ -115,20 +145,20 @@ Page({
         _id: p._id,
         name: p.name,
         status: p.status,
-        recentSalesText: ((p.recent_sales || 0) / 100).toFixed(0),
+        recentSalesText: ((productSales[p._id] || 0) / 100).toFixed(0),
         lastProducedText: p.last_produced_at ? this.formatDaysAgo(p.last_produced_at) : ''
       }))
       .sort((a, b) => a.status === 'out' ? -1 : 1);
 
     // 产品排行
-    const maxSales = Math.max(1, ...products.map(p => p.recent_sales || 0));
+    const maxSales = Math.max(1, ...products.map(p => productSales[p._id] || 0));
     const topProducts = [...products]
-      .sort((a, b) => (b.recent_sales || 0) - (a.recent_sales || 0))
+      .sort((a, b) => (productSales[b._id] || 0) - (productSales[a._id] || 0))
       .slice(0, 10)
       .map(p => ({
         _id: p._id, name: p.name, category: p.category, unit: p.unit,
-        recentSalesText: ((p.recent_sales || 0) / 100).toFixed(0),
-        barPercent: Math.round(((p.recent_sales || 0) / maxSales) * 100)
+        recentSalesText: ((productSales[p._id] || 0) / 100).toFixed(0),
+        barPercent: Math.round(((productSales[p._id] || 0) / maxSales) * 100)
       }));
 
     // 客户排行

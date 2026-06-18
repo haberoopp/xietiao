@@ -1,6 +1,9 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const res = require('./response');
+const logger = require('./logger');
+const auth = require('./auth');
 const crypto = require('crypto');
 
 const MAX_ATTEMPTS = 5;
@@ -20,13 +23,13 @@ exports.main = async (event) => {
   const openid = wxContext.OPENID;
 
   if (!username || !password) {
-    return { code: -1, msg: '请输入账号和密码' };
+    return res.badRequest('请输入账号和密码');
   }
 
   try {
     const result = await db.collection('admins').where({ username }).get();
     if (result.data.length === 0) {
-      return { code: -1, msg: '账号或密码错误' };
+      return res.badRequest('账号或密码错误');
     }
 
     const admin = result.data[0];
@@ -34,7 +37,7 @@ exports.main = async (event) => {
     // 检查是否被锁定
     if (admin.lockedUntil && admin.lockedUntil > Date.now()) {
       const remaining = Math.ceil((admin.lockedUntil - Date.now()) / 60000);
-      return { code: -1, msg: `账号已锁定，请${remaining}分钟后再试` };
+      return res.forbidden(`账号已锁定，请${remaining}分钟后再试`);
     }
 
     let valid = false;
@@ -61,7 +64,7 @@ exports.main = async (event) => {
         updateData.lockedUntil = Date.now() + LOCK_MINUTES * 60000;
       }
       await db.collection('admins').doc(admin._id).update({ data: updateData });
-      return { code: -1, msg: '账号或密码错误' };
+      return res.badRequest('账号或密码错误');
     }
 
     // 登录成功：重置失败次数，迁移密码，记录登录信息
@@ -82,16 +85,15 @@ exports.main = async (event) => {
 
     await db.collection('admins').doc(admin._id).update({ data: updateData });
 
-    return {
-      code: 0,
-      data: {
-        adminId: admin._id,
-        username: admin.username,
-        role: admin.role || 'warehouse',
-        nickname: admin.nickname || admin.username
-      }
-    };
+    logger.info('adminLogin', { adminId: admin._id, username: admin.username });
+    return res.record({
+      adminId: admin._id,
+      username: admin.username,
+      role: admin.role || 'warehouse',
+      nickname: admin.nickname || admin.username
+    });
   } catch (err) {
-    return { code: -1, msg: err.message };
+    logger.error('adminLogin', err, { username });
+    return res.internalError();
   }
 };

@@ -132,15 +132,37 @@ Page({
     }
 
     try {
-      const res = await wx.cloud.callFunction({ name: 'getProducts', data: { page: 1, pageSize: 500 } });
-      if (res.result.code === 0) {
-        const products = res.result.data.list.map(p => ({
-          ...p, priceText: (p.price / 100).toFixed(2)
-        }));
-        this.setData({ products, allProducts: products });
+      // 先查总数
+      const countRes = await wx.cloud.callFunction({
+        name: 'getProducts',
+        data: { page: 1, pageSize: 1 }
+      });
+      if (countRes.result.code !== 0) {
+        throw new Error('count failed');
       }
+      const total = countRes.result.data.total;
+      const PAGE = 200;
+      const pages = Math.ceil(total / PAGE);
+
+      // 并行拉取全部数据，一次 setData 避免滚动跳动
+      const calls = [];
+      for (let i = 0; i < pages; i++) {
+        calls.push(wx.cloud.callFunction({
+          name: 'getProducts',
+          data: { page: i + 1, pageSize: PAGE }
+        }));
+      }
+      const results = await Promise.all(calls);
+      const allProducts = results
+        .filter(r => r.result && r.result.code === 0)
+        .flatMap(r => r.result.data.list)
+        .map(p => ({ ...p, priceText: (p.price / 100).toFixed(2) }));
+
+      this.setData({ products: allProducts, allProducts });
+      console.log(`✅ 已加载 ${allProducts.length} / ${total} 个产品`);
     } catch (err) {
-      wx.showToast({ title: '加载失败', icon: 'none' });
+      console.error('加载产品失败', err);
+      wx.showToast({ title: '加载失败，请重试', icon: 'none' });
     }
     this.filterProducts();
     this.setData({ loading: false });
