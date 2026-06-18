@@ -235,14 +235,6 @@ Page({
         });
       }
       wx.setStorageSync('addresses', addresses);
-      // 结算页选择模式下：新增地址后自动带回结算页
-      if (this.data.selectMode) {
-        app.globalData.selectedAddressData = addrData;
-        app.globalData.addressSelectMode = false;
-        this.setData({ showForm: false, selectMode: false, addresses });
-        wx.navigateTo({ url: '/pages/checkout/checkout' });
-        return;
-      }
       this.setData({ showForm: false, addresses });
       wx.showToast({ title: '已保存', icon: 'success' });
       return;
@@ -268,21 +260,6 @@ Page({
       const res = await wx.cloud.callFunction({ name: 'addressCRUD', data });
       wx.hideLoading();
       if (res.result.code === 0) {
-        // 结算页选择模式下：新增地址后自动带回结算页
-        if (this.data.selectMode) {
-          const addrData = {
-            name: name.trim(),
-            phone: phone.trim(),
-            address: address.trim(),
-            addressDetail: addressDetail.trim() || undefined,
-            location: this.data.pickedLocation || undefined
-          };
-          app.globalData.selectedAddressData = addrData;
-          app.globalData.addressSelectMode = false;
-          this.setData({ showForm: false, selectMode: false });
-          wx.navigateTo({ url: '/pages/checkout/checkout' });
-          return;
-        }
         this.setData({ showForm: false });
         this.loadAddresses();
         wx.showToast({ title: '已保存', icon: 'success' });
