@@ -435,6 +435,7 @@ Page({
     const unitIdx = header.findIndex(h => h === '单位' || h === 'unit');
     const stockIdx = header.findIndex(h => h === '库存' || h === 'stock');
     const descIdx = header.findIndex(h => h === '描述' || h === 'description');
+    const imgIdx = header.findIndex(h => h === '图片' || h === '图片链接' || h === 'image');
 
     if (nameIdx === -1 || priceIdx === -1) {
       wx.showModal({
@@ -466,7 +467,7 @@ Page({
         unit: unitIdx >= 0 ? (cols[unitIdx] || '米') : '米',
         stock: stockIdx >= 0 ? (parseInt(cols[stockIdx]) || 0) : 0,
         description: descIdx >= 0 ? (cols[descIdx] || '') : '',
-        image: '',
+        image: imgIdx >= 0 ? (cols[imgIdx] || '') : '',
         createdAt: Date.now()
       };
 

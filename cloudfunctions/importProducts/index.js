@@ -37,6 +37,7 @@ exports.main = async (event) => {
       const unit = (row['单位'] || row['unit'] || '米').toString().trim();
       const stock = parseInt(row['库存'] || row['stock'] || 0) || 0;
       const description = (row['描述'] || row['description'] || '').toString().trim();
+      const image = (row['图片'] || row['图片链接'] || row['image'] || '').toString().trim();
 
       if (!name) {
         results.errors.push({ row: i + 2, msg: '名称为空' });
@@ -51,8 +52,7 @@ exports.main = async (event) => {
         _row: i + 2,  // Excel 行号
         name, category,
         price: Math.round(price * 100),
-        unit, stock, description,
-        image: '',
+        unit, stock, description, image,
         createdAt: db.serverDate(),
         updatedAt: db.serverDate()
       });
