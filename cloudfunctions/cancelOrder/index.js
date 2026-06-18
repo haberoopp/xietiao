@@ -16,6 +16,7 @@ const db = cloud.database();
 const res = require('./response');
 const logger = require('./logger');
 const auth = require('./auth');
+const notify = require('./notify');
 
 // ============================================================
 // 接口层
@@ -38,7 +39,16 @@ exports.main = async (event) => {
       return res.conflict(bizResult.error);
     }
 
-    // 4. 成功返回
+    // 4. 发送通知（fire-and-forget，不阻塞响应）
+    const order = bizResult.order;
+    notify.sendToCustomer(db, order, 'STATUS_CHANGE', { oldStatus: order.oldStatus }).catch(e => {
+      logger.warn('notify customer STATUS_CHANGE failed', { orderId: v.orderId, error: e.message });
+    });
+    notify.sendToAdmins(db, 'ORDER_CANCELLED', order, {}).catch(e => {
+      logger.warn('notify ORDER_CANCELLED failed', { orderId: v.orderId, error: e.message });
+    });
+
+    // 5. 成功返回
     logger.info('orderCancelled', { orderId: v.orderId });
     return res.ok();
   } catch (err) {
@@ -80,9 +90,15 @@ async function doCancelOrder(orderId, openid) {
     return { success: false, error: '该订单已有退换货申请，无法取消' };
   }
 
+  const oldStatus = order.data.status;
+
   await db.collection('orders').doc(orderId).update({
     data: { status: 'cancelled', updatedAt: db.serverDate() }
   });
 
-  return { success: true };
+  // 返回更新后的订单数据用于通知
+  return {
+    success: true,
+    order: { ...order.data, status: 'cancelled', oldStatus }
+  };
 }

@@ -4,6 +4,7 @@ const db = cloud.database();
 const res = require('./response');
 const logger = require('./logger');
 const auth = require('./auth');
+const notify = require('./notify');
 
 exports.main = async (event) => {
   const { customerName, phone, address, items, totalAmount, remark, deliveryMethod, location } = event;
@@ -34,8 +35,15 @@ exports.main = async (event) => {
     if (location) order.location = location;
 
     const result = await db.collection('orders').add({ data: order });
-    logger.info('submitOrder', { orderId: result._id, customerName });
-    return res.record({ orderId: result._id });
+    const orderId = result._id;
+    logger.info('submitOrder', { orderId, customerName });
+
+    // 通知所有订阅管理员：新订单
+    notify.sendToAdmins(db, 'NEW_ORDER', { _id: orderId, customerName, totalAmount, items }, {}).catch(e => {
+      logger.warn('notify NEW_ORDER failed', { orderId, error: e.message });
+    });
+
+    return res.record({ orderId });
   } catch (err) {
     logger.error('submitOrder', err, { customerName, phone });
     return res.internalError();

@@ -4,6 +4,7 @@ const db = cloud.database();
 const res = require('./response');
 const logger = require('./logger');
 const auth = require('./auth');
+const notify = require('./notify');
 
 exports.main = async (event) => {
   const authResult = await auth.requireAdmin();
@@ -62,6 +63,29 @@ exports.main = async (event) => {
     });
 
     logger.info('adminHandleReturn', { requestId, action });
+
+    // 读取订单数据用于通知
+    const orderDoc = await db.collection('orders').doc(req.data.orderId).get();
+    if (orderDoc.data) {
+      const order = orderDoc.data;
+      // 通知客户退换货结果
+      notify.sendToCustomer(db, order, 'RETURN_RESULT', {
+        requestId,
+        result: newStatus,
+        returnType: req.data.type
+      }).catch(e => {
+        logger.warn('notify customer RETURN_RESULT failed', { requestId, error: e.message });
+      });
+      // 通知管理员退换货处理
+      notify.sendToAdmins(db, 'RETURN', order, {
+        requestId,
+        result: newStatus,
+        returnType: req.data.type
+      }).catch(e => {
+        logger.warn('notify admin RETURN failed', { requestId, error: e.message });
+      });
+    }
+
     return res.ok();
   } catch (err) {
     logger.error('adminHandleReturn', err, { requestId, action });

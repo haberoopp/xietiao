@@ -119,13 +119,6 @@
       </view>
     </view>
 
-    <!-- 导出入口按钮（非选择模式） -->
-    <view wx:if="{{!selectMode && orders.length > 0}}" class="export-entry-bar">
-      <view class="export-entry-btn" bindtap="onEnterSelectMode">
-        <text>📥 选择导出订单</text>
-      </view>
-    </view>
-
     <view wx:if="{{orders.length === 0}}" class="empty-state">
       <text>暂无订单</text>
     </view>
