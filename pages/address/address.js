@@ -73,7 +73,7 @@ Page({
     try {
       const res = await wx.cloud.callFunction({ name: 'addressCRUD', data: { action: 'list' } });
       if (res.result.code === 0) {
-        this.setData({ addresses: res.result.data });
+        this.setData({ addresses: res.result.data.list });
       }
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' });

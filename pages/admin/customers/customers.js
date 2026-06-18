@@ -63,7 +63,7 @@ Page({
     try {
       const res = await wx.cloud.callFunction({ name: 'customerCRUD', data: { action: 'list' } });
       if (res.result.code === 0) {
-        this.setData({ customers: this.formatCustomers(res.result.data) });
+        this.setData({ customers: this.formatCustomers(res.result.data.list) });
         this.filterCustomers();
       }
     } catch (err) {

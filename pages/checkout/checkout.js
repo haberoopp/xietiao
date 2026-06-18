@@ -192,7 +192,7 @@ Page({
     try {
       const res = await wx.cloud.callFunction({ name: 'addressCRUD', data: { action: 'list' } });
       if (res.result.code === 0) {
-        const addresses = res.result.data;
+        const addresses = res.result.data.list;
         this.setData({ savedAddresses: addresses });
         const defaultAddr = addresses.find(a => a.isDefault);
         if (defaultAddr && !this.data.form.customerName) {
@@ -301,7 +301,7 @@ Page({
     try {
       const res = await wx.cloud.callFunction({ name: 'customerCRUD', data: { action: 'getByPhone', phone } });
       if (res.result.code === 0 && res.result.data) {
-        const c = res.result.data;
+        const c = res.result.data.record;
         this.setData({ customerDiscount: c.discount, matchedCustomer: c });
         this.setData({ items: this.formatItems(this.data.items) });
         this.calcTotal();
@@ -349,7 +349,7 @@ Page({
         data: { action: 'list' }
       });
       if (listRes.result && listRes.result.code === 0) {
-        const exists = (listRes.result.data || []).find(a =>
+        const exists = (listRes.result.data.list || []).find(a =>
           a.name === newAddr.name && a.phone === newAddr.phone && a.address === newAddr.address
         );
         if (exists) return;
