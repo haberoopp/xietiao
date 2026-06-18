@@ -21,13 +21,6 @@ Page({
     this.getLocation();
   },
 
-  onShow() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 1 });
-    }
-    this.loadAddresses();
-  },
-
   async getLocation() {
     const loc = await amap.getCurrentLocation();
     if (loc) {
@@ -40,13 +33,6 @@ Page({
 
     if (app.globalData.demoMode) {
       let addresses = wx.getStorageSync('addresses') || [];
-      if (addresses.length === 0) {
-        addresses.push(
-          { _id: 'a001', name: '陈大明', phone: '13900139002', address: '浙江省温州市瓯海区梧田街道月乐西街58号', isDefault: true, createdAt: Date.now() - 86400000 * 10 },
-          { _id: 'a002', name: '温州服装厂', phone: '13800138001', address: '浙江省温州市鹿城区双屿街道工业区3号', isDefault: false, createdAt: Date.now() - 86400000 * 5 }
-        );
-        wx.setStorageSync('addresses', addresses);
-      }
       this.setData({ addresses });
       return;
     }
@@ -59,6 +45,14 @@ Page({
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' });
     }
+  },
+
+  // 点击已有地址 → 选中并返回结算页
+  onSelect(e) {
+    const addr = e.currentTarget.dataset.address;
+    const app = getApp();
+    app.globalData.selectedAddressData = addr;
+    wx.navigateBack();
   },
 
   async onSetDefault(e) {
@@ -105,10 +99,6 @@ Page({
 
   onDelete(e) {
     const addressId = e.currentTarget.dataset.id;
-    if (!addressId) {
-      wx.showToast({ title: '地址信息异常', icon: 'none' });
-      return;
-    }
     wx.showModal({
       title: '确认删除',
       content: '确定要删除该地址吗？',
@@ -140,7 +130,6 @@ Page({
     });
   },
 
-
   onFormInput(e) {
     const field = e.currentTarget.dataset.field;
     const value = e.detail.value;
@@ -149,7 +138,6 @@ Page({
     this.setData(data);
   },
 
-  // 微信原生地图搜索选点
   async onChooseLocation() {
     const { currentLocation } = this.data;
     const result = await amap.chooseLocation(
@@ -192,21 +180,27 @@ Page({
         addressDetail: addressDetail.trim() || undefined,
         location: this.data.pickedLocation || undefined
       };
+      let savedAddr;
       if (this.data.editingId) {
         addresses = addresses.map(a =>
           a._id === this.data.editingId ? { ...a, ...addrData, location: this.data.pickedLocation || a.location } : a
         );
+        savedAddr = { _id: this.data.editingId, ...addrData };
       } else {
-        addresses.push({
+        savedAddr = {
           _id: 'a' + Date.now(),
           ...addrData,
           isDefault: addresses.length === 0,
           createdAt: Date.now()
-        });
+        };
+        addresses.push(savedAddr);
       }
       wx.setStorageSync('addresses', addresses);
       this.setData({ showForm: false, addresses });
-      wx.showToast({ title: '已保存', icon: 'success' });
+      // 自动返回结算页并选中
+      app.globalData.selectedAddressData = savedAddr;
+      wx.showToast({ title: '已保存', icon: 'success', duration: 800 });
+      setTimeout(() => wx.navigateBack(), 800);
       return;
     }
 
@@ -223,16 +217,26 @@ Page({
       if (this.data.pickedLocation) {
         data.location = this.data.pickedLocation;
       } else if (this.data.editingId) {
-        data.location = null; // 允许清除已保存的定位
+        data.location = null;
       }
       if (this.data.editingId) data.addressId = this.data.editingId;
 
       const res = await wx.cloud.callFunction({ name: 'addressCRUD', data });
       wx.hideLoading();
       if (res.result.code === 0) {
+        // 构建保存后的地址数据
+        const savedAddr = {
+          _id: action === 'add' ? (res.result.data && res.result.data.record && res.result.data.record._id) : this.data.editingId,
+          name: name.trim(),
+          phone: phone.trim(),
+          address: address.trim(),
+          addressDetail: addressDetail.trim() || undefined,
+          location: this.data.pickedLocation || undefined
+        };
+        app.globalData.selectedAddressData = savedAddr;
         this.setData({ showForm: false });
-        this.loadAddresses();
-        wx.showToast({ title: '已保存', icon: 'success' });
+        wx.showToast({ title: '已保存', icon: 'success', duration: 800 });
+        setTimeout(() => wx.navigateBack(), 800);
       } else {
         wx.showToast({ title: res.result.msg || '保存失败', icon: 'none' });
       }

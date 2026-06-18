@@ -224,7 +224,6 @@ Page({
 
   goAddressSelect() {
     const app = getApp();
-    app.globalData.addressSelectMode = true;
     app.globalData.checkoutState = {
       deliveryMethod: this.data.deliveryMethod,
       customerName: this.data.form.customerName,
@@ -235,7 +234,7 @@ Page({
       customerDiscount: this.data.customerDiscount,
       matchedCustomer: this.data.matchedCustomer
     };
-    wx.switchTab({ url: '/pages/address/address' });
+    wx.navigateTo({ url: '/pages/address/select' });
   },
 
   onDeliveryChange(e) {

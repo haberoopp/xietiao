@@ -5,6 +5,7 @@
     "pages/checkout/checkout",
     "pages/orders/orders",
     "pages/address/address",
+    "pages/address/select",
     "pages/admin/login/login",
     "pages/admin/dashboard/dashboard",
     "pages/admin/orders/orders",
