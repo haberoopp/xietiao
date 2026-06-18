@@ -21,6 +21,7 @@
     { "name": "adminAddProduct",         "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "adminUpdateProduct",      "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "adminDeleteProduct",      "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminBatchProducts",     "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "adminOrderImage",         "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "adminDeleteOrderImage",   "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "adminTogglePickedUp",     "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },

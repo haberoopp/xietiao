@@ -29,7 +29,12 @@ Page({
     priceCurrent: '',
     priceNew: '',
     // 搜索
-    searchKeyword: ''
+    searchKeyword: '',
+    // 选择导出
+    selectMode: false,
+    selectedIds: {},
+    selectedCount: 0,
+    allSelected: false
   },
 
   onShow() {
@@ -664,7 +669,99 @@ Page({
     });
   },
 
-  // 导出订单为 CSV 并分享到微信
+  // ===== 选择导出 =====
+  // 进入选择模式
+  onEnterSelectMode() {
+    // 如果从功能tab进入，先切到订单tab
+    if (this.data.isToolsTab) {
+      this.setData({ isToolsTab: false });
+    }
+    const orders = this.data.orders.map(o => ({ ...o, selected: false }));
+    this.setData({
+      selectMode: true,
+      orders,
+      selectedIds: {},
+      selectedCount: 0,
+      allSelected: false
+    });
+  },
+
+  // 退出选择模式
+  onCancelSelectMode() {
+    const orders = this.data.orders.map(o => ({ ...o, selected: false }));
+    this.setData({
+      selectMode: false,
+      orders,
+      selectedIds: {},
+      selectedCount: 0,
+      allSelected: false
+    });
+  },
+
+  // 切换单个订单选中
+  onToggleOrderSelect(e) {
+    const id = e.currentTarget.dataset.id;
+    const selectedIds = { ...this.data.selectedIds };
+    if (selectedIds[id]) {
+      delete selectedIds[id];
+    } else {
+      selectedIds[id] = true;
+    }
+    const count = Object.keys(selectedIds).length;
+    const orders = this.data.orders.map(o => ({
+      ...o,
+      selected: !!selectedIds[o._id]
+    }));
+    this.setData({
+      selectedIds,
+      selectedCount: count,
+      allSelected: count === orders.length,
+      orders
+    });
+  },
+
+  // 全选/取消全选
+  onToggleSelectAll() {
+    if (this.data.allSelected) {
+      const orders = this.data.orders.map(o => ({ ...o, selected: false }));
+      this.setData({
+        orders,
+        selectedIds: {},
+        selectedCount: 0,
+        allSelected: false
+      });
+    } else {
+      const selectedIds = {};
+      this.data.orders.forEach(o => { selectedIds[o._id] = true; });
+      const orders = this.data.orders.map(o => ({ ...o, selected: true }));
+      this.setData({
+        orders,
+        selectedIds,
+        selectedCount: orders.length,
+        allSelected: true
+      });
+    }
+  },
+
+  // 导出选中（或全部）
+  onExportSelected() {
+    let exportOrders = this.data.orders.filter(o => this.data.selectedIds[o._id]);
+    if (exportOrders.length === 0) {
+      // 没选任何订单 → 导出当前全部
+      exportOrders = this.data.orders;
+    }
+    if (exportOrders.length === 0) {
+      wx.showToast({ title: '没有订单可导出', icon: 'none' });
+      return;
+    }
+    const csv = exportUtil.ordersToCSV(exportOrders);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    exportUtil.shareCSV(csv, '订单导出_' + dateStr + '.csv');
+    // 导出后退出选择模式
+    this.onCancelSelectMode();
+  },
+
+  // 旧版导出（保留兼容：直接导出所有订单）
   onExportOrders() {
     const orders = this.data.orders;
     if (orders.length === 0) {

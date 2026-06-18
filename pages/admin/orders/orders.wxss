@@ -660,3 +660,111 @@
   color: #E8594B;
   font-weight: 500;
 }
+
+/* ===== 选择导出 ===== */
+.export-entry-bar {
+  padding: 0 0 16rpx;
+}
+
+.export-entry-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx;
+  background: #e3f2fd;
+  border: 1rpx dashed #2196f3;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #1976D2;
+}
+
+.export-entry-btn:active {
+  background: #bbdefb;
+}
+
+/* 选择栏 */
+.select-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #eee;
+  margin-bottom: 16rpx;
+  border-radius: 8rpx;
+}
+
+.select-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.select-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.select-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 26rpx;
+  color: #333;
+}
+
+.select-count {
+  font-size: 24rpx;
+  color: #7F8C8D;
+}
+
+.select-cancel-btn {
+  font-size: 26rpx;
+  color: #666;
+  padding: 8rpx 20rpx;
+}
+
+.select-export-btn {
+  font-size: 26rpx;
+  color: #fff;
+  background: #1976D2;
+  padding: 10rpx 24rpx;
+  border-radius: 6rpx;
+}
+
+.select-export-btn:active {
+  background: #1565C0;
+}
+
+/* 选择框 */
+.select-checkbox {
+  width: 40rpx;
+  height: 40rpx;
+  border: 2rpx solid #ccc;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.select-checkbox.checked {
+  background: #1976D2;
+  border-color: #1976D2;
+}
+
+/* 订单选中高亮 */
+.order-card.order-selected {
+  border: 2rpx solid #1976D2;
+  background: #f5f9ff;
+}
+
+.order-select-check {
+  position: absolute;
+  top: 20rpx;
+  left: 16rpx;
+  z-index: 2;
+}

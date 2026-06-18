@@ -80,7 +80,7 @@
       <text class="tool-label">仪表盘</text>
       <text class="tool-arrow">›</text>
     </view>
-    <view class="tool-item" bindtap="onExportOrders">
+    <view class="tool-item" bindtap="onEnterSelectMode">
       <text class="tool-icon">📥</text>
       <text class="tool-label">导出订单</text>
       <text class="tool-arrow">›</text>
@@ -104,12 +104,38 @@
 
   <!-- ===== 订单列表 ===== -->
   <view wx:else>
+    <!-- 选择导出栏 -->
+    <view wx:if="{{selectMode}}" class="select-bar">
+      <view class="select-bar-left">
+        <view class="select-all-btn" bindtap="onToggleSelectAll">
+          <view class="select-checkbox {{allSelected ? 'checked' : ''}}">{{allSelected ? '✓' : ''}}</view>
+          <text>{{allSelected ? '取消全选' : '全选'}}</text>
+        </view>
+        <text class="select-count">已选 {{selectedCount}} 项</text>
+      </view>
+      <view class="select-bar-right">
+        <view class="select-cancel-btn" bindtap="onCancelSelectMode">取消</view>
+        <view class="select-export-btn" bindtap="onExportSelected">导出{{selectedCount > 0 ? '选中(' + selectedCount + ')' : '全部'}}</view>
+      </view>
+    </view>
+
+    <!-- 导出入口按钮（非选择模式） -->
+    <view wx:if="{{!selectMode && orders.length > 0}}" class="export-entry-bar">
+      <view class="export-entry-btn" bindtap="onEnterSelectMode">
+        <text>📥 选择导出订单</text>
+      </view>
+    </view>
+
     <view wx:if="{{orders.length === 0}}" class="empty-state">
       <text>暂无订单</text>
     </view>
 
     <view wx:else>
-      <view class="order-card card" wx:for="{{orders}}" wx:key="_id">
+      <view class="order-card card {{selectMode && item.selected ? 'order-selected' : ''}}" wx:for="{{orders}}" wx:key="_id">
+        <!-- 选择框 -->
+        <view wx:if="{{selectMode}}" class="order-select-check" data-id="{{item._id}}" catchtap="onToggleOrderSelect">
+          <view class="select-checkbox {{item.selected ? 'checked' : ''}}">{{item.selected ? '✓' : ''}}</view>
+        </view>
         <!-- 右上角复制按钮 -->
         <view class="copy-btn" data-order="{{item}}" catchtap="onCopyOrder">复制信息</view>
         <!-- 头部 -->

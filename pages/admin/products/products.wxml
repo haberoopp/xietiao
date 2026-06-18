@@ -5,6 +5,7 @@
     <view class="top-actions">
       <view class="import-btn" bindtap="onImport">导入Excel</view>
       <view class="add-btn" bindtap="onAdd">+ 添加产品</view>
+      <view class="batch-btn {{selectMode ? 'batch-active' : ''}}" bindtap="onToggleBatchMode">{{selectMode ? '退出批量' : '批量管理'}}</view>
     </view>
   </view>
 
@@ -17,13 +18,32 @@
     </view>
   </view>
 
+  <!-- 批量操作栏 -->
+  <view wx:if="{{selectMode}}" class="batch-bar">
+    <view class="batch-bar-left">
+      <view class="select-all-btn" bindtap="onToggleSelectAll">
+        <view class="select-checkbox {{allSelected ? 'checked' : ''}}">{{allSelected ? '✓' : ''}}</view>
+        <text>{{allSelected ? '取消全选' : '全选'}}</text>
+      </view>
+      <text class="select-count">已选 {{selectedCount}} 项</text>
+    </view>
+    <view class="batch-bar-right">
+      <view class="batch-delete-btn" bindtap="onBatchDelete">批量删除</view>
+      <view class="batch-edit-btn" bindtap="onBatchEdit">批量编辑</view>
+    </view>
+  </view>
+
   <!-- 产品列表 -->
   <view wx:if="{{filteredProducts.length === 0}}" class="empty-state">
     <text>暂无产品，点击上方添加</text>
   </view>
 
   <view wx:else class="product-admin-list">
-    <view class="pa-item card" wx:for="{{filteredProducts}}" wx:key="_id">
+    <view class="pa-item card {{selectMode && item.selected ? 'pa-selected' : ''}}" wx:for="{{filteredProducts}}" wx:key="_id">
+      <!-- 选择框 -->
+      <view wx:if="{{selectMode}}" class="pa-select-check" data-id="{{item._id}}" catchtap="onToggleSelect">
+        <view class="select-checkbox {{item.selected ? 'checked' : ''}}">{{item.selected ? '✓' : ''}}</view>
+      </view>
       <image class="pa-image" src="{{item.image || '/images/placeholder.png'}}" mode="aspectFill" />
       <view class="pa-info">
         <view class="pa-name">{{item.name}}</view>
@@ -34,7 +54,7 @@
           <text wx:if="{{item.recent_sales}}" class="pa-recent-sales">近7天销量 ¥{{item.recent_sales / 100}}</text>
         </view>
       </view>
-      <view class="pa-actions">
+      <view wx:if="{{!selectMode}}" class="pa-actions">
         <view class="action-btn edit" data-product="{{item}}" bindtap="onEdit">编辑</view>
         <view class="action-btn delete" data-product="{{item}}" bindtap="onDelete">删除</view>
       </view>
@@ -99,6 +119,46 @@
       <view class="modal-btns">
         <view class="btn-outline modal-cancel" bindtap="onCancel">取消</view>
         <view class="btn-primary modal-save" bindtap="onSave">保存</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 批量编辑弹窗 -->
+  <view wx:if="{{showBatchForm}}" class="modal-mask">
+    <view class="modal-content" catchtap="">
+      <view class="modal-title">批量编辑 {{selectedCount}} 个产品</view>
+
+      <scroll-view class="form-scroll" scroll-y>
+        <view class="form-group">
+          <view class="form-label">分类（留空不修改）</view>
+          <picker mode="selector" range="{{batchCategories}}" bindchange="onBatchCategoryChange">
+            <view class="picker-val">{{batchForm.category || '点击选择'}}</view>
+          </picker>
+        </view>
+
+        <view class="form-group">
+          <view class="form-label">单位（留空不修改）</view>
+          <picker mode="selector" range="{{batchUnits}}" bindchange="onBatchUnitChange">
+            <view class="picker-val">{{batchForm.unit || '点击选择'}}</view>
+          </picker>
+        </view>
+
+        <view class="form-group">
+          <view class="form-label">缺货状态（留空不修改）</view>
+          <picker mode="selector" range="{{batchStatuses}}" bindchange="onBatchStatusChange">
+            <view class="picker-val">
+              <view wx:if="{{batchForm.status}}" class="status-dot-inline {{batchForm.status === 'out' ? 'dot-out' : batchForm.status === 'low' ? 'dot-low' : 'dot-suf'}}"></view>
+              {{batchForm.status === 'out' ? '缺货' : batchForm.status === 'low' ? '紧张' : batchForm.status === 'sufficient' ? '充足' : '点击选择'}}
+            </view>
+          </picker>
+        </view>
+
+        <view class="batch-form-hint">提示：仅修改选中的字段，留空字段保持不变。不会修改产品名称、价格和图片。</view>
+      </scroll-view>
+
+      <view class="modal-btns">
+        <view class="btn-outline modal-cancel" bindtap="onCancelBatchForm">取消</view>
+        <view class="btn-primary modal-save" bindtap="onSaveBatchEdit">应用到{{selectedCount}}个产品</view>
       </view>
     </view>
   </view>

@@ -17,7 +17,21 @@ Page({
       status: 'sufficient',
       description: '',
       image: ''
-    }
+    },
+    // 批量管理
+    selectMode: false,
+    selectedIds: {},
+    selectedCount: 0,
+    allSelected: false,
+    showBatchForm: false,
+    batchForm: {
+      category: '',
+      unit: '',
+      status: ''
+    },
+    batchCategories: ['', '色丁', '雪纺', '涤纶', '锦纶', '花边', '其他'],
+    batchUnits: ['', '米', '卷', '个', '公斤', '包'],
+    batchStatuses: ['', '充足', '紧张', '缺货']
   },
 
   onShow() {
@@ -44,7 +58,7 @@ Page({
 
     if (app.globalData.demoMode) {
       const products = demoStore.getAll(demoStore.KEYS.products).map(p => ({
-        ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient'
+        ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient', selected: false
       }));
       this.setData({ products });
       this.filterProducts();
@@ -74,7 +88,7 @@ Page({
       const products = results
         .filter(r => r.result && r.result.code === 0)
         .flatMap(r => r.result.data.list)
-        .map(p => ({ ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient' }));
+        .map(p => ({ ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient', selected: false }));
 
       this.setData({ products });
       this.filterProducts();
@@ -278,6 +292,210 @@ Page({
 
   onCancel() {
     this.setData({ showForm: false });
+  },
+
+  // ===== 批量管理 =====
+  onToggleBatchMode() {
+    if (this.data.selectMode) {
+      this.exitBatchMode();
+    } else {
+      this.enterBatchMode();
+    }
+  },
+
+  enterBatchMode() {
+    const products = this.data.filteredProducts.map(p => ({ ...p, selected: false }));
+    this.setData({
+      selectMode: true,
+      filteredProducts: products,
+      selectedIds: {},
+      selectedCount: 0,
+      allSelected: false
+    });
+  },
+
+  exitBatchMode() {
+    const products = this.data.filteredProducts.map(p => ({ ...p, selected: false }));
+    this.setData({
+      selectMode: false,
+      filteredProducts: products,
+      selectedIds: {},
+      selectedCount: 0,
+      allSelected: false
+    });
+  },
+
+  onToggleSelect(e) {
+    const id = e.currentTarget.dataset.id;
+    const selectedIds = { ...this.data.selectedIds };
+    if (selectedIds[id]) {
+      delete selectedIds[id];
+    } else {
+      selectedIds[id] = true;
+    }
+    const count = Object.keys(selectedIds).length;
+    const filteredProducts = this.data.filteredProducts.map(p => ({
+      ...p,
+      selected: !!selectedIds[p._id]
+    }));
+    this.setData({
+      selectedIds,
+      selectedCount: count,
+      allSelected: count === filteredProducts.length,
+      filteredProducts
+    });
+  },
+
+  onToggleSelectAll() {
+    if (this.data.allSelected) {
+      const filteredProducts = this.data.filteredProducts.map(p => ({ ...p, selected: false }));
+      this.setData({
+        filteredProducts,
+        selectedIds: {},
+        selectedCount: 0,
+        allSelected: false
+      });
+    } else {
+      const selectedIds = {};
+      this.data.filteredProducts.forEach(p => { selectedIds[p._id] = true; });
+      const filteredProducts = this.data.filteredProducts.map(p => ({ ...p, selected: true }));
+      this.setData({
+        filteredProducts,
+        selectedIds,
+        selectedCount: filteredProducts.length,
+        allSelected: true
+      });
+    }
+  },
+
+  onBatchDelete() {
+    const ids = Object.keys(this.data.selectedIds);
+    if (ids.length === 0) {
+      wx.showToast({ title: '请先选择产品', icon: 'none' });
+      return;
+    }
+    wx.showModal({
+      title: '批量删除',
+      content: `确定要删除选中的${ids.length}个产品吗？此操作不可恢复。`,
+      confirmColor: '#f44336',
+      success: async (res) => {
+        if (!res.confirm) return;
+        const app = getApp();
+
+        if (app.globalData.demoMode) {
+          const products = this.data.products.filter(p => !this.data.selectedIds[p._id]);
+          demoStore.setAll(demoStore.KEYS.products, products);
+          wx.showToast({ title: `已删除${ids.length}个产品`, icon: 'success' });
+          this.exitBatchMode();
+          this.loadProducts();
+          return;
+        }
+
+        wx.showLoading({ title: `删除${ids.length}个产品...` });
+        try {
+          const result = await wx.cloud.callFunction({
+            name: 'adminBatchProducts',
+            data: { action: 'delete', ids }
+          });
+          wx.hideLoading();
+          if (result.result.code === 0) {
+            wx.showToast({ title: `已删除${ids.length}个产品`, icon: 'success' });
+            this.exitBatchMode();
+            this.loadProducts();
+          } else {
+            wx.showToast({ title: result.result.msg || '删除失败', icon: 'none' });
+          }
+        } catch (err) {
+          wx.hideLoading();
+          wx.showToast({ title: '网络错误', icon: 'none' });
+        }
+      }
+    });
+  },
+
+  onBatchEdit() {
+    const ids = Object.keys(this.data.selectedIds);
+    if (ids.length === 0) {
+      wx.showToast({ title: '请先选择产品', icon: 'none' });
+      return;
+    }
+    this.setData({
+      showBatchForm: true,
+      batchForm: { category: '', unit: '', status: '' }
+    });
+  },
+
+  onCancelBatchForm() {
+    this.setData({ showBatchForm: false });
+  },
+
+  onBatchCategoryChange(e) {
+    this.setData({ 'batchForm.category': this.data.batchCategories[e.detail.value] });
+  },
+
+  onBatchUnitChange(e) {
+    this.setData({ 'batchForm.unit': this.data.batchUnits[e.detail.value] });
+  },
+
+  onBatchStatusChange(e) {
+    const statusMap = { 0: '', 1: 'sufficient', 2: 'low', 3: 'out' };
+    this.setData({ 'batchForm.status': statusMap[e.detail.value] || '' });
+  },
+
+  async onSaveBatchEdit() {
+    const { category, unit, status } = this.data.batchForm;
+    if (!category && !unit && !status) {
+      wx.showToast({ title: '请至少选择一个要修改的字段', icon: 'none' });
+      return;
+    }
+
+    const ids = Object.keys(this.data.selectedIds);
+    const app = getApp();
+
+    if (app.globalData.demoMode) {
+      const updateData = {};
+      if (category) updateData.category = category;
+      if (unit) updateData.unit = unit;
+      if (status) updateData.status = status;
+
+      const products = this.data.products.map(p => {
+        if (this.data.selectedIds[p._id]) {
+          return { ...p, ...updateData };
+        }
+        return p;
+      });
+      demoStore.setAll(demoStore.KEYS.products, products);
+      wx.showToast({ title: `已更新${ids.length}个产品`, icon: 'success' });
+      this.setData({ showBatchForm: false });
+      this.exitBatchMode();
+      this.loadProducts();
+      return;
+    }
+
+    wx.showLoading({ title: `更新${ids.length}个产品...` });
+    try {
+      const data = { action: 'update', ids };
+      if (category) data.category = category;
+      if (unit) data.unit = unit;
+      if (status) data.status = status;
+
+      const result = await wx.cloud.callFunction({
+        name: 'adminBatchProducts',
+        data
+      });
+      wx.hideLoading();
+      if (result.result.code === 0) {
+        wx.showToast({ title: `已更新${ids.length}个产品`, icon: 'success' });
+        this.setData({ showBatchForm: false });
+        this.exitBatchMode();
+        this.loadProducts();
+      } else {
+        wx.showToast({ title: result.result.msg || '更新失败', icon: 'none' });
+      }
+    } catch (err) {
+      wx.hideLoading();
+      wx.showToast({ title: '网络错误', icon: 'none' });
+    }
   },
 
   onBackToOrders() {
