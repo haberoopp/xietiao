@@ -21,7 +21,7 @@ Page({
   },
 
   onLoad() {
-    this.loadProducts();
+    // loadProducts 由 onShow 统一触发，避免 onLoad + onShow 双重请求
   },
 
   onShow() {
@@ -36,9 +36,7 @@ Page({
       this.setData({ exchangeMode: false });
       this.loadCart();
     }
-    if (this.data.products.length === 0) {
-      this.loadProducts();
-    }
+    this.loadProducts();  // 每次切到此 Tab 都刷新
   },
 
   onPullDownRefresh() {

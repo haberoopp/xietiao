@@ -200,34 +200,50 @@ Page({
     const app = getApp();
 
     if (app.globalData.demoMode) {
+      const idx = this.data.orders.findIndex(o => o._id === priceOrderId);
+      if (idx !== -1) {
+        this.setData({ [`orders[${idx}].totalAmount`]: Math.round(newAmount * 100), [`orders[${idx}].totalText`]: newAmount.toFixed(2), showPriceModal: false });
+      }
       demoStore.update(demoStore.KEYS.orders, (orders) => {
         const o = orders.find(o => o._id === priceOrderId);
         if (o) o.totalAmount = Math.round(newAmount * 100);
         return orders;
       });
       wx.showToast({ title: '价格已更新', icon: 'success' });
-      this.setData({ showPriceModal: false });
-      this.loadOrders();
       return;
     }
 
-    wx.showLoading({ title: '更新中...' });
+    // 乐观更新
+    const idx = this.data.orders.findIndex(o => o._id === priceOrderId);
+    if (idx === -1) return;
+    const oldAmount = this.data.orders[idx].totalAmount;
+    const oldText = this.data.orders[idx].totalText;
+    this.setData({
+      [`orders[${idx}].totalAmount`]: Math.round(newAmount * 100),
+      [`orders[${idx}].totalText`]: newAmount.toFixed(2),
+      showPriceModal: false
+    });
+
     try {
       const res = await wx.cloud.callFunction({
         name: 'adminUpdateOrderPrice',
         data: { orderId: priceOrderId, totalAmount: newAmount * 100 }
       });
-      wx.hideLoading();
-      if (res.result.code === 0) {
-        wx.showToast({ title: '价格已更新', icon: 'success' });
-        this.setData({ showPriceModal: false });
-        this.loadOrders();
-      } else {
+      if (res.result.code !== 0) {
+        this.setData({
+          [`orders[${idx}].totalAmount`]: oldAmount,
+          [`orders[${idx}].totalText`]: oldText
+        });
         wx.showToast({ title: res.result.msg, icon: 'none' });
+      } else {
+        wx.showToast({ title: '价格已更新', icon: 'success' });
       }
     } catch (err) {
-      wx.hideLoading();
-      wx.showToast({ title: '操作失败', icon: 'none' });
+      this.setData({
+        [`orders[${idx}].totalAmount`]: oldAmount,
+        [`orders[${idx}].totalText`]: oldText
+      });
+      wx.showToast({ title: '网络错误', icon: 'none' });
     }
   },
 
@@ -363,27 +379,35 @@ Page({
         const newStatus = statusKeys[res.tapIndex];
 
         if (app.globalData.demoMode) {
+          const idx = this.data.orders.findIndex(o => o._id === order._id);
+          if (idx !== -1) this.setData({ [`orders[${idx}].status`]: newStatus });
           demoStore.update(demoStore.KEYS.orders, (orders) => {
             const o = orders.find(o => o._id === order._id);
             if (o) o.status = newStatus;
             return orders;
           });
           wx.showToast({ title: '已更新', icon: 'success' });
-          this.loadOrders();
           return;
         }
+
+        // 乐观更新
+        const idx = this.data.orders.findIndex(o => o._id === order._id);
+        if (idx === -1) return;
+        const oldStatus = this.data.orders[idx].status;
+        this.setData({ [`orders[${idx}].status`]: newStatus });
 
         try {
           const result = await wx.cloud.callFunction({
             name: 'adminUpdateOrderStatus', data: { orderId: order._id, status: newStatus }
           });
-          if (result.result.code === 0) {
-            wx.showToast({ title: '已更新', icon: 'success' });
-            this.loadOrders();
-          } else {
+          if (result.result.code !== 0) {
+            this.setData({ [`orders[${idx}].status`]: oldStatus });
             wx.showToast({ title: '更新失败', icon: 'none' });
+          } else {
+            wx.showToast({ title: '已更新', icon: 'success' });
           }
         } catch (err) {
+          this.setData({ [`orders[${idx}].status`]: oldStatus });
           wx.showToast({ title: '网络错误', icon: 'none' });
         }
       }
@@ -468,70 +492,99 @@ Page({
   // 切换已拿货/未拿货（仅配送订单）
   async onTogglePickedUp(e) {
     const { orderId } = e.currentTarget.dataset;
+    if (!orderId) return;
     const app = getApp();
 
     if (app.globalData.demoMode) {
+      const idx = this.data.orders.findIndex(o => o._id === orderId);
+      if (idx === -1) return;
+      const newVal = !this.data.orders[idx].pickedUp;
+      this.setData({ [`orders[${idx}].pickedUp`]: newVal });
       demoStore.update(demoStore.KEYS.orders, (orders) => {
         const o = orders.find(o => o._id === orderId);
         if (o) o.pickedUp = !o.pickedUp;
         return orders;
       });
-      this.loadOrders();
       return;
     }
+
+    // 乐观更新：立即翻转本地 pickedUp
+    const idx = this.data.orders.findIndex(o => o._id === orderId);
+    if (idx === -1) return;
+    const oldVal = this.data.orders[idx].pickedUp;
+    this.setData({ [`orders[${idx}].pickedUp`]: !oldVal });
 
     try {
       const res = await wx.cloud.callFunction({
         name: 'adminTogglePickedUp',
         data: { orderId }
       });
-      if (res.result.code === 0) {
-        this.loadOrders();
-      } else {
-        wx.showToast({ title: '操作失败', icon: 'none' });
+      if (res.result.code !== 0) {
+        // 失败回滚
+        this.setData({ [`orders[${idx}].pickedUp`]: oldVal });
+        wx.showToast({ title: res.result.msg || '操作失败', icon: 'none' });
       }
+      // 成功：乐观更新已生效，不需要任何操作
     } catch (err) {
+      // 网络异常回滚
+      this.setData({ [`orders[${idx}].pickedUp`]: oldVal });
       wx.showToast({ title: '网络错误', icon: 'none' });
     }
   },
 
   async onTogglePayment(e) {
     const { orderId } = e.currentTarget.dataset;
+    if (!orderId) return;
     const app = getApp();
 
     if (app.globalData.demoMode) {
+      const idx = this.data.orders.findIndex(o => o._id === orderId);
+      if (idx === -1) return;
+      const isPaid = this.data.orders[idx].payment_status === 'paid';
+      this.setData({
+        [`orders[${idx}].payment_status`]: isPaid ? 'unpaid' : 'paid',
+        [`orders[${idx}].paid_amount`]: isPaid ? 0 : this.data.orders[idx].totalAmount
+      });
       demoStore.update(demoStore.KEYS.orders, (orders) => {
         const o = orders.find(o => o._id === orderId);
         if (o) {
-          if (o.payment_status === 'paid') {
-            o.payment_status = 'unpaid';
-            o.paid_amount = 0;
-          } else {
-            o.payment_status = 'paid';
-            o.paid_amount = o.totalAmount;
-          }
+          if (o.payment_status === 'paid') { o.payment_status = 'unpaid'; o.paid_amount = 0; }
+          else { o.payment_status = 'paid'; o.paid_amount = o.totalAmount; }
         }
         return orders;
       });
-      wx.showToast({ title: '已更新', icon: 'success' });
-      this.loadOrders();
       return;
     }
+
+    // 乐观更新
+    const idx = this.data.orders.findIndex(o => o._id === orderId);
+    if (idx === -1) return;
+    const oldStatus = this.data.orders[idx].payment_status;
+    const oldPaidAmount = this.data.orders[idx].paid_amount;
+    const isPaid = oldStatus === 'paid';
+    this.setData({
+      [`orders[${idx}].payment_status`]: isPaid ? 'unpaid' : 'paid',
+      [`orders[${idx}].paid_amount`]: isPaid ? 0 : this.data.orders[idx].totalAmount
+    });
 
     try {
       const res = await wx.cloud.callFunction({
         name: 'adminUpdateOrderStatus',
-        data: {
-          orderId,
-          payment_status: this.data.orders.find(o => o._id === orderId).payment_status === 'paid' ? 'unpaid' : 'paid'
-        }
+        data: { orderId, payment_status: isPaid ? 'unpaid' : 'paid' }
       });
-      if (res.result.code === 0) {
-        wx.showToast({ title: '已更新', icon: 'success' });
-        this.loadOrders();
+      if (res.result.code !== 0) {
+        this.setData({
+          [`orders[${idx}].payment_status`]: oldStatus,
+          [`orders[${idx}].paid_amount`]: oldPaidAmount
+        });
+        wx.showToast({ title: '操作失败', icon: 'none' });
       }
     } catch (err) {
-      wx.showToast({ title: '操作失败', icon: 'none' });
+      this.setData({
+        [`orders[${idx}].payment_status`]: oldStatus,
+        [`orders[${idx}].paid_amount`]: oldPaidAmount
+      });
+      wx.showToast({ title: '网络错误', icon: 'none' });
     }
   },
 
