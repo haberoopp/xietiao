@@ -246,9 +246,7 @@ Page({
         app.globalData.selectedAddressData = savedAddr;
         app.globalData.addressSelectMode = false;
         this.setData({ selectMode: false, showForm: false });
-        setTimeout(() => {
-          wx.navigateTo({ url: '/pages/checkout/checkout' });
-        }, 600);
+        wx.navigateTo({ url: '/pages/checkout/checkout' });
       } else {
         this.setData({ showForm: false, addresses });
       }
@@ -292,9 +290,7 @@ Page({
           app.globalData.selectedAddressData = savedAddr;
           app.globalData.addressSelectMode = false;
           this.setData({ selectMode: false });
-          setTimeout(() => {
-            wx.navigateTo({ url: '/pages/checkout/checkout' });
-          }, 600);
+          wx.navigateTo({ url: '/pages/checkout/checkout' });
         } else {
           this.loadAddresses();
         }
