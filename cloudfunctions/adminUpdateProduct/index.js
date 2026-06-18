@@ -10,7 +10,7 @@ exports.main = async (event) => {
     const authResult = await auth.requireAdmin();
     if (!authResult.authorized) return authResult.response;
 
-    const { productId, name, category, price, unit, stock, description, image } = event;
+    const { productId, name, category, price, unit, stock, status, description, image } = event;
 
     if (!productId) {
       return res.badRequest('缺少产品ID');
@@ -24,6 +24,7 @@ exports.main = async (event) => {
     if (stock !== undefined) data.stock = parseInt(stock) || 0;
     if (description !== undefined) data.description = description;
     if (image !== undefined) data.image = image;
+    if (status !== undefined) data.status = status;
 
     await db.collection('products').doc(productId).update({ data });
     logger.info('Product updated', { productId });

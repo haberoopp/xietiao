@@ -156,6 +156,8 @@ Page({
               (o.address || '').toLowerCase().includes(kw)
             );
           }
+          // 把 cloud:// 图片转为临时 HTTP URL，非上传者也能加载
+          orders = await this.convertOrderImageUrls(orders);
           this.setData({ orders, returnList: [] });
       }
     } catch (err) {
@@ -740,5 +742,38 @@ Page({
     // 清除服务端登录状态
     wx.cloud.callFunction({ name: 'adminLogout' }).catch(() => {});
     wx.switchTab({ url: '/pages/admin/login/login' });
+  },
+
+  // 将订单图片的 cloud:// fileID 转为临时 HTTP URL，解决非上传者无法加载的问题
+  async convertOrderImageUrls(orders) {
+    const fileIDs = [];
+    orders.forEach(order => {
+      if (order.images && order.images.length > 0) {
+        order.images.forEach(img => {
+          if (img.fileID && img.fileID.startsWith('cloud://')) {
+            fileIDs.push(img.fileID);
+          }
+        });
+      }
+    });
+    if (fileIDs.length === 0) return orders;
+
+    try {
+      const res = await wx.cloud.getTempFileURL({ fileList: fileIDs });
+      const map = {};
+      (res.fileList || []).forEach(f => {
+        if (f.tempFileURL) map[f.fileID] = f.tempFileURL;
+      });
+      return orders.map(order => ({
+        ...order,
+        images: (order.images || []).map(img => ({
+          ...img,
+          fileID: map[img.fileID] || img.fileID
+        }))
+      }));
+    } catch (e) {
+      // 转换失败不影响订单数据显示
+      return orders;
+    }
   }
 });
