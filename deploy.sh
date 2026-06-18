@@ -20,8 +20,21 @@ for d in "$FUNCTIONS_DIR"/*/; do
 done
 
 echo ""
-echo "=== 2. 部署全部云函数 ==="
-echo "y" | tcb fn deploy --env-id "$ENV_ID" --force
+echo "=== 2. 并行部署全部云函数 ==="
+passed=0; failed=0; failed_list=""
+for d in "$FUNCTIONS_DIR"/*/; do
+  name=$(basename "$d")
+  [ "$name" = "lib" ] && continue
+  (
+    if echo "y" | tcb fn deploy "$name" --env-id "$ENV_ID" --force > /dev/null 2>&1; then
+      echo "  $name: OK"
+    else
+      echo "  $name: FAIL"
+    fi
+  ) &
+done
+wait
+echo "  部署完成"
 
 echo ""
 echo "=== 3. 清理复制的 lib 文件 ==="
