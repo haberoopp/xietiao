@@ -11,13 +11,11 @@ exports.main = async () => {
     if (!authResult.authorized) return authResult.response;
 
     const openid = cloud.getWXContext().OPENID;
-    const admin = await db.collection('admins').where({ lastLoginOpenid: openid, loggedIn: true }).get();
-    if (admin.data.length > 0) {
-      await db.collection('admins').doc(admin.data[0]._id).update({
-        data: { loggedIn: false, updatedAt: db.serverDate() }
-      });
-    }
-    logger.info('Admin logged out');
+    // 批量清除该 openid 下所有管理员的登录态
+    const result = await db.collection('admins')
+      .where({ lastLoginOpenid: openid, loggedIn: true })
+      .update({ data: { loggedIn: false, updatedAt: db.serverDate() } });
+    logger.info('Admin logged out', { clearedCount: result.stats?.updated || 0 });
     return res.ok();
   } catch (err) {
     logger.error('adminLogout error', err);

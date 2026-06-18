@@ -7,7 +7,7 @@ const logger = require('./logger');
 const auth = require('./auth');
 
 exports.main = async (event) => {
-  const authResult = auth.requireOpenid();
+  const authResult = await auth.requireOpenid();
   const admin = await db.collection('admins').where({ lastLoginOpenid: authResult.openid, loggedIn: true }).get();
   if (admin.data.length === 0) return res.forbidden('无管理员权限');
 

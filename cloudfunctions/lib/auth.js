@@ -50,6 +50,7 @@ async function requireAdmin() {
   try {
     const result = await db.collection('admins')
       .where({ lastLoginOpenid: openid, loggedIn: true })
+      .orderBy('lastLoginAt', 'desc')
       .get();
 
     if (result.data.length === 0) {

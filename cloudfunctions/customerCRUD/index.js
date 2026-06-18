@@ -10,7 +10,7 @@ exports.main = async (event) => {
   const { action } = event;
   // 仅管理操作需要鉴权（list/add/update/delete）
   if (action !== 'getByPhone' && action !== 'upsert') {
-    const authResult = auth.requireOpenid();
+    const authResult = await auth.requireOpenid();
     const admin = await db.collection('admins').where({ lastLoginOpenid: authResult.openid, loggedIn: true }).get();
     if (admin.data.length === 0) return res.forbidden('无管理员权限');
   }

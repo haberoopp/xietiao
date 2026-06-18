@@ -67,6 +67,11 @@ exports.main = async (event) => {
       return res.badRequest('账号或密码错误');
     }
 
+    // 登录成功前：清除同一 openid 下其他管理员旧登录态，防止多账号残留
+    await db.collection('admins')
+      .where({ lastLoginOpenid: openid, loggedIn: true, _id: db.command.neq(admin._id) })
+      .update({ data: { loggedIn: false, updatedAt: db.serverDate() } });
+
     // 登录成功：重置失败次数，迁移密码，记录登录信息
     const updateData = {
       failedAttempts: 0,

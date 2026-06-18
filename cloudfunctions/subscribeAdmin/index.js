@@ -7,7 +7,7 @@ const auth = require('./auth');
 
 exports.main = async (event) => {
   const { action, categories } = event;
-  const authResult = auth.requireOpenid();
+  const authResult = await auth.requireOpenid();
   const openid = authResult.openid;
 
   try {
