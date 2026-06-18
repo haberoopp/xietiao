@@ -55,7 +55,7 @@ Page({
       });
       wx.hideLoading();
       if (res.result.code === 0) {
-        this.loginSuccess(res.result.data);
+        this.loginSuccess(res.result.data.record);
       } else {
         wx.showToast({ title: res.result.msg || '登录失败', icon: 'none' });
       }
