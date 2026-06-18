@@ -235,8 +235,23 @@ Page({
         });
       }
       wx.setStorageSync('addresses', addresses);
-      this.setData({ showForm: false, addresses });
       wx.showToast({ title: '已保存', icon: 'success' });
+
+      // 从结算页跳转进来时，保存后自动返回结算页并选中新地址
+      if (this.data.selectMode) {
+        const savedAddr = {
+          _id: this.data.editingId || ('a' + Date.now()),
+          ...addrData
+        };
+        app.globalData.selectedAddressData = savedAddr;
+        app.globalData.addressSelectMode = false;
+        this.setData({ selectMode: false, showForm: false });
+        setTimeout(() => {
+          wx.navigateTo({ url: '/pages/checkout/checkout' });
+        }, 600);
+      } else {
+        this.setData({ showForm: false, addresses });
+      }
       return;
     }
 
@@ -261,8 +276,28 @@ Page({
       wx.hideLoading();
       if (res.result.code === 0) {
         this.setData({ showForm: false });
-        this.loadAddresses();
         wx.showToast({ title: '已保存', icon: 'success' });
+
+        // 从结算页跳转进来时，保存后自动返回结算页并选中新地址
+        if (this.data.selectMode) {
+          const savedAddr = {
+            _id: action === 'add' ? (res.result.data && res.result.data.record && res.result.data.record._id) : this.data.editingId,
+            name: name.trim(),
+            phone: phone.trim(),
+            address: address.trim(),
+            addressDetail: addressDetail.trim() || undefined,
+            location: this.data.pickedLocation || undefined
+          };
+          const app = getApp();
+          app.globalData.selectedAddressData = savedAddr;
+          app.globalData.addressSelectMode = false;
+          this.setData({ selectMode: false });
+          setTimeout(() => {
+            wx.navigateTo({ url: '/pages/checkout/checkout' });
+          }, 600);
+        } else {
+          this.loadAddresses();
+        }
       } else {
         wx.showToast({ title: res.result.msg || '保存失败', icon: 'none' });
       }
