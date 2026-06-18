@@ -796,35 +796,44 @@ Page({
   },
 
   onSubscribeAdmin() {
-    const constants = require('../../../utils/constants');
-    wx.requestSubscribeMessage({
-      tmplIds: constants.NOTIFY_TEMPLATES.ADMIN,
-      success: async (res) => {
-        const accepted = Object.values(res).some(v => v === 'accept');
-        if (accepted) {
-          wx.showLoading({ title: '保存中...' });
-          try {
-            const result = await wx.cloud.callFunction({
-              name: 'subscribeAdmin',
-              data: {
-                action: 'subscribe',
-                categories: ['new_order', 'status_change', 'cancelled', 'return']
+    wx.showModal({
+      title: '订阅通知',
+      content: '建议勾选「总是保持以上选择」，后续自动接收通知，不再弹窗打扰。',
+      confirmText: '去订阅',
+      cancelText: '取消',
+      success: (modalRes) => {
+        if (!modalRes.confirm) return;
+        const constants = require('../../../utils/constants');
+        wx.requestSubscribeMessage({
+          tmplIds: constants.NOTIFY_TEMPLATES.ADMIN,
+          success: async (res) => {
+            const accepted = Object.values(res).some(v => v === 'accept');
+            if (accepted) {
+              wx.showLoading({ title: '保存中...' });
+              try {
+                const result = await wx.cloud.callFunction({
+                  name: 'subscribeAdmin',
+                  data: {
+                    action: 'subscribe',
+                    categories: ['new_order', 'status_change', 'cancelled', 'return']
+                  }
+                });
+                wx.hideLoading();
+                if (result.result && result.result.code === 0) {
+                  wx.showToast({ title: '通知订阅成功', icon: 'success' });
+                } else {
+                  wx.showToast({ title: '保存失败', icon: 'none' });
+                }
+              } catch (err) {
+                wx.hideLoading();
+                wx.showToast({ title: '网络错误', icon: 'none' });
               }
-            });
-            wx.hideLoading();
-            if (result.result && result.result.code === 0) {
-              wx.showToast({ title: '通知订阅成功', icon: 'success' });
-            } else {
-              wx.showToast({ title: '保存失败', icon: 'none' });
             }
-          } catch (err) {
-            wx.hideLoading();
-            wx.showToast({ title: '网络错误', icon: 'none' });
+          },
+          fail: function(err) {
+            console.warn('Admin subscribe failed:', err);
           }
-        }
-      },
-      fail: function(err) {
-        console.warn('Admin subscribe failed:', err);
+        });
       }
     });
   },

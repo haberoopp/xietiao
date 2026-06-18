@@ -540,7 +540,7 @@ Page({
 
     wx.showModal({
       title: '下单成功',
-      content: '您的订单已提交！\n\n开启订单通知，第一时间掌握订单状态变更。',
+      content: '您的订单已提交！\n\n开启订单通知，第一时间掌握订单状态变更。\n\n💡 建议勾选「总是保持以上选择」，后续自动接收通知，不再弹窗打扰。',
       confirmText: '开启通知',
       cancelText: '暂不',
       success: (res) => {
