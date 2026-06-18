@@ -431,11 +431,11 @@ Page({
     const header = parseLine(lines[0]);
     const nameIdx = header.findIndex(h => h === '名称' || h === 'name');
     const catIdx = header.findIndex(h => h === '分类' || h === 'category');
-    const priceIdx = header.findIndex(h => h.includes('单价') || h === 'price');
+    const priceIdx = header.findIndex(h => h.includes('单价') || h === '销售价' || h === 'price');
     const unitIdx = header.findIndex(h => h === '单位' || h === 'unit');
-    const stockIdx = header.findIndex(h => h === '库存' || h === 'stock');
-    const descIdx = header.findIndex(h => h === '描述' || h === 'description');
-    const imgIdx = header.findIndex(h => h === '图片' || h === '图片链接' || h === 'image');
+    const stockIdx = header.findIndex(h => h === '库存' || h === '盘点库存数量' || h === 'stock');
+    const descIdx = header.findIndex(h => h === '描述' || h === '商品备注' || h === 'description');
+    const imgIdx = header.findIndex(h => h === '图片' || h === '图片链接' || h === '商品图片链接' || h === 'image');
 
     if (nameIdx === -1 || priceIdx === -1) {
       wx.showModal({

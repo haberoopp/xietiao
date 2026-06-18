@@ -33,11 +33,11 @@ exports.main = async (event) => {
       const row = rows[i];
       const name = (row['名称'] || row['name'] || '').toString().trim();
       const category = (row['分类'] || row['category'] || '其他').toString().trim();
-      const price = parseFloat(row['单价(元)'] || row['单价'] || row['price'] || 0);
+      const price = parseFloat(row['单价(元)'] || row['单价'] || row['销售价'] || row['price'] || 0);
       const unit = (row['单位'] || row['unit'] || '米').toString().trim();
-      const stock = parseInt(row['库存'] || row['stock'] || 0) || 0;
-      const description = (row['描述'] || row['description'] || '').toString().trim();
-      const image = (row['图片'] || row['图片链接'] || row['image'] || '').toString().trim();
+      const stock = parseInt(row['库存'] || row['盘点库存数量'] || row['stock'] || 0) || 0;
+      const description = (row['描述'] || row['商品备注'] || row['description'] || '').toString().trim();
+      const image = (row['图片'] || row['图片链接'] || row['商品图片链接'] || row['image'] || '').toString().trim();
 
       if (!name) {
         results.errors.push({ row: i + 2, msg: '名称为空' });
