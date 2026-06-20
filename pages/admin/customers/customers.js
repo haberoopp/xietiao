@@ -9,15 +9,14 @@ Page({
     editingId: null,
     form: {
       name: '',
-      phone: '',
-      discount: '1.0'
+      phone: ''
     }
   },
 
   onShow() {
     const app = getApp();
     if (!app.globalData.adminLoggedIn && !wx.getStorageSync('adminLoggedIn')) {
-      wx.switchTab({ url: '/pages/admin/login/login' });
+      wx.redirectTo({ url: '/pages/admin/login/login' });
       return;
     }
     const role = wx.getStorageSync('adminRole') || app.globalData.adminRole || '';
@@ -41,7 +40,7 @@ Page({
       if (customers.length === 0) {
         customers = [
           { _id: 'c001', name: '温州服装厂', phone: '13800138001', discount: 0.9, totalOrders: 3, totalAmount: 25500, createdAt: Date.now() - 86400000 * 30 },
-          { _id: 'c002', name: '陈大明', phone: '13900139002', discount: 0.85, totalOrders: 1, totalAmount: 15000, createdAt: Date.now() - 86400000 * 15 },
+          { _id: 'c002', name: '陈大明', phone: '13900139002', totalOrders: 1, totalAmount: 15000, createdAt: Date.now() - 86400000 * 15 },
         ];
         wx.setStorageSync('customers', customers);
       }
@@ -75,7 +74,7 @@ Page({
     this.setData({
       showForm: true,
       editingId: null,
-      form: { name: '', phone: '', discount: '1.0' }
+      form: { name: '', phone: '' }
     });
   },
 
@@ -84,7 +83,7 @@ Page({
     this.setData({
       showForm: true,
       editingId: c._id,
-      form: { name: c.name, phone: c.phone, discount: String(c.discount) }
+      form: { name: c.name, phone: c.phone }
     });
   },
 
@@ -124,12 +123,8 @@ Page({
     this.setData({ ['form.' + field]: e.detail.value });
   },
 
-  onDiscountSlider(e) {
-    this.setData({ 'form.discount': (e.detail.value / 100).toFixed(2) });
-  },
-
   async onSave() {
-    const { name, phone, discount } = this.data.form;
+    const { name, phone } = this.data.form;
 
     if (!name.trim()) {
       wx.showToast({ title: '请填写客户名称', icon: 'none' });
@@ -139,24 +134,18 @@ Page({
       wx.showToast({ title: '请填写正确的手机号', icon: 'none' });
       return;
     }
-    const d = parseFloat(discount);
-    if (isNaN(d) || d <= 0 || d > 1) {
-      wx.showToast({ title: '折扣必须在0.01~1.0之间', icon: 'none' });
-      return;
-    }
 
     const app = getApp();
 
     if (app.globalData.demoMode) {
       let customers = wx.getStorageSync('customers') || [];
       if (this.data.editingId) {
-        customers = customers.map(c => c._id === this.data.editingId ? { ...c, name: name.trim(), phone: phone.trim(), discount: d } : c);
+        customers = customers.map(c => c._id === this.data.editingId ? { ...c, name: name.trim(), phone: phone.trim() } : c);
       } else {
         customers.push({
           _id: 'c' + Date.now(),
           name: name.trim(),
           phone: phone.trim(),
-          discount: d,
           totalOrders: 0,
           totalAmount: 0,
           createdAt: Date.now()
@@ -170,7 +159,7 @@ Page({
 
     wx.showLoading({ title: '保存中...' });
     try {
-      const data = { name: name.trim(), phone: phone.trim(), discount: d };
+      const data = { name: name.trim(), phone: phone.trim() };
       if (this.data.editingId) {
         data.action = 'update';
         data.customerId = this.data.editingId;
@@ -203,7 +192,6 @@ Page({
   formatCustomers(list) {
     return list.map(c => ({
       ...c,
-      discountLabel: c.discount < 1 ? (c.discount * 10).toFixed(1).replace(/\.0$/, '') + '折' : '',
       amountText: (c.totalAmount / 100).toFixed(2),
       debtText: (c.debt && c.debt > 0) ? ((c.debt / 100).toFixed(2)) : ''
     }));

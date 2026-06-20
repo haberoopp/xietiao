@@ -7,7 +7,7 @@
   <!-- 搜索 -->
   <view class="search-bar">
     <view class="search-input-wrap">
-      <text class="search-icon">🔍</text>
+      <text class="search-icon">⌕</text>
       <input class="search-input" placeholder="搜索客户名称或电话..." value="{{searchKeyword}}" bindinput="onSearchInput" confirm-type="search" />
       <text wx:if="{{searchKeyword}}" class="search-clear" bindtap="onClearSearch">✕</text>
     </view>
@@ -24,7 +24,6 @@
         <view class="cust-name">{{item.name}}</view>
         <view class="cust-phone">{{item.phone}}</view>
         <view class="cust-discount">
-          <text wx:if="{{item.discount < 1}}" class="discount-badge">{{item.discountLabel}}</text>
           <text wx:if="{{item.totalOrders > 0}}" class="cust-stats">累计{{item.totalOrders}}单 ¥{{item.amountText}}</text>
           <text wx:if="{{item.debtText}}" class="cust-debt">欠款 ¥{{item.debtText}}</text>
         </view>
@@ -49,12 +48,6 @@
         <view class="form-label">手机号 *</view>
         <input class="form-input" type="number" maxlength="11" placeholder="下单时自动匹配" value="{{form.phone}}" data-field="phone" bindinput="onFormInput" />
       </view>
-      <view class="form-group">
-        <view class="form-label">折扣：{{form.discount * 10}}折</view>
-        <slider min="1" max="100" value="{{form.discount * 100}}" show-value block-size="20" bindchange="onDiscountSlider" />
-        <view class="discount-hint">零售价 × {{form.discount}} = 实际售价</view>
-      </view>
-
       <view class="modal-btns">
         <view class="btn-outline modal-cancel" bindtap="onCancel">取消</view>
         <view class="btn-primary modal-save" bindtap="onSave">保存</view>
