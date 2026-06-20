@@ -1,9 +1,9 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
-const res = require('../lib/response');
-const logger = require('../lib/logger');
-const auth = require('../lib/auth');
+const res = require('./response');
+const logger = require('./logger');
+const auth = require('./auth');
 
 exports.main = async (event) => {
   const { action } = event;
@@ -70,20 +70,18 @@ async function doSet(event) {
     return res.badRequest('参数不完整');
   }
 
-  const existing = await db.collection('customerPrices')
+  // Atomic upsert: try update first, insert if no match
+  const updateResult = await db.collection('customerPrices')
     .where({ customerPhone, productId })
-    .limit(1)
-    .get();
-
-  if (existing.data.length > 0) {
-    await db.collection('customerPrices').doc(existing.data[0]._id).update({
+    .update({
       data: {
         customPrice: Math.round(customPrice),
-        productName: productName || existing.data[0].productName,
+        productName: productName || '',
         updatedAt: db.serverDate()
       }
     });
-  } else {
+
+  if (updateResult.stats.updated === 0) {
     await db.collection('customerPrices').add({
       data: {
         customerPhone,
@@ -117,20 +115,18 @@ async function doBatchSet(event) {
     const { customerPhone, productId, productName, customPrice } = entry;
     if (!customerPhone || !productId || customPrice === undefined) continue;
 
-    const existing = await db.collection('customerPrices')
+    // Atomic upsert: try update first, insert if no match
+    const updateResult = await db.collection('customerPrices')
       .where({ customerPhone, productId })
-      .limit(1)
-      .get();
-
-    if (existing.data.length > 0) {
-      await db.collection('customerPrices').doc(existing.data[0]._id).update({
+      .update({
         data: {
           customPrice: Math.round(customPrice),
-          productName: productName || existing.data[0].productName,
+          productName: productName || '',
           updatedAt: db.serverDate()
         }
       });
-    } else {
+
+    if (updateResult.stats.updated === 0) {
       await db.collection('customerPrices').add({
         data: {
           customerPhone,
@@ -146,7 +142,7 @@ async function doBatchSet(event) {
   }
 
   logger.info('customerPriceCRUD batchSet', { count: updated });
-  return { code: 0, data: { updated } };
+  return res.ok();
 }
 
 /**
@@ -201,7 +197,7 @@ async function doBatchDelete(event) {
   }
 
   logger.info('customerPriceCRUD batchDelete', { count: deleted });
-  return { code: 0, data: { deleted } };
+  return res.ok();
 }
 
 /**
