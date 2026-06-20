@@ -1,0 +1,198 @@
+/* 继承 container / card / search-bar 等全局样式 */
+
+.header-fixed {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f5f5f5;
+}
+
+.section-label {
+  font-size: 28rpx;
+  color: #666;
+  padding: 20rpx 24rpx 8rpx;
+}
+
+/* 客户标签横滑 */
+.customer-select-scroll {
+  white-space: nowrap;
+  padding: 0 24rpx 16rpx;
+}
+
+.customer-tags {
+  display: flex;
+  gap: 16rpx;
+}
+
+.customer-tag {
+  display: inline-block;
+  padding: 12rpx 24rpx;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  background: #fff;
+  color: #333;
+  border: 2rpx solid #ddd;
+  flex-shrink: 0;
+}
+
+.customer-tag.tag-active {
+  background: #E8594B;
+  color: #fff;
+  border-color: #E8594B;
+}
+
+.empty-hint {
+  font-size: 26rpx;
+  color: #999;
+  padding: 16rpx 24rpx;
+}
+
+/* 批量操作栏（复用 products 页样式） */
+.batch-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  background: #fff8e1;
+  margin: 0 24rpx 8rpx;
+  border-radius: 12rpx;
+}
+
+.batch-bar-left, .batch-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.select-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 26rpx;
+  color: #333;
+}
+
+.select-checkbox {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 6rpx;
+  border: 2rpx solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  color: #fff;
+  background: #fff;
+}
+
+.select-checkbox.checked {
+  background: #E8594B;
+  border-color: #E8594B;
+}
+
+.select-count {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.batch-edit-btn {
+  padding: 10rpx 20rpx;
+  background: #E8594B;
+  color: #fff;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+}
+
+/* 产品定价列表 */
+.scroll-list {
+  height: calc(100vh - 360rpx);
+  padding: 0 16rpx;
+}
+
+.pricing-list {
+  padding-bottom: 40rpx;
+}
+
+.pricing-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 16rpx;
+  margin-bottom: 8rpx;
+  background: #fff;
+  border-radius: 12rpx;
+}
+
+.pricing-item.pricing-selected {
+  background: #fff5f5;
+}
+
+.pricing-select {
+  margin-right: 16rpx;
+}
+
+.pricing-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pricing-name {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pricing-meta {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.pricing-input-wrap {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.pricing-unit {
+  font-size: 28rpx;
+  color: #E8594B;
+  margin-right: 4rpx;
+}
+
+.pricing-input {
+  width: 130rpx;
+  height: 60rpx;
+  border: 2rpx solid #ddd;
+  border-radius: 8rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: #333;
+  background: #fafafa;
+}
+
+.pricing-input.input-has-price {
+  border-color: #4CAF50;
+  background: #f1f8e9;
+}
+
+/* 批量改价弹窗 */
+.batch-form-hint {
+  font-size: 26rpx;
+  color: #999;
+  text-align: center;
+  padding: 16rpx 0;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 0;
+  color: #999;
+  font-size: 28rpx;
+}

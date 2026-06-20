@@ -6,11 +6,13 @@
     "pages/orders/orders",
     "pages/address/address",
     "pages/address/select",
+    "pages/my/my",
     "pages/admin/login/login",
     "pages/admin/dashboard/dashboard",
     "pages/admin/orders/orders",
     "pages/admin/products/products",
-    "pages/admin/customers/customers"
+    "pages/admin/customers/customers",
+    "pages/admin/pricing/pricing"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -27,27 +29,21 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页",
+        "text": "主页",
         "iconPath": "images/home.png",
         "selectedIconPath": "images/home-active.png"
       },
       {
-        "pagePath": "pages/address/address",
-        "text": "收货地址",
-        "iconPath": "images/location.png",
-        "selectedIconPath": "images/location-active.png"
+        "pagePath": "pages/cart/cart",
+        "text": "购物车",
+        "iconPath": "images/cart.png",
+        "selectedIconPath": "images/cart-active.png"
       },
       {
-        "pagePath": "pages/orders/orders",
-        "text": "我的订单",
-        "iconPath": "images/order.png",
-        "selectedIconPath": "images/order-active.png"
-      },
-      {
-        "pagePath": "pages/admin/login/login",
-        "text": "后台",
-        "iconPath": "images/home.png",
-        "selectedIconPath": "images/home-active.png"
+        "pagePath": "pages/my/my",
+        "text": "我的",
+        "iconPath": "images/my.png",
+        "selectedIconPath": "images/my-active.png"
       }
     ]
   },
