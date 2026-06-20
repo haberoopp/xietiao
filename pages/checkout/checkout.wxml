@@ -41,7 +41,7 @@
         data-method="pickup"
         bindtap="onDeliveryChange"
       >
-        <view class="do-icon">◎</view>
+        <image class="do-icon" src="/images/自取.png" mode="aspectFit" />
         <view class="do-label">自取</view>
       </view>
       <view
@@ -49,7 +49,7 @@
         data-method="delivery"
         bindtap="onDeliveryChange"
       >
-        <view class="do-icon">↦</view>
+        <image class="do-icon" src="/images/配送.png" mode="aspectFit" />
         <view class="do-label">配送</view>
       </view>
       <view
@@ -57,7 +57,7 @@
         data-method="logistics"
         bindtap="onDeliveryChange"
       >
-        <view class="do-icon">◫</view>
+        <image class="do-icon" src="/images/物流.png" mode="aspectFit" />
         <view class="do-label">物流</view>
       </view>
     </view>

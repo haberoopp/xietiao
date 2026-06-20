@@ -80,8 +80,8 @@
   padding: 24rpx 0; border: 2rpx solid #EEEEEE; border-radius: 8rpx;
 }
 .delivery-option.active { border-color: var(--color-primary); background: var(--color-primary-light); }
-.do-icon { font-size:44rpx;margin-bottom:8rpx;display:flex;align-items:center;justify-content:center; }
-.delivery-option.active .do-icon { color: var(--color-primary); }
+.do-icon { width: 72rpx; height: 72rpx; margin-bottom: 8rpx; }
+.delivery-option.active .do-icon { /* icon stays the same; border color indicates active */ }
 .do-label { font-size: 26rpx; color: #1A1A1A; }
 .delivery-option.active .do-label { color: var(--color-primary); font-weight: 600; }
 

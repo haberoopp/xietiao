@@ -30,14 +30,20 @@ exports.main = async (event) => {
     });
     logger.info('adminUpdateOrderStatus', { orderId, status });
 
-    // 发送通知（fire-and-forget，不阻塞响应）
+    // 发送通知
     const order = { ...oldOrder.data, status };
-    notify.sendToCustomer(db, order, 'STATUS_CHANGE', { oldStatus: oldOrder.data.status }).catch(e => {
+    try {
+      const customerResult = await notify.sendToCustomer(db, order, 'STATUS_CHANGE', { oldStatus: oldOrder.data.status });
+      logger.info('notify customer STATUS_CHANGE result', { orderId, ...customerResult });
+    } catch (e) {
       logger.warn('notify customer STATUS_CHANGE failed', { orderId, error: e.message });
-    });
-    notify.sendToAdmins(db, 'STATUS_CHANGE', order, {}).catch(e => {
+    }
+    try {
+      const adminResult = await notify.sendToAdmins(db, 'STATUS_CHANGE', order, {});
+      logger.info('notify admin STATUS_CHANGE result', { orderId, ...adminResult });
+    } catch (e) {
       logger.warn('notify admin STATUS_CHANGE failed', { orderId, error: e.message });
-    });
+    }
 
     return res.ok();
   } catch (err) {

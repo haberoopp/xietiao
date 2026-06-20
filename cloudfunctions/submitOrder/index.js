@@ -41,9 +41,12 @@ exports.main = async (event) => {
     logger.info('submitOrder', { orderId, customerName });
 
     // 通知所有订阅管理员：新订单
-    notify.sendToAdmins(db, 'NEW_ORDER', { _id: orderId, customerName, totalAmount, items }, {}).catch(e => {
+    try {
+      const notifyResult = await notify.sendToAdmins(db, 'NEW_ORDER', { _id: orderId, customerName, totalAmount, items }, {});
+      logger.info('notify NEW_ORDER result', { orderId, ...notifyResult });
+    } catch (e) {
       logger.warn('notify NEW_ORDER failed', { orderId, error: e.message });
-    });
+    }
 
     return res.record({ orderId });
   } catch (err) {

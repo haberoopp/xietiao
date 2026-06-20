@@ -80,17 +80,53 @@ Page({
   },
 
   // 微信头像选择
-  onChooseAvatar(e) {
-    const avatarUrl = e.detail.avatarUrl;
-    if (avatarUrl) {
-      wx.setStorageSync('customerAvatar', avatarUrl);
-      this.setData({ avatarUrl, isFirstTime: false });
-      this.syncProfileToCloud({ avatarUrl });
+  async onChooseAvatar(e) {
+    const tempUrl = e.detail.avatarUrl;
+    if (!tempUrl) return;
+
+    // 先显示临时头像（即时反馈）
+    this.setData({ avatarUrl: tempUrl, isFirstTime: false });
+
+    const app = getApp();
+
+    // 演示模式：直接保存本地路径
+    if (app.globalData.demoMode) {
+      wx.setStorageSync('customerAvatar', tempUrl);
+      this.syncProfileToCloud({ avatarUrl: tempUrl });
+      return;
+    }
+
+    // 云端模式：上传到云存储获取永久 fileID
+    wx.showLoading({ title: '上传中...' });
+    try {
+      const cloudPath = 'avatars/' + app.globalData.openid + '_' + Date.now() + '.jpg';
+      const uploadRes = await wx.cloud.uploadFile({ cloudPath, filePath: tempUrl });
+      const fileID = uploadRes.fileID;
+      wx.setStorageSync('customerAvatar', fileID);
+      this.setData({ avatarUrl: fileID });
+      this.syncProfileToCloud({ avatarUrl: fileID });
+      wx.hideLoading();
+    } catch (err) {
+      wx.hideLoading();
+      // 上传失败时回退到本地临时路径（至少本次会话可用）
+      wx.setStorageSync('customerAvatar', tempUrl);
+      this.syncProfileToCloud({ avatarUrl: tempUrl });
+      console.warn('头像上传云端失败，使用本地缓存', err.message);
     }
   },
 
   // 微信昵称输入（微信会自动填充昵称）
   onNicknameBlur(e) {
+    const name = (e.detail.value || '').trim();
+    if (name) {
+      wx.setStorageSync('customerName', name);
+      this.setData({ customerName: name, isFirstTime: false });
+      this.syncProfileToCloud({ name });
+    }
+  },
+
+  // 昵称输入完成（用户点击键盘"完成"按钮）
+  onNicknameConfirm(e) {
     const name = (e.detail.value || '').trim();
     if (name) {
       wx.setStorageSync('customerName', name);

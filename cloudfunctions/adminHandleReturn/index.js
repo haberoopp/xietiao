@@ -69,21 +69,23 @@ exports.main = async (event) => {
     if (orderDoc.data) {
       const order = orderDoc.data;
       // 通知客户退换货结果
-      notify.sendToCustomer(db, order, 'RETURN_RESULT', {
-        requestId,
-        result: newStatus,
-        returnType: req.data.type
-      }).catch(e => {
+      try {
+        const customerResult = await notify.sendToCustomer(db, order, 'RETURN_RESULT', {
+          requestId, result: newStatus, returnType: req.data.type
+        });
+        logger.info('notify customer RETURN_RESULT result', { requestId, ...customerResult });
+      } catch (e) {
         logger.warn('notify customer RETURN_RESULT failed', { requestId, error: e.message });
-      });
+      }
       // 通知管理员退换货处理
-      notify.sendToAdmins(db, 'RETURN', order, {
-        requestId,
-        result: newStatus,
-        returnType: req.data.type
-      }).catch(e => {
+      try {
+        const adminResult = await notify.sendToAdmins(db, 'RETURN', order, {
+          requestId, result: newStatus, returnType: req.data.type
+        });
+        logger.info('notify admin RETURN result', { requestId, ...adminResult });
+      } catch (e) {
         logger.warn('notify admin RETURN failed', { requestId, error: e.message });
-      });
+      }
     }
 
     return res.ok();

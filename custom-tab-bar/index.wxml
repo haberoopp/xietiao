@@ -8,7 +8,7 @@
     bindtap="switchTab"
   >
     <view class="tab-icon-wrap">
-      <text class="tab-icon-text {{selected === idx ? 'active' : ''}}">{{item.iconText}}</text>
+      <image class="tab-icon" src="{{selected === idx ? item.selectedIconPath : item.iconPath}}" mode="aspectFit" />
       <view wx:if="{{item.badge > 0}}" class="tab-badge">{{item.badge > 99 ? '99+' : item.badge}}</view>
     </view>
     <view class="tab-text">{{item.text}}</view>

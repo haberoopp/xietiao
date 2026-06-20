@@ -1,0 +1,100 @@
+<view class="container">
+  <!-- ===== 固定头部 ===== -->
+  <view class="header-fixed">
+    <view class="admin-top-bar">
+      <view class="back-btn" bindtap="onBack">← 返回选客户</view>
+      <view class="save-btn" bindtap="onSave">保存</view>
+    </view>
+
+    <!-- 已选客户标签 -->
+    <view class="selected-customers">
+      <text class="sc-label">已选客户：</text>
+      <scroll-view scroll-x class="sc-scroll">
+        <view class="sc-tags">
+          <view class="sc-tag" wx:for="{{selectedCustomers}}" wx:key="phone">{{item.name}}</view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 搜索（首页风格） -->
+    <view class="search-bar">
+      <view class="search-input-wrap">
+        <text class="search-icon">⌕</text>
+        <input class="search-input" placeholder="搜索产品名称或分类..." value="{{searchKeyword}}" bindinput="onSearchInput" confirm-type="search" />
+        <text wx:if="{{searchKeyword}}" class="search-clear" bindtap="onClearSearch">✕</text>
+      </view>
+    </view>
+
+    <!-- 批量操作栏 -->
+    <view class="batch-bar">
+      <view class="batch-bar-left">
+        <view class="select-all-btn" bindtap="onToggleSelectAll">
+          <view class="select-checkbox {{allSelected ? 'checked' : ''}}">{{allSelected ? '✓' : ''}}</view>
+          <text>{{allSelected ? '取消全选' : '全选'}}</text>
+        </view>
+        <text class="select-count">已选 {{selectedCount}} 项</text>
+      </view>
+      <view class="batch-bar-right">
+        <view class="batch-edit-btn" bindtap="onBatchSetPrice">批量改价</view>
+      </view>
+    </view>
+  </view>
+  <!-- ===== /固定头部 ===== -->
+
+  <!-- ===== 可滚动列表 ===== -->
+  <scroll-view class="scroll-list" scroll-y scroll-top="{{listScrollTop}}" bindscroll="onListScroll">
+    <view wx:if="{{filteredProducts.length === 0}}" class="empty-state">
+      <text>暂无产品</text>
+    </view>
+
+    <view wx:else class="pricing-list">
+      <view
+        class="pricing-item card {{selectedProductIds[item._id] ? 'pricing-selected' : ''}}"
+        wx:for="{{filteredProducts}}"
+        wx:key="_id"
+      >
+        <view class="pricing-select" data-id="{{item._id}}" catchtap="onToggleProduct">
+          <view class="select-checkbox {{selectedProductIds[item._id] ? 'checked' : ''}}">{{selectedProductIds[item._id] ? '✓' : ''}}</view>
+        </view>
+        <view class="pricing-info">
+          <view class="pricing-name">{{item.name}}</view>
+          <view class="pricing-meta">零售价 ¥{{item.priceText}} / {{item.unit}}</view>
+        </view>
+        <view class="pricing-input-wrap">
+          <text class="pricing-unit">¥</text>
+          <input
+            class="pricing-input {{priceInputs[item._id] !== undefined && priceInputs[item._id] !== '' ? 'input-has-price' : ''}}"
+            type="digit"
+            placeholder="{{pricePlaceholders[item._id] || '零售价'}}"
+            value="{{priceInputs[item._id] !== undefined ? priceInputs[item._id] : ''}}"
+            data-id="{{item._id}}"
+            bindinput="onPriceInput"
+          />
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 批量改价弹窗 -->
+  <view wx:if="{{showBatchModal}}" class="modal-mask">
+    <view class="modal-content" catchtap="">
+      <view class="modal-title">批量设置专属价</view>
+      <view class="form-group">
+        <view class="form-label">专属价（元）</view>
+        <input
+          class="form-input"
+          type="digit"
+          placeholder="请输入单价"
+          value="{{batchPriceValue}}"
+          focus="{{true}}"
+          bindinput="onBatchPriceInput"
+        />
+      </view>
+      <view class="batch-form-hint">将应用于 {{selectedCount}} 个产品</view>
+      <view class="modal-btns">
+        <view class="btn-outline modal-cancel" bindtap="onCancelBatch">取消</view>
+        <view class="btn-primary modal-save" bindtap="onConfirmBatch">确认</view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -39,14 +39,20 @@ exports.main = async (event) => {
       return res.conflict(bizResult.error);
     }
 
-    // 4. 发送通知（fire-and-forget，不阻塞响应）
+    // 4. 发送通知
     const order = bizResult.order;
-    notify.sendToCustomer(db, order, 'STATUS_CHANGE', { oldStatus: order.oldStatus }).catch(e => {
+    try {
+      const customerResult = await notify.sendToCustomer(db, order, 'STATUS_CHANGE', { oldStatus: order.oldStatus });
+      logger.info('notify customer STATUS_CHANGE result', { orderId: v.orderId, ...customerResult });
+    } catch (e) {
       logger.warn('notify customer STATUS_CHANGE failed', { orderId: v.orderId, error: e.message });
-    });
-    notify.sendToAdmins(db, 'ORDER_CANCELLED', order, {}).catch(e => {
+    }
+    try {
+      const adminResult = await notify.sendToAdmins(db, 'ORDER_CANCELLED', order, {});
+      logger.info('notify ORDER_CANCELLED result', { orderId: v.orderId, ...adminResult });
+    } catch (e) {
       logger.warn('notify ORDER_CANCELLED failed', { orderId: v.orderId, error: e.message });
-    });
+    }
 
     // 5. 成功返回
     logger.info('orderCancelled', { orderId: v.orderId });

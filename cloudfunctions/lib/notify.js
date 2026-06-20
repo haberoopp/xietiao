@@ -10,18 +10,18 @@
  */
 
 // ============================================================
-// 模板 ID 配置 —— 7 个真实模板
+// 模板 ID 配置 —— 7 个真实模板（字段名按微信后台实际类型）
 // ============================================================
 const TEMPLATES = {
   // 客户侧
-  ORDER_STATUS_CHANGE: 'vcuCn2dNTkgg6Xf-P3xqYvXYLJJgtSqf_hhO7wRqiE0',  // thing1+phrase2+amount3+thing4
-  PAYMENT_CHANGE:      'vcuCn2dNTkgg6Xf-P3xqYtrKc9DgUcN3g7LmZirw4Kw',  // thing1+phrase2+amount3
-  RETURN_RESULT:       'tlxN0JZIJyzJQbYrZZ5XTQMGorYXll2rBhRkRqgwBFg',  // thing1+phrase2
+  ORDER_STATUS_CHANGE: 'vcuCn2dNTkgg6Xf-P3xqYvXYLJJgtSqf_hhO7wRqiE0',  // thing1+name2+amount6+thing8
+  PAYMENT_CHANGE:      'vcuCn2dNTkgg6Xf-P3xqYtrKc9DgUcN3g7LmZirw4Kw',  // thing1+name2+amount6
+  RETURN_RESULT:       'tlxN0JZIJyzJQbYrZZ5XTQMGorYXll2rBhRkRqgwBFg',  // character_string1+thing2
   // 管理侧
-  NEW_ORDER_ADMIN:     'XGD06qwAdw5mN9Nxu9NMkv0ywwtEluVnoRIb5hxIGGk',  // thing1+thing2+amount3
-  ORDER_STATUS_ADMIN:  'vcuCn2dNTkgg6Xf-P3xqYsQHCNH7oyZmYfbUzGn-d0Q',  // thing1+phrase2+amount3+thing4
-  ORDER_CANCEL_ADMIN:  'XGD06qwAdw5mN9Nxu9NMkvNS4DskjFB6njCzhuTziQA',  // thing1+thing2+thing3
-  RETURN_ADMIN:        'tlxN0JZIJyzJQbYrZZ5XTS8lL882gPR5wwMgSxE8iGQ',  // thing1+thing2+thing3
+  NEW_ORDER_ADMIN:     'XGD06qwAdw5mN9Nxu9NMkv0ywwtEluVnoRIb5hxIGGk',  // character_string1+thing12+amount2+thing14
+  ORDER_STATUS_ADMIN:  'vcuCn2dNTkgg6Xf-P3xqYsQHCNH7oyZmYfbUzGn-d0Q',  // character_string4+name2+amount6+thing8
+  ORDER_CANCEL_ADMIN:  'XGD06qwAdw5mN9Nxu9NMkvNS4DskjFB6njCzhuTziQA',  // character_string1+thing12+thing8
+  RETURN_ADMIN:        'tlxN0JZIJyzJQbYrZZ5XTS8lL882gPR5wwMgSxE8iGQ',  // thing2+character_string1+thing5
 };
 
 var MAX_LEN = 20;
@@ -63,9 +63,10 @@ async function sendOne(templateId, toUser, page, data) {
       data: data,
       miniprogramState: 'formal'
     });
+    console.log('[notify] send ok: template=' + templateId + ' to=' + toUser.substring(0, 8) + '...');
     return { success: true };
   } catch (err) {
-    console.warn('[notify] send failed: errCode=' + (err.errCode || '?') + ' ' + err.message);
+    console.warn('[notify] send failed: template=' + templateId + ' errCode=' + (err.errCode || '?') + ' errMsg=' + (err.errMsg || err.message));
     return { success: false, errCode: err.errCode, error: err.message };
   }
 }
@@ -80,32 +81,32 @@ async function sendToCustomer(db, order, type, extra) {
   var templateId, data;
 
   if (type === 'STATUS_CHANGE') {
-    // 模板1: thing1订单编号 | phrase2订单状态 | amount3订单金额 | thing4备注
+    // 客户侧订单状态变更: thing1客户信息 | name2订单状态 | amount6订单金额 | thing8通知详情
     templateId = TEMPLATES.ORDER_STATUS_CHANGE;
     data = {
-      thing1:  { value: shortId(order._id) },
-      phrase2: { value: STATUS_MAP[order.status] || order.status },
-      amount3: { value: formatMoney(order.totalAmount) },
-      thing4:  { value: truncate('状态更新：' + (STATUS_MAP[order.status] || order.status)) }
+      thing1:  { value: truncate(order.customerName || '客户') },
+      name2: { value: STATUS_MAP[order.status] || order.status },
+      amount6: { value: formatMoney(order.totalAmount) },
+      thing8:  { value: truncate('订单状态已更新为' + (STATUS_MAP[order.status] || order.status)) }
     };
   } else if (type === 'PAYMENT_CHANGE') {
-    // 模板2: thing1打款编号 | phrase2打款状态 | amount3打款金额
+    // 客户侧付款状态变更: thing1客户信息 | name2订单状态 | amount6订单金额
     templateId = TEMPLATES.PAYMENT_CHANGE;
     var paidText = order.payment_status === 'paid' ? '打款成功' : '待打款';
     var payAmount = order.payment_status === 'paid' ? (order.paid_amount || order.totalAmount) : order.totalAmount;
     data = {
-      thing1:  { value: shortId(order._id) },
-      phrase2: { value: paidText },
-      amount3: { value: formatMoney(payAmount) }
+      thing1:  { value: truncate(order.customerName || '客户') },
+      name2: { value: paidText },
+      amount6: { value: formatMoney(payAmount) }
     };
   } else if (type === 'RETURN_RESULT') {
-    // 模板3: thing1退货单号 | phrase2退货状态 (仅2字段)
+    // 客户侧退货状态通知: character_string1订单编码 | thing2退货商品
     templateId = TEMPLATES.RETURN_RESULT;
     var resultMap = { approved: '已通过', rejected: '已拒绝', completed: '已完成' };
     var returnLabel = extra.returnType === 'exchange' ? '换货' : '退货';
     data = {
-      thing1:  { value: shortId(extra.requestId || order._id) },
-      phrase2: { value: truncate(returnLabel + resultMap[extra.result] || String(extra.result), 5) }
+      character_string1: { value: shortId(extra.requestId || order._id) },
+      thing2: { value: truncate(returnLabel + (resultMap[extra.result] || String(extra.result))) }
     };
   } else {
     return { success: false, error: 'unknown type: ' + type };
@@ -141,42 +142,43 @@ async function sendToAdmins(db, type, order, extra) {
 
 function buildAdminData(order, type, extra) {
   if (type === 'NEW_ORDER') {
-    // 模板4: thing1订单号 | thing2客户名称 | amount3订单金额
+    // 新订单通知: character_string1订单编号 | thing12客户姓名 | amount2订单金额 | thing14订单需求
     return {
-      thing1:  { value: shortId(order._id) },
-      thing2:  { value: truncate(order.customerName || '') },
-      amount3: { value: formatMoney(order.totalAmount) }
+      character_string1: { value: shortId(order._id) },
+      thing12: { value: truncate(order.customerName || '') },
+      amount2: { value: formatMoney(order.totalAmount) },
+      thing14: { value: itemsSummary(order.items) }
     };
   }
   if (type === 'STATUS_CHANGE') {
-    // 模板5: thing1订单号 | phrase2订单状态 | amount3订单金额 | thing4备注
+    // 订单状态变更: character_string4订单号 | name2订单状态 | amount6订单金额 | thing8通知详情
     var statusText = STATUS_MAP[order.status] || order.status;
     return {
-      thing1:  { value: shortId(order._id) },
-      phrase2: { value: statusText },
-      amount3: { value: formatMoney(order.totalAmount) },
-      thing4:  { value: truncate(order.customerName || '') }
+      character_string4: { value: shortId(order._id) },
+      name2: { value: statusText },
+      amount6: { value: formatMoney(order.totalAmount) },
+      thing8: { value: truncate(order.customerName || '') }
     };
   }
   if (type === 'ORDER_CANCELLED') {
-    // 模板6: thing1订单号 | thing2客户名称 | thing3订单内容
+    // 订单取消通知: character_string1订单编号 | thing12客户姓名 | thing8订单商品
     return {
-      thing1: { value: shortId(order._id) },
-      thing2: { value: truncate(order.customerName || '') },
-      thing3: { value: itemsSummary(order.items) }
+      character_string1: { value: shortId(order._id) },
+      thing12: { value: truncate(order.customerName || '') },
+      thing8: { value: itemsSummary(order.items) }
     };
   }
   if (type === 'RETURN') {
-    // 模板7: thing1项目名称 | thing2退货单号 | thing3退货内容
+    // 退货申请审核通知: thing2退货商品 | character_string1订单编码 | thing5审核说明
     var returnResultMap = { approved: '已通过', rejected: '已拒绝', completed: '已完成' };
     var returnLabel = extra.returnType === 'exchange' ? '换货' : '退货';
     return {
-      thing1: { value: truncate(returnLabel + '申请处理') },
-      thing2: { value: shortId(extra.requestId || order._id) },
-      thing3: { value: truncate(returnResultMap[extra.result] + '：' + (order.customerName || '')) }
+      thing2: { value: truncate(returnLabel + '申请') },
+      character_string1: { value: shortId(extra.requestId || order._id) },
+      thing5: { value: truncate(returnResultMap[extra.result] || '') + '：' + truncate(order.customerName || '') }
     };
   }
-  return { thing1: { value: shortId(order._id) } };
+  return { character_string1: { value: shortId(order._id) } };
 }
 
 // -----------------------------------------------------------

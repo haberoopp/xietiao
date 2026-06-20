@@ -2,9 +2,9 @@ Component({
   data: {
     selected: 0,
     list: [
-      { pagePath: '/pages/index/index', text: '主页', iconText: '⌂' },
-      { pagePath: '/pages/cart/cart', text: '购物车', iconText: '⊡', badge: 0 },
-      { pagePath: '/pages/my/my', text: '我的', iconText: '◉' }
+      { pagePath: '/pages/index/index', text: '主页', iconPath: '/images/tab_home.png', selectedIconPath: '/images/tab_home_active.png' },
+      { pagePath: '/pages/cart/cart', text: '购物车', iconPath: '/images/tab_cart.png', selectedIconPath: '/images/tab_cart_active.png', badge: 0 },
+      { pagePath: '/pages/my/my', text: '我的', iconPath: '/images/tab_my.png', selectedIconPath: '/images/tab_my_active.png' }
     ]
   },
 

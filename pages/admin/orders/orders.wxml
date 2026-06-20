@@ -9,8 +9,8 @@
     </view>
   </view>
 
-  <!-- 状态筛选 -->
-  <scroll-view class="status-tabs" scroll-x enable-flex>
+  <!-- 状态筛选（仅订单页显示） -->
+  <scroll-view class="status-tabs" scroll-x enable-flex wx:if="{{!isToolsTab && !isReturnTab}}">
     <view
       class="tab-item {{activeStatus === item.key ? 'active' : ''}}"
       wx:for="{{statusTabs}}"
@@ -22,7 +22,7 @@
   </scroll-view>
 
   <!-- 搜索框 -->
-  <view class="search-bar" wx:if="{{!isReturnTab}}">
+  <view class="search-bar" wx:if="{{!isToolsTab && !isReturnTab}}">
     <view class="search-input-wrap">
       <text class="search-icon">⌕</text>
       <input class="search-input" placeholder="搜索客户姓名、电话、地址..." value="{{searchKeyword}}" bindinput="onSearchInput" confirm-type="search" />
@@ -94,6 +94,11 @@
     <view class="tool-item" bindtap="onGoCustomers">
       <text class="tool-icon">👥</text>
       <text class="tool-label">客户管理</text>
+      <text class="tool-arrow">›</text>
+    </view>
+    <view class="tool-item" bindtap="onGoPricing">
+      <text class="tool-icon">💰</text>
+      <text class="tool-label">客户定价</text>
       <text class="tool-arrow">›</text>
     </view>
     <view class="tool-item" bindtap="onGoProducts">

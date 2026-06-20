@@ -31,16 +31,16 @@ const DELIVERY_METHOD_LABELS = {
 const NOTIFY_TEMPLATES = {
   // 客户订阅（用在结算页）
   CUSTOMER: [
-    'vcuCn2dNTkgg6Xf-P3xqYvXYLJJgtSqf_hhO7wRqiE0',  // 订单状态变更 thing1+phrase2+amount3+thing4
-    'vcuCn2dNTkgg6Xf-P3xqYtrKc9DgUcN3g7LmZirw4Kw',  // 付款状态变更 thing1+phrase2+amount3
-    'tlxN0JZIJyzJQbYrZZ5XTQMGorYXll2rBhRkRqgwBFg',  // 退换货结果 thing1+phrase2
+    'vcuCn2dNTkgg6Xf-P3xqYvXYLJJgtSqf_hhO7wRqiE0',  // 订单状态变更 thing1+name2+amount6+thing8
+    'vcuCn2dNTkgg6Xf-P3xqYtrKc9DgUcN3g7LmZirw4Kw',  // 付款状态变更 thing1+name2+amount6
+    'tlxN0JZIJyzJQbYrZZ5XTQMGorYXll2rBhRkRqgwBFg',  // 退货状态通知 character_string1+thing2
   ],
   // 管理员订阅（用在管理后台）
   ADMIN: [
-    'XGD06qwAdw5mN9Nxu9NMkv0ywwtEluVnoRIb5hxIGGk',  // 新订单通知 thing1+thing2+amount3
-    'vcuCn2dNTkgg6Xf-P3xqYsQHCNH7oyZmYfbUzGn-d0Q',  // 订单状态变更 thing1+phrase2+amount3+thing4
-    'XGD06qwAdw5mN9Nxu9NMkvNS4DskjFB6njCzhuTziQA',  // 订单取消通知 thing1+thing2+thing3
-    'tlxN0JZIJyzJQbYrZZ5XTS8lL882gPR5wwMgSxE8iGQ',  // 退换货通知 thing1+thing2+thing3
+    'XGD06qwAdw5mN9Nxu9NMkv0ywwtEluVnoRIb5hxIGGk',  // 新订单通知 character_string1+thing12+amount2+thing14
+    'vcuCn2dNTkgg6Xf-P3xqYsQHCNH7oyZmYfbUzGn-d0Q',  // 订单状态变更 character_string4+name2+amount6+thing8
+    'XGD06qwAdw5mN9Nxu9NMkvNS4DskjFB6njCzhuTziQA',  // 订单取消通知 character_string1+thing12+thing8
+    'tlxN0JZIJyzJQbYrZZ5XTS8lL882gPR5wwMgSxE8iGQ',  // 退货申请审核 thing2+character_string1+thing5
   ]
 };
 

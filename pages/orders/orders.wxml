@@ -102,11 +102,11 @@
 
       <view class="return-type-select">
         <view class="type-option {{returnType === 'return' ? 'active' : ''}}" data-type="return" bindtap="onReturnTypeChange">
-          <view class="type-icon">□</view>
+          <image class="type-icon" src="/images/退货.png" mode="aspectFit" />
           <view class="type-label">退货</view>
         </view>
         <view class="type-option {{returnType === 'exchange' ? 'active' : ''}}" data-type="exchange" bindtap="onReturnTypeChange">
-          <view class="type-icon">↻</view>
+          <image class="type-icon" src="/images/换货.png" mode="aspectFit" />
           <view class="type-label">换货</view>
         </view>
       </view>

@@ -721,6 +721,10 @@ Page({
     wx.navigateTo({ url: '/pages/admin/customers/customers' });
   },
 
+  onGoPricing() {
+    wx.navigateTo({ url: '/pages/admin/pricing/pricing' });
+  },
+
   onCopyOrder(e) {
     const order = e.currentTarget.dataset.order;
     const items = order.items.map(p => `${p.name} ×${p.quantity}${p.unit}`).join('；');

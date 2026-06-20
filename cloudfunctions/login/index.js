@@ -28,7 +28,7 @@ exports.main = async (event) => {
             name: user.name || '',
             avatarUrl: user.avatarUrl || '',
             phone: user.phone || '',
-            discount: user.discount || 1
+            // discount 已废弃（改为客户专属定价）
           }
         }
       };
@@ -40,7 +40,6 @@ exports.main = async (event) => {
       name: '',
       avatarUrl: '',
       phone: '',
-      discount: 1,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -56,8 +55,7 @@ exports.main = async (event) => {
         profile: {
           name: '',
           avatarUrl: '',
-          phone: '',
-          discount: 1
+          phone: ''
         }
       }
     };
