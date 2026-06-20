@@ -13,6 +13,7 @@
 | `admins` | 所有用户可读 | 3 | 管理员账号 |
 | `addresses` | 仅创建者可读写 | 每用户数条 | 客户地址簿 |
 | `customers` | 所有用户可读 | ~100 | 客户档案 |
+| `customerPrices` | 所有用户可读 | 持续增长 | 客户专属定价 |
 | `returnRequests` | 仅创建者可读写 | 持续增长 | 退换货申请 |
 | `adminSubscriptions` | 所有用户可读 | 1-5 | 管理员订阅消息状态 |
 
@@ -169,7 +170,6 @@ diaohuo    / 123456  →  warehouse(仓库调货员)
 | `_id` | string | 自动 | 文档 ID | `'c001'` |
 | `name` | string | 是 | 客户名称 | `'温州服装厂'` |
 | `phone` | string | 是 | 手机号（唯一） | `'13800138001'` |
-| `discount` | number | 是 | 折扣率 | `1.0`(原价) / `0.85`(8.5折) |
 | `totalOrders` | integer | 自动 | 累计订单数 | `3` |
 | `totalAmount` | integer | 自动 | 累计消费金额（分） | `25500` |
 | `debt` | integer | 否 | 欠款（分，仅 demo 模式客户端计算） | `15000` |
@@ -180,7 +180,30 @@ diaohuo    / 123456  →  warehouse(仓库调货员)
 
 ---
 
-## 6. returnRequests — 退换货申请
+## 6. customerPrices — 客户专属定价
+
+```
+权限: 所有用户可读, 仅管理员可写（通过云函数控制）
+索引: customerPhone + productId 联合唯一（应用层保证）
+```
+
+| 字段 | 类型 | 必填 | 说明 | 示例 |
+|------|------|------|------|------|
+| `_id` | string | 自动 | 文档 ID | `'cp001'` |
+| `customerPhone` | string | 是 | 客户手机号，与 `customers.phone` 对应 | `'13800138001'` |
+| `productId` | string | 是 | 产品 ID | `'p001'` |
+| `productName` | string | 是 | 产品名称（冗余快照，便于后台列表显示） | `'色丁布 2cm'` |
+| `customPrice` | integer | 是 | 专属单价（分） | `120` = ¥1.20 |
+| `createdAt` | Date | 自动 | 创建时间 | `db.serverDate()` |
+| `updatedAt` | Date | 自动 | 更新时间 | `db.serverDate()` |
+
+**唯一性约束**：同一 `customerPhone + productId` 只能有一条记录，云函数内通过 update-first-then-insert 保证。
+
+**定价优先级**：结算时优先使用 `customerPrices.customPrice`，未设专属价的产品走 `products.price`（零售价）。
+
+---
+
+## 7. returnRequests — 退换货申请
 
 ```
 权限: 仅创建者可读写
@@ -217,7 +240,7 @@ diaohuo    / 123456  →  warehouse(仓库调货员)
 
 ---
 
-## 7. adminSubscriptions — 管理员订阅消息
+## 8. adminSubscriptions — 管理员订阅消息
 
 ```
 权限: 所有用户可读
@@ -257,10 +280,14 @@ addresses                      status
   phone                        returnRequest ── 嵌入副本
   address
                                customers
-                                 phone ◄── checkout 匹配折扣
-                                 discount
+                                 phone ◄── checkout 匹配专属价
                                  totalOrders
                                  totalAmount ←── upsert 自动累计
+
+                               customerPrices
+                                 customerPhone ◄── customers.phone
+                                 productId ◄── products._id
+                                 customPrice ──→ checkout 结算时优先使用
 ```
 
 **嵌入 vs 引用策略**：

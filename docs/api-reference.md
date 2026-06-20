@@ -226,7 +226,7 @@
 ### customerCRUD — 客户管理
 
 ```
-调用方: 结算页（匹配折扣）、管理后台客户页
+调用方: 结算页（匹配客户）、管理后台客户页
 鉴权: list/add/update/delete 需 admin 鉴权; getByPhone 和 upsert 无需鉴权
 ```
 
@@ -234,11 +234,37 @@
 | action | 参数 | 鉴权 | 说明 |
 |--------|------|------|------|
 | `list` | — | admin | 查所有客户 |
-| `getByPhone` | `phone` | 无 | 根据手机号查单个客户（结算页折扣匹配） |
-| `add` | `name, phone, discount` | admin | 新增客户 |
-| `update` | `customerId, name?, phone?, discount?` | admin | 修改客户 |
+| `getByPhone` | `phone` | 无 | 根据手机号查单个客户（结算页匹配专属价） |
+| `add` | `name, phone` | admin | 新增客户 |
+| `update` | `customerId, name?, phone?` | admin | 修改客户 |
 | `delete` | `customerId` | admin | 删除客户 |
 | `upsert` | `name, phone, orderAmount` | 无 | 下单后自动录入/更新（累加 totalOrders + totalAmount） |
+
+---
+
+### customerPriceCRUD — 客户专属定价
+
+```
+调用方: 结算页（匹配专属价）、管理后台定价页
+鉴权: getByPhone 无需鉴权; 其余操作需 admin 鉴权
+```
+
+**入参**（按 action）：
+| action | 参数 | 鉴权 | 说明 |
+|--------|------|------|------|
+| `getByPhone` | `phone` | 无 | 查某客户所有专属价 |
+| `list` | `page, pageSize, customerPhone?, keyword?` | admin | 分页列表，支持按客户或产品名筛选 |
+| `set` | `customerPhone, productId, productName, customPrice` | admin | 单条新增/更新（upsert） |
+| `batchSet` | `entries: [{customerPhone, productId, productName, customPrice}]` | admin | 批量设置 |
+| `delete` | `customerPhone, productId` | admin | 单条删除 |
+| `batchDelete` | `entries: [{customerPhone, productId}]` | admin | 批量删除 |
+
+**出参**：
+- `getByPhone`: `{ code: 0, data: { list: [...], total: N } }`
+- `list`: `{ code: 0, data: { list: [...], total, page, pageSize } }`
+- `set/delete`: `{ code: 0 }`
+- `batchSet`: `{ code: 0 }`
+- `batchDelete`: `{ code: 0 }`
 
 ---
 
