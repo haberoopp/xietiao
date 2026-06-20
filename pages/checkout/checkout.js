@@ -1,11 +1,10 @@
 const util = require('../../utils/util');
-const amap = require('../../utils/amap');
 
 Page({
   data: {
     items: [],
     totalAmount: '0.00',
-    customerDiscount: 1.0,
+    customerPriceMap: {},
     matchedCustomer: null,
     savedAddresses: [],
     selectedAddress: null,
@@ -18,7 +17,8 @@ Page({
       customerName: '',
       phone: '',
       address: '',
-      remark: ''
+      remark: '',
+      logisticsCompany: ''
     }
   },
 
@@ -59,8 +59,9 @@ Page({
         'form.phone': state.phone || '',
         'form.address': state.address || '',
         'form.remark': state.remark || '',
+        'form.logisticsCompany': state.logisticsCompany || '',
         editingOrderId: state.editingOrderId || this.data.editingOrderId || '',
-        customerDiscount: state.customerDiscount || 1.0,
+        customerPriceMap: state.customerPriceMap || {},
         matchedCustomer: state.matchedCustomer || null
       });
       app.globalData.checkoutState = null;
@@ -75,24 +76,33 @@ Page({
     this.setData({ items: this.formatItems(items) });
     this.calcTotal();
     this.loadSavedAddresses();
-    amap.getCurrentLocation().then(loc => {
-      if (loc) this.setData({ currentLocation: loc });
+    wx.getLocation({
+      type: 'gcj02',
+      success: (res) => this.setData({ currentLocation: { lat: res.latitude, lng: res.longitude } }),
+      fail: () => {}
     });
   },
 
   formatItems(items) {
-    const discount = this.data.customerDiscount;
-    return items.map(item => ({
-      ...item,
-      priceText: (item.price / 100).toFixed(2),
-      discountedPrice: Math.round(item.price * discount),
-      discountedPriceText: (Math.round(item.price * discount) / 100).toFixed(2),
-      subtotal: (Math.round(item.price * discount) * item.quantity / 100).toFixed(2)
-    }));
+    const priceMap = this.data.customerPriceMap || {};
+    return items.map(item => {
+      const finalPrice = priceMap[item._id] !== undefined ? priceMap[item._id] : item.price;
+      return {
+        ...item,
+        priceText: (item.price / 100).toFixed(2),
+        finalPrice: finalPrice,
+        finalPriceText: (finalPrice / 100).toFixed(2),
+        hasCustomPrice: priceMap[item._id] !== undefined,
+        subtotal: (finalPrice * item.quantity / 100).toFixed(2)
+      };
+    });
   },
 
   calcTotal() {
-    const total = this.data.items.reduce((sum, item) => sum + (item.discountedPrice != null ? item.discountedPrice : item.price) * item.quantity, 0);
+    const total = this.data.items.reduce((sum, item) => {
+      const p = item.finalPrice != null ? item.finalPrice : item.price;
+      return sum + p * item.quantity;
+    }, 0);
     this.setData({ totalAmount: (total / 100).toFixed(2) });
   },
 
@@ -153,8 +163,9 @@ Page({
       phone: this.data.form.phone,
       address: this.data.form.address,
       remark: this.data.form.remark,
+      logisticsCompany: this.data.form.logisticsCompany,
       editingOrderId: this.data.editingOrderId,
-      customerDiscount: this.data.customerDiscount,
+      customerPriceMap: this.data.customerPriceMap,
       matchedCustomer: this.data.matchedCustomer
     };
     // 用结算页商品替换购物车（保留用户修改过的数量）
@@ -173,6 +184,12 @@ Page({
 
   onShow() {
     this.loadSavedAddresses();
+    // 从地址选择页返回：应用选中的地址
+    const app = getApp();
+    if (app.globalData.selectedAddressData) {
+      this.applyAddress(app.globalData.selectedAddressData);
+      app.globalData.selectedAddressData = null;
+    }
   },
 
   async loadSavedAddresses() {
@@ -230,8 +247,9 @@ Page({
       phone: this.data.form.phone,
       address: this.data.form.address,
       remark: this.data.form.remark,
+      logisticsCompany: this.data.form.logisticsCompany,
       editingOrderId: this.data.editingOrderId,
-      customerDiscount: this.data.customerDiscount,
+      customerPriceMap: this.data.customerPriceMap,
       matchedCustomer: this.data.matchedCustomer
     };
     wx.navigateTo({ url: '/pages/address/select' });
@@ -247,10 +265,22 @@ Page({
 
   async onChooseLocation() {
     const { currentLocation } = this.data;
-    const result = await amap.chooseLocation(
-      currentLocation ? currentLocation.lat : null,
-      currentLocation ? currentLocation.lng : null
-    );
+    const result = await new Promise((resolve) => {
+      wx.chooseLocation({
+        latitude: currentLocation ? currentLocation.lat : 27.9939,
+        longitude: currentLocation ? currentLocation.lng : 120.6993,
+        success: (res) => resolve({
+          name: res.name || '',
+          address: res.address || res.name || '',
+          lat: res.latitude,
+          lng: res.longitude
+        }),
+        fail: (err) => {
+          if (err.errMsg.includes('cancel')) resolve(null);
+          else { wx.showToast({ title: '定位失败，请授权位置权限', icon: 'none' }); resolve(null); }
+        }
+      });
+    });
     if (result) {
       this.setData({
         'form.address': result.address || result.name,
@@ -275,38 +305,48 @@ Page({
         if (this._matchTimer) clearTimeout(this._matchTimer);
         this._matchTimer = setTimeout(() => this.matchCustomer(value), 500);
       } else if (this.data.matchedCustomer) {
-        this.setData({ customerDiscount: 1.0, matchedCustomer: null });
+        this.setData({ customerPriceMap: {}, matchedCustomer: null });
         this.setData({ items: this.formatItems(this.data.items) });
         this.calcTotal();
       }
     }
   },
 
-  // 根据手机号匹配客户折扣
+  // 根据手机号匹配客户专属价
   async matchCustomer(phone) {
     const app = getApp();
 
+    let custData = null;
+    let priceList = [];
+
     if (app.globalData.demoMode) {
       const customers = wx.getStorageSync('customers') || [];
-      const c = customers.find(c => c.phone === phone);
-      if (c) {
-        this.setData({ customerDiscount: c.discount, matchedCustomer: c });
-        this.setData({ items: this.formatItems(this.data.items) });
-        this.calcTotal();
+      custData = customers.find(c => c.phone === phone) || null;
+      const prices = wx.getStorageSync('customerPrices') || [];
+      priceList = prices.filter(p => p.customerPhone === phone);
+    } else {
+      try {
+        const [custRes, priceRes] = await Promise.all([
+          wx.cloud.callFunction({ name: 'customerCRUD', data: { action: 'getByPhone', phone } }),
+          wx.cloud.callFunction({ name: 'customerPriceCRUD', data: { action: 'getByPhone', phone } })
+        ]);
+        if (custRes.result && custRes.result.code === 0 && custRes.result.data) {
+          custData = custRes.result.data.record;
+        }
+        if (priceRes.result && priceRes.result.code === 0 && priceRes.result.data) {
+          priceList = priceRes.result.data.list || [];
+        }
+      } catch (err) {
+        return;
       }
-      return;
     }
 
-    try {
-      const res = await wx.cloud.callFunction({ name: 'customerCRUD', data: { action: 'getByPhone', phone } });
-      if (res.result.code === 0 && res.result.data) {
-        const c = res.result.data.record;
-        this.setData({ customerDiscount: c.discount, matchedCustomer: c });
-        this.setData({ items: this.formatItems(this.data.items) });
-        this.calcTotal();
-      }
-    } catch (err) {
-      // 静默失败
+    if (custData) {
+      const priceMap = {};
+      priceList.forEach(p => { priceMap[p.productId] = p.customPrice; });
+      this.setData({ matchedCustomer: custData, customerPriceMap: priceMap });
+      this.setData({ items: this.formatItems(this.data.items) });
+      this.calcTotal();
     }
   },
 
@@ -378,6 +418,10 @@ Page({
       wx.showToast({ title: '请填写地址', icon: 'none' });
       return;
     }
+    if (this.data.deliveryMethod === 'logistics' && !(this.data.form.logisticsCompany || '').trim()) {
+      wx.showToast({ title: '请填写物流公司名称', icon: 'none' });
+      return;
+    }
     if (this.data.items.length === 0) {
       wx.showToast({ title: '请选择商品', icon: 'none' });
       return;
@@ -393,13 +437,13 @@ Page({
       items: this.data.items.map(item => ({
         productId: item._id,
         name: item.name,
-        price: item.price,
+        price: item.finalPrice != null ? item.finalPrice : item.price,
         quantity: item.quantity,
         unit: item.unit
       })),
       totalAmount: Math.round(parseFloat(this.data.totalAmount) * 100),
-      discount: this.data.customerDiscount,
       deliveryMethod: this.data.deliveryMethod,
+      logisticsCompany: this.data.deliveryMethod === 'logistics' ? (this.data.form.logisticsCompany || '').trim() : '',
       status: 'processing',
       payment_status: 'unpaid',
       paid_amount: 0,
@@ -465,7 +509,7 @@ Page({
         content: '订单信息已更新！',
         showCancel: false,
         success: () => {
-          wx.switchTab({ url: '/pages/orders/orders' });
+          wx.redirectTo({ url: '/pages/orders/orders' });
         }
       });
       return;
@@ -482,7 +526,7 @@ Page({
           content: '订单信息已更新！',
           showCancel: false,
           success: () => {
-            wx.switchTab({ url: '/pages/orders/orders' });
+            wx.redirectTo({ url: '/pages/orders/orders' });
           }
         });
       } else {
@@ -545,13 +589,35 @@ Page({
       success: (res) => {
         if (res.confirm) {
           this.requestCustomerSubscription(() => {
-            wx.switchTab({ url: '/pages/orders/orders' });
+            wx.redirectTo({ url: '/pages/orders/orders' });
           });
         } else {
-          wx.switchTab({ url: '/pages/orders/orders' });
+          wx.redirectTo({ url: '/pages/orders/orders' });
         }
       }
     });
+  },
+
+  // 点击图片放大预览
+  onPreviewImage(e) {
+    const url = e.currentTarget.dataset.url;
+    if (!url) return;
+    const urls = this.data.items
+      .filter(item => item.image)
+      .map(item => item.image);
+    const that = this;
+    wx.createSelectorQuery().selectViewport().scrollOffset(function(res) {
+      that._savedScrollTop = (res && res.scrollTop) || 0;
+      wx.previewImage({
+        current: url,
+        urls: urls.length > 0 ? urls : [url],
+        complete: () => {
+          if (that._savedScrollTop > 0) {
+            wx.pageScrollTo({ scrollTop: that._savedScrollTop, duration: 0 });
+          }
+        }
+      });
+    }).exec();
   },
 
   requestCustomerSubscription(callback) {

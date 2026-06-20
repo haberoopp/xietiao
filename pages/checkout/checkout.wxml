@@ -4,12 +4,12 @@
   <view class="card">
     <view class="order-item" wx:for="{{items}}" wx:key="_id" wx:for-index="idx">
       <view class="oi-del" data-index="{{idx}}" catchtap="onRemoveItem">×</view>
-      <image class="oi-image" src="{{item.image || '/images/placeholder.png'}}" mode="aspectFill" />
+      <image class="oi-image" src="{{item.image || '/images/placeholder.png'}}" mode="aspectFill" catchtap="onPreviewImage" data-url="{{item.image}}" />
       <view class="oi-info">
         <view class="oi-name">{{item.name}}</view>
         <view class="oi-meta">
-          <text wx:if="{{customerDiscount < 1}}" class="original-price">¥{{item.priceText}}</text>
-          <text>¥{{item.discountedPriceText}} / {{item.unit}}</text>
+          <text wx:if="{{item.hasCustomPrice}}" class="original-price">¥{{item.priceText}}</text>
+          <text>¥{{item.finalPriceText}} / {{item.unit}}</text>
         </view>
         <view class="oi-qty-ctrl">
           <view class="qty-btn" data-index="{{idx}}" catchtap="onDecrease">−</view>
@@ -26,7 +26,7 @@
     </view>
 
     <view class="total-line">
-      <text wx:if="{{customerDiscount < 1}}" class="discount-note">已享{{customerDiscount * 10}}折</text>
+      <text wx:if="{{matchedCustomer}}" class="discount-note">已匹配: {{matchedCustomer.name}}</text>
       <text>合计</text>
       <text class="price">¥{{totalAmount}}</text>
     </view>
@@ -41,7 +41,7 @@
         data-method="pickup"
         bindtap="onDeliveryChange"
       >
-        <view class="do-icon">📍</view>
+        <view class="do-icon">◎</view>
         <view class="do-label">自取</view>
       </view>
       <view
@@ -49,7 +49,7 @@
         data-method="delivery"
         bindtap="onDeliveryChange"
       >
-        <view class="do-icon">🚲</view>
+        <view class="do-icon">↦</view>
         <view class="do-label">配送</view>
       </view>
       <view
@@ -57,7 +57,7 @@
         data-method="logistics"
         bindtap="onDeliveryChange"
       >
-        <view class="do-icon">📦</view>
+        <view class="do-icon">◫</view>
         <view class="do-label">物流</view>
       </view>
     </view>
@@ -66,9 +66,11 @@
       ! 订单费用不包含物流运费，物流费用需另行支付
     </view>
 
-    <view wx:if="{{deliveryMethod === 'pickup'}}" class="pickup-hint">
-      取货地址：浙江省温州市鹿城区双屿街道工业区（具体位置请联系确认）
+    <view wx:if="{{deliveryMethod === 'logistics'}}" class="form-group" style="margin-top: 16rpx;">
+      <view class="form-label">物流公司 *</view>
+      <input class="form-input" placeholder="请填写物流公司名称" value="{{form.logisticsCompany}}" data-field="logisticsCompany" bindinput="onInput" />
     </view>
+
   </view>
 
   <!-- 3. 收货信息 -->
@@ -130,8 +132,7 @@
           bindinput="onInput"
         />
         <view wx:if="{{matchedCustomer}}" class="matched-customer">
-          <text>★ {{matchedCustomer.name}}</text>
-          <text wx:if="{{matchedCustomer.discount < 1}}" class="matched-discount">享{{matchedCustomer.discount * 10}}折</text>
+          <text>★ {{matchedCustomer.name}}（已匹配专属价）</text>
         </view>
       </view>
       <view class="form-group">
@@ -142,7 +143,7 @@
             <text wx:if="{{pickedLocation}}" class="addr-search-tag">✓ 已定位</text>
           </view>
           <view wx:else class="addr-search-placeholder">
-            <text class="addr-search-icon">📍</text>
+            <text class="addr-search-icon">◎</text>
             <text>点击搜索地址（可在地图中搜索任意地址）</text>
           </view>
         </view>
