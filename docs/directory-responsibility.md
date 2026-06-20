@@ -75,8 +75,7 @@
 | `cloudfunctions/adminTogglePickedUp/` | 🟠 框架规定类型 | 切换已拿货状态：pickedUp true/false 翻转 | pickedUp 字段切换 | 其他状态管理 | `index.js` |
 | `cloudfunctions/importProducts/` | 🟠 框架规定类型 | Excel 导入：下载文件 → 解析 → 批量写入 | xlsx 解析 + 批量写入 | CSV 解析（客户端自己做） | `index.js` |
 | `cloudfunctions/subscribeAdmin/` | 🟠 框架规定类型 | 管理订阅消息：写入/更新 adminSubscriptions 表 | 订阅状态管理 | 消息发送（由 notify.js 完成） | `index.js` |
-| `cloudfunctions/seedAdmin/` | 🟢 业务自定义 | 种子账号：首次部署时写入 3 个预置管理员 | 账号初始化 | 日常使用（仅部署时调用一次） | `index.js` |
-| `cloudfunctions/initAdminAccounts/` | 🟢 业务自定义 | 初始化账号（旧版）：与 seedAdmin 功能相同 | 账号初始化 | 日常使用 | `index.js` |
+| `cloudfunctions/initAdminAccounts/` | 🟢 业务自定义 | 初始化管理员账号：首次部署时写入 3 个预置管理员 | 账号初始化 | 日常使用（仅部署时调用一次） | `index.js` |
 
 ---
 
@@ -88,7 +87,6 @@
 | `utils/constants.js` | 🟢 业务自定义 | 共享常量：产品分类、状态映射、模板 ID | 所有枚举值和映射表 | 业务逻辑、API 密钥 | `PRODUCT_CATEGORIES` |
 | `utils/demoStore.js` | 🟢 业务自定义 | Demo 模式数据层：统一读写本地缓存 | 本地数据的 get/set/update | 云函数调用 | `demoStore.getAll(KEYS.orders)` |
 | `utils/mock.js` | 🟢 业务自定义 | 预置演示数据：首次启动时的示例数据 | 静态演示数据 | 运行中修改的数据 | `mockProducts` `demoAdminAccounts` |
-| `utils/amap.js` | 🟢 业务自定义 | 高德地图封装：POI 搜索、地理编码、导航 | 地图 API 调用 | 业务逻辑 | `chooseLocation()` |
 | `utils/export.js` | 🟢 业务自定义 | 导出工具：CSV 生成 + Canvas 对账单 | CSV 格式、Canvas 绑制 | 业务数据查询 | `ordersToCSV()` |
 | `utils/util.js` | 🟢 业务自定义 | 通用工具：格式化日期/价格、手机号校验、状态映射 | 纯函数工具 | 有副作用的操作 | `formatPrice()` `isValidPhone()` |
 
@@ -222,7 +220,7 @@ if (!authResult.authorized) return authResult.response;
 - `adminLogin` — 登录本身
 - `customerCRUD.getByPhone` — 结算页匹配折扣
 - `customerCRUD.upsert` — 下单后自动录入
-- `seedAdmin` / `initAdminAccounts` — 首次手动调用
+- `initAdminAccounts` — 首次手动调用
 
 ---
 

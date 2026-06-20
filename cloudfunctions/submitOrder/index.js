@@ -14,8 +14,9 @@ exports.main = async (event) => {
   }
 
   try {
-    const wxContext = cloud.getWXContext();
-    const openid = wxContext.OPENID;
+    const authResult = await auth.requireOpenid();
+    if (!authResult.authorized) return authResult.response;
+    const openid = authResult.openid;
 
     const order = {
       _openid: openid,
@@ -25,6 +26,7 @@ exports.main = async (event) => {
       items,
       totalAmount,
       deliveryMethod: deliveryMethod || 'delivery',
+      logisticsCompany: deliveryMethod === 'logistics' ? (event.logisticsCompany || '').trim() : '',
       remark: remark || '',
       status: 'processing',
       payment_status: 'unpaid',

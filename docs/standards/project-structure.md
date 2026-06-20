@@ -53,14 +53,12 @@ E:\miniprogram\
 │   ├── addressCRUD/        #   地址簿 CRUD
 │   ├── customerCRUD/       #   客户 CRUD + upsert
 │   ├── importProducts/     #   Excel 批量导入产品
-│   ├── initAdminAccounts/  #   初始化管理员账号
-│   └── seedAdmin/          #   种子账号写入
+│   └── initAdminAccounts/  #   初始化管理员账号
 │
 ├── utils/                  # 【前端工具模块】
 │   ├── constants.js        #   共享常量（分类/状态/模板ID）
 │   ├── demoStore.js        #   Demo 模式数据存储层
 │   ├── mock.js             #   演示用预置数据
-│   ├── amap.js             #   高德地图 API 封装
 │   ├── export.js           #   CSV 导出 + Canvas 对账单
 │   └── util.js             #   格式化 + 校验工具
 │

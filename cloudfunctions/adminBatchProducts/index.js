@@ -29,7 +29,7 @@ exports.main = async (event) => {
         return res.badRequest('未知操作');
     }
   } catch (err) {
-    logger.error('adminBatchProducts error', { error: err.message, action: event.action });
+    logger.error('adminBatchProducts error', err, { action: event.action });
     return res.internalError();
   }
 };

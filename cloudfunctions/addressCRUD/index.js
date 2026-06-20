@@ -27,7 +27,7 @@ exports.main = async (event) => {
         return res.badRequest('未知操作');
     }
   } catch (err) {
-    logger.error('addressCRUD error', { error: err.message, action: event.action, openid });
+    logger.error('addressCRUD error', err, { action: event.action, openid });
     return res.internalError();
   }
 };

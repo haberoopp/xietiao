@@ -7,14 +7,15 @@ const auth = require('./auth');
 
 exports.main = async (event) => {
   const { orderId, customerName, phone, address, addressDetail, items, totalAmount, deliveryMethod, remark, images, location } = event;
-  const wxContext = cloud.getWXContext();
-  const openid = wxContext.OPENID;
 
   if (!orderId) {
     return res.badRequest('缺少订单ID');
   }
 
   try {
+    const authResult = await auth.requireOpenid();
+    if (!authResult.authorized) return authResult.response;
+    const openid = authResult.openid;
     const order = await db.collection('orders').doc(orderId).get();
     if (!order.data) return res.notFound('订单不存在');
     if (order.data._openid !== openid) return res.forbidden('无权操作');

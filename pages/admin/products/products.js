@@ -23,6 +23,11 @@ Page({
     selectedIds: {},
     selectedCount: 0,
     allSelected: false,
+    listScrollTop: 0,
+    showImagePreview: false,
+    previewImageUrl: '',
+    previewImageUrls: [],
+    previewImageIndex: 0,
     showBatchForm: false,
     batchForm: {
       category: '',
@@ -31,12 +36,19 @@ Page({
     },
     batchCategories: ['', '色丁', '雪纺', '涤纶', '锦纶', '花边', '其他'],
     batchUnits: ['', '米', '卷', '个', '公斤', '包'],
-    batchStatuses: ['', '充足', '紧张', '缺货']
+    batchStatuses: ['', '充足', '紧张', '缺货'],
+    filterMode: ''  // 'shortage' 来自仪表盘缺货预警
+  },
+
+  onLoad(options) {
+    if (options && options.filter === 'shortage') {
+      this.setData({ filterMode: 'shortage' });
+    }
   },
 
   onShow() {
     if (!getApp().globalData.adminLoggedIn && !wx.getStorageSync('adminLoggedIn')) {
-      wx.switchTab({ url: '/pages/admin/login/login' });
+      wx.redirectTo({ url: '/pages/admin/login/login' });
       return;
     }
     // 仅厂长可管理产品
@@ -46,10 +58,12 @@ Page({
       wx.redirectTo({ url: '/pages/admin/orders/orders' });
       return;
     }
+    // 始终拉取数据（数据对比在 loadProducts 内部，未变化则跳过 setData 避免滚动重置）
     this.loadProducts();
   },
 
   onPullDownRefresh() {
+    this.setData({ listScrollTop: 0 });
     this.loadProducts().then(() => wx.stopPullDownRefresh());
   },
 
@@ -59,41 +73,68 @@ Page({
     if (app.globalData.demoMode) {
       const products = demoStore.getAll(demoStore.KEYS.products).map(p => ({
         ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient', selected: false
-      }));
+      })).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }));
+      this._cachedProducts = products;
+      this._lastProductsData = JSON.stringify(products);
       this.setData({ products });
       this.filterProducts();
       return;
     }
 
+    // 1. 缓存优先：瞬间显示上次数据
+    let fromCache = false;
+    const cached = wx.getStorageSync('cache_admin_products');
+    if (cached && cached.length > 0) {
+      this._cachedProducts = cached;
+      this._lastProductsData = JSON.stringify(cached);
+      this.setData({ products: cached });
+      this.filterProducts();
+      fromCache = true;
+    }
+
+    // 2. 后台拉取最新数据（count + 第一页并行，减少 1 个 RTT）
+    const PAGE = 200;
     try {
-      // 先查总数
-      const countRes = await wx.cloud.callFunction({
-        name: 'getProducts',
-        data: { page: 1, pageSize: 1 }
-      });
+      const [countRes, firstPageRes] = await Promise.all([
+        wx.cloud.callFunction({ name: 'getProducts', data: { page: 1, pageSize: 1 } }),
+        wx.cloud.callFunction({ name: 'getProducts', data: { page: 1, pageSize: PAGE } })
+      ]);
       if (countRes.result.code !== 0) throw new Error('count failed');
       const total = countRes.result.data.total;
-      const PAGE = 200;
-      const pages = Math.ceil(total / PAGE);
 
-      // 并行拉取全部
-      const calls = [];
-      for (let i = 0; i < pages; i++) {
-        calls.push(wx.cloud.callFunction({
-          name: 'getProducts',
-          data: { page: i + 1, pageSize: PAGE }
-        }));
+      let products = (firstPageRes.result && firstPageRes.result.code === 0)
+        ? firstPageRes.result.data.list : [];
+
+      if (total > PAGE) {
+        const remaining = Math.ceil((total - PAGE) / PAGE);
+        const calls = [];
+        for (let i = 0; i < remaining; i++) {
+          calls.push(wx.cloud.callFunction({
+            name: 'getProducts', data: { page: i + 2, pageSize: PAGE }
+          }));
+        }
+        const results = await Promise.all(calls);
+        products = products.concat(
+          results.filter(r => r.result && r.result.code === 0).flatMap(r => r.result.data.list)
+        );
       }
-      const results = await Promise.all(calls);
-      const products = results
-        .filter(r => r.result && r.result.code === 0)
-        .flatMap(r => r.result.data.list)
-        .map(p => ({ ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient', selected: false }));
 
+      products = products
+        .map(p => ({ ...p, priceText: (p.price / 100).toFixed(2), status: p.status || 'sufficient', selected: false }))
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }));
+
+      const newDataStr = JSON.stringify(products);
+      if (this._lastProductsData === newDataStr) return;
+      this._lastProductsData = newDataStr;
+      this._cachedProducts = products;
+
+      wx.setStorage({ key: 'cache_admin_products', data: products });
       this.setData({ products });
       this.filterProducts();
+      console.log('✅ 已加载 ' + products.length + ' / ' + total + ' 个产品' + (fromCache ? '（缓存秒开 + 后台更新）' : ''));
     } catch (err) {
-      wx.showToast({ title: '加载失败', icon: 'none' });
+      console.error('admin loadProducts 失败', err);
+      if (!fromCache) wx.showToast({ title: '加载失败', icon: 'none' });
     }
   },
 
@@ -498,6 +539,54 @@ Page({
     }
   },
 
+  // 点击图片放大预览
+  onListScroll(e) {
+    this._lastScrollTop = e.detail.scrollTop;
+  },
+
+  // 点击图片放大预览（自定义弹窗，避免 wx.previewImage 导致页面跳到顶部）
+  onPreviewImage(e) {
+    const url = e.currentTarget.dataset.url;
+    if (!url) return;
+    const urls = this.data.filteredProducts
+      .filter(p => p.image)
+      .map(p => p.image);
+    const allUrls = urls.length > 0 ? urls : [url];
+    const idx = allUrls.indexOf(url);
+    this.setData({
+      showImagePreview: true,
+      previewImageUrl: url,
+      previewImageUrls: allUrls,
+      previewImageIndex: idx >= 0 ? idx : 0
+    });
+  },
+
+  onCloseImagePreview() {
+    this.setData({ showImagePreview: false });
+  },
+
+  onPrevImage() {
+    const { previewImageIndex, previewImageUrls } = this.data;
+    if (previewImageIndex > 0) {
+      const newIdx = previewImageIndex - 1;
+      this.setData({
+        previewImageIndex: newIdx,
+        previewImageUrl: previewImageUrls[newIdx]
+      });
+    }
+  },
+
+  onNextImage() {
+    const { previewImageIndex, previewImageUrls } = this.data;
+    if (previewImageIndex < previewImageUrls.length - 1) {
+      const newIdx = previewImageIndex + 1;
+      this.setData({
+        previewImageIndex: newIdx,
+        previewImageUrl: previewImageUrls[newIdx]
+      });
+    }
+  },
+
   onBackToOrders() {
     wx.redirectTo({ url: '/pages/admin/orders/orders' });
   },
@@ -728,28 +817,37 @@ Page({
   },
 
   onSearchInput(e) {
-    this.setData({ searchKeyword: e.detail.value });
+    this.setData({ searchKeyword: e.detail.value, listScrollTop: 0 });
     this.filterProducts();
   },
 
   onClearSearch() {
-    this.setData({ searchKeyword: '' });
+    this.setData({ searchKeyword: '', listScrollTop: 0 });
     this.filterProducts();
   },
 
   filterProducts() {
-    const { products, searchKeyword } = this.data;
-    if (!searchKeyword) {
-      this.setData({ filteredProducts: products });
-      return;
+    const { products, searchKeyword, filterMode } = this.data;
+    let list = products;
+
+    // 缺货预警模式：仅显示缺货/紧张商品，缺货排最前
+    if (filterMode === 'shortage') {
+      list = list.filter(p => p.status === 'out' || p.status === 'low');
+      list.sort((a, b) => {
+        if (a.status === 'out' && b.status !== 'out') return -1;
+        if (a.status !== 'out' && b.status === 'out') return 1;
+        return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
+      });
     }
-    // 有搜索关键词时需要全量替换（过滤导致 item 位置发生变化）
-    const kw = searchKeyword.toLowerCase();
-    this.setData({
-      filteredProducts: products.filter(p =>
+
+    if (searchKeyword) {
+      const kw = searchKeyword.toLowerCase();
+      list = list.filter(p =>
         (p.name || '').toLowerCase().includes(kw) ||
         (p.category || '').toLowerCase().includes(kw)
-      )
-    });
+      );
+    }
+
+    this.setData({ filteredProducts: list });
   }
 });

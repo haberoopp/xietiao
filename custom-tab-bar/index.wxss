@@ -22,10 +22,52 @@
   position: relative;
 }
 
-.tab-icon {
+.tab-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 44rpx;
   height: 44rpx;
   margin-bottom: 2rpx;
+}
+
+.tab-icon {
+  width: 44rpx;
+  height: 44rpx;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+.tab-item.active .tab-icon {
+  opacity: 1;
+}
+
+.tab-icon-text {
+  font-size: 40rpx;
+  color: #999;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.tab-icon-text.active {
+  color: #E8594B;
+}
+
+.tab-badge {
+  position: absolute;
+  top: -8rpx;
+  right: -16rpx;
+  min-width: 28rpx;
+  height: 28rpx;
+  line-height: 28rpx;
+  padding: 0 6rpx;
+  background: #E8594B;
+  color: #fff;
+  font-size: 18rpx;
+  font-weight: 500;
+  border-radius: 14rpx;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .tab-text {

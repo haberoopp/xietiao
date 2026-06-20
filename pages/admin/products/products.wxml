@@ -1,4 +1,6 @@
 <view class="container">
+  <!-- ===== 固定头部 ===== -->
+  <view class="header-fixed">
   <!-- 操作栏 -->
   <view class="admin-top-bar">
     <view class="back-btn" bindtap="onBackToOrders">← 返回订单</view>
@@ -12,7 +14,7 @@
   <!-- 搜索 -->
   <view class="search-bar">
     <view class="search-input-wrap">
-      <text class="search-icon">🔍</text>
+      <text class="search-icon">⌕</text>
       <input class="search-input" placeholder="搜索产品名称或分类..." value="{{searchKeyword}}" bindinput="onSearchInput" confirm-type="search" />
       <text wx:if="{{searchKeyword}}" class="search-clear" bindtap="onClearSearch">✕</text>
     </view>
@@ -32,7 +34,11 @@
       <view class="batch-edit-btn" bindtap="onBatchEdit">批量编辑</view>
     </view>
   </view>
+  </view>
+  <!-- ===== /固定头部 ===== -->
 
+  <!-- ===== 可滚动列表 ===== -->
+  <scroll-view class="scroll-list" scroll-y scroll-top="{{listScrollTop}}" bindscroll="onListScroll">
   <!-- 产品列表 -->
   <view wx:if="{{filteredProducts.length === 0}}" class="empty-state">
     <text>暂无产品，点击上方添加</text>
@@ -44,7 +50,7 @@
       <view wx:if="{{selectMode}}" class="pa-select-check" data-id="{{item._id}}" catchtap="onToggleSelect">
         <view class="select-checkbox {{item.selected ? 'checked' : ''}}">{{item.selected ? '✓' : ''}}</view>
       </view>
-      <image class="pa-image" src="{{item.image || '/images/placeholder.png'}}" mode="aspectFill" />
+      <image class="pa-image" src="{{item.image || '/images/placeholder.png'}}" mode="aspectFill" catchtap="onPreviewImage" data-url="{{item.image}}" />
       <view class="pa-info">
         <view class="pa-name">{{item.name}}</view>
         <view class="pa-meta">{{item.category}} / {{item.unit}} / ¥{{item.priceText}}</view>
@@ -60,6 +66,9 @@
       </view>
     </view>
   </view>
+
+  </scroll-view>
+  <!-- ===== /可滚动列表 ===== -->
 
   <!-- 添加/编辑表单弹窗 -->
   <view wx:if="{{showForm}}" class="modal-mask">
@@ -161,5 +170,14 @@
         <view class="btn-primary modal-save" bindtap="onSaveBatchEdit">应用到{{selectedCount}}个产品</view>
       </view>
     </view>
+  </view>
+
+  <!-- 图片预览弹窗（自定义，避免 wx.previewImage 导致页面跳到顶部） -->
+  <view wx:if="{{showImagePreview}}" class="image-preview-mask" catchtap="onCloseImagePreview">
+    <view class="ip-close" catchtap="onCloseImagePreview">✕</view>
+    <view wx:if="{{previewImageIndex > 0}}" class="ip-arrow ip-arrow-left" catchtap="onPrevImage">‹</view>
+    <image class="ip-image" src="{{previewImageUrl}}" mode="aspectFit" catchtap="" />
+    <view wx:if="{{previewImageIndex < previewImageUrls.length - 1}}" class="ip-arrow ip-arrow-right" catchtap="onNextImage">›</view>
+    <view wx:if="{{previewImageUrls.length > 1}}" class="ip-indicator">{{previewImageIndex + 1}} / {{previewImageUrls.length}}</view>
   </view>
 </view>

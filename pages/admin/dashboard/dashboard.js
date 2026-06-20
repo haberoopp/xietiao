@@ -18,7 +18,7 @@ Page({
   onShow() {
     const app = getApp();
     if (!app.globalData.adminLoggedIn && !wx.getStorageSync('adminLoggedIn')) {
-      wx.switchTab({ url: '/pages/admin/login/login' });
+      wx.redirectTo({ url: '/pages/admin/login/login' });
       return;
     }
     const role = wx.getStorageSync('adminRole') || app.globalData.adminRole || '';

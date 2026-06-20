@@ -10,9 +10,19 @@ exports.main = async (event) => {
     const authResult = await auth.requireAdmin();
     if (!authResult.authorized) return authResult.response;
 
-    const { orderId } = event;
+    const { orderId, pickedUp } = event;
     if (!orderId) return res.badRequest('参数错误');
 
+    // 若客户端已传 pickedUp 值，直接写入（省一次 DB 读取）
+    if (typeof pickedUp === 'boolean') {
+      await db.collection('orders').doc(orderId).update({
+        data: { pickedUp, updatedAt: db.serverDate() }
+      });
+      logger.info('Order pickup set', { orderId, pickedUp });
+      return res.ok();
+    }
+
+    // 兼容旧版：读取后取反
     const order = await db.collection('orders').doc(orderId).get();
     if (!order.data) return res.notFound('订单不存在');
 

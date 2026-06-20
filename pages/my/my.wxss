@@ -1,0 +1,253 @@
+/* === 页面容器 === */
+.container {
+  background: linear-gradient(180deg, #E8594B 0%, #EC7A71 18%, #F8C4BE 38%, #FDF2F2 55%, #FFFFFF 72%);
+  min-height: 100vh;
+}
+
+/* === 头像栏 === */
+.profile-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background: transparent;
+  padding: 40rpx 32rpx 40rpx 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.avatar-btn {
+  width: 100rpx; height: 100rpx; border-radius: 50%;
+  padding: 0; margin: 0; border: none;
+  background: transparent;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.avatar-btn::after { border: none; }
+.avatar-btn:active { opacity: 0.7; }
+
+.avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: #eee;
+  flex-shrink: 0;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  margin-left: 16rpx;
+}
+
+.profile-name-input {
+  height: 56rpx;
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #FFFFFF;
+  text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.12);
+  background: transparent;
+  padding: 0;
+  max-width: 280rpx;
+}
+
+.profile-name {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #FFFFFF;
+  text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.12);
+}
+
+.edit-name-btn {
+  margin-left: 12rpx;
+  padding: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-name-btn:active {
+  opacity: 0.5;
+}
+
+.edit-icon {
+  font-size: 32rpx;
+  color: rgba(255,255,255,0.85);
+}
+
+/* === 首次使用提示 === */
+.first-time-tip {
+  margin: 0 32rpx 8rpx;
+  padding: 16rpx 24rpx;
+  background: rgba(255,255,255,0.85);
+  border-radius: 12rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: #E8594B;
+}
+
+/* === 区块 === */
+.section {
+  background: #fff;
+  margin-bottom: 16rpx;
+  padding: 32rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #1A1A1A;
+  margin-bottom: 28rpx;
+}
+
+/* === 订单状态行 === */
+.order-status-row {
+  display: flex;
+  justify-content: space-around;
+}
+
+.order-status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.status-icon-box {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: #F5F5F5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12rpx;
+  border: 3rpx solid transparent;
+  transition: border-color 0.2s;
+}
+.order-status-item:active .status-icon-box {
+  border-color: var(--color-primary);
+}
+
+.status-icon {
+  font-size: 44rpx;
+}
+
+.status-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.status-badge {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #999;
+  background: #F0F0F0;
+  padding: 2rpx 12rpx;
+  border-radius: 20rpx;
+  min-width: 36rpx;
+  text-align: center;
+}
+
+/* === 功能菜单 === */
+.menu-section {
+  padding: 0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 32rpx;
+  border-bottom: 1rpx solid #F5F5F5;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item:active {
+  background: #FDF2F2;
+}
+.menu-item:active .menu-icon {
+  color: var(--color-primary);
+}
+
+.menu-icon {
+  font-size: 36rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.menu-text {
+  flex: 1;
+  font-size: 30rpx;
+  color: #1A1A1A;
+}
+
+.menu-arrow {
+  font-size: 36rpx;
+  color: #CCC;
+  flex-shrink: 0;
+}
+
+/* === 商家管理入口 === */
+.admin-entry {
+  display: flex;
+  justify-content: center;
+  padding: 40rpx 0;
+}
+
+.admin-text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* === 编辑名称弹窗 === */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 16rpx;
+  width: 600rpx;
+  padding: 40rpx 32rpx 24rpx;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.name-input {
+  width: 100%;
+  height: 88rpx;
+  background: #F5F5F5;
+  border-radius: 8rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  box-sizing: border-box;
+  margin-bottom: 32rpx;
+}
+
+.modal-btns {
+  display: flex;
+  gap: 20rpx;
+}
+
+.modal-cancel {
+  flex: 1;
+}
+
+.modal-save {
+  flex: 1;
+}

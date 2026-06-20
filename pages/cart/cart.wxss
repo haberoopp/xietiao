@@ -22,12 +22,13 @@
 .item-bottom { display: flex; align-items: center; justify-content: space-between; }
 .item-bottom .price { font-size: 28rpx; }
 
-.qty-control { display: flex; align-items: center; gap: 8rpx; }
+.qty-control { display: flex; align-items: center; gap: 6rpx; }
 .qty-btn {
-  width: 88rpx; height: 88rpx; line-height: 88rpx;
+  width: 56rpx; height: 48rpx; line-height: 48rpx;
   text-align: center; background: #F0F0F0; border-radius: 6rpx;
-  font-size: 28rpx; color: #1A1A1A;
+  font-size: 26rpx; color: #1A1A1A;
 }
+.qty-btn:active { background: #E0E0E0; }
 .qty-input {
   width: 80rpx; height: 48rpx;
   border: 1rpx solid #E0E0E0; border-radius: 6rpx;

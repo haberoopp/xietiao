@@ -35,7 +35,7 @@ exports.main = async (event) => {
           .get();
         (orderRes.data || []).forEach(o => { orderMap[o._id] = o; });
       } catch (e) {
-        console.warn('[adminGetReturns] batch order lookup failed:', e.message);
+        logger.warn('adminGetReturns batch order lookup failed', { error: e.message });
       }
     }
 

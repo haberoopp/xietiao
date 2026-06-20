@@ -7,9 +7,8 @@ const logger = require('./logger');
 const auth = require('./auth');
 
 exports.main = async (event) => {
-  const authResult = await auth.requireOpenid();
-  const admin = await db.collection('admins').where({ lastLoginOpenid: authResult.openid, loggedIn: true }).get();
-  if (admin.data.length === 0) return res.forbidden('无管理员权限');
+  const authResult = await auth.requireAdmin();
+  if (!authResult.authorized) return authResult.response;
 
   const { fileID } = event;
 
@@ -89,7 +88,7 @@ exports.main = async (event) => {
     logger.info('Products imported', { success: results.success, errors: results.errors.length, total: rows.length });
     return res.ok(results);
   } catch (err) {
-    logger.error('importProducts error', { error: err.message });
+    logger.error('importProducts error', err);
     return res.internalError();
   }
 };

@@ -1,4 +1,6 @@
 <view class="container">
+  <!-- ===== 固定头部 ===== -->
+  <view class="header-fixed">
   <!-- 顶部栏 -->
   <view class="admin-top-bar">
     <view class="top-left">
@@ -22,12 +24,16 @@
   <!-- 搜索框 -->
   <view class="search-bar" wx:if="{{!isReturnTab}}">
     <view class="search-input-wrap">
-      <text class="search-icon">🔍</text>
+      <text class="search-icon">⌕</text>
       <input class="search-input" placeholder="搜索客户姓名、电话、地址..." value="{{searchKeyword}}" bindinput="onSearchInput" confirm-type="search" />
       <text wx:if="{{searchKeyword}}" class="search-clear" bindtap="onClearSearch">✕</text>
     </view>
   </view>
+  </view>
+  <!-- ===== /固定头部 ===== -->
 
+  <!-- ===== 可滚动列表 ===== -->
+  <scroll-view class="scroll-list" scroll-y scroll-top="{{listScrollTop}}" bindscroll="onListScroll">
   <!-- ===== 退换货列表 ===== -->
   <view wx:if="{{isReturnTab}}">
     <view wx:if="{{returnList.length === 0}}" class="empty-state">
@@ -81,7 +87,7 @@
       <text class="tool-arrow">›</text>
     </view>
     <view class="tool-item" bindtap="onEnterSelectMode">
-      <text class="tool-icon">📥</text>
+      <text class="tool-icon">📤</text>
       <text class="tool-label">导出订单</text>
       <text class="tool-arrow">›</text>
     </view>
@@ -158,11 +164,13 @@
               <view class="info-addr-text">
                 <text class="info-label">地址：</text><text class="addr-value">{{item.address}}</text>
               </view>
-              <view class="navi-btn" data-address="{{item.address}}" data-lat="{{item.location.lat}}" data-lng="{{item.location.lng}}" catchtap="onNavigate">🧭 导航</view>
             </view>
           </block>
           <view class="info-row">
             <text class="info-label">拿货方式：</text><text>{{item.deliveryMethodText}}</text>
+          </view>
+          <view wx:if="{{item.logisticsCompany}}" class="info-row">
+            <text class="info-label">物流公司：</text><text>{{item.logisticsCompany}}</text>
           </view>
         </view>
 
@@ -202,7 +210,7 @@
         <!-- 上传图片按钮（所有角色可见） -->
         <view class="upload-row">
           <view class="upload-btn" data-order-id="{{item._id}}" bindtap="onUploadImage">
-            📷 上传图片
+            ▣ 上传图片
           </view>
           <text wx:if="{{isDelivery && item.deliveryMethod === 'delivery' && (!item.images || item.images.length === 0)}}" class="upload-hint">配送前需上传凭证</text>
           <text wx:if="{{isWarehouse && item.deliveryMethod === 'logistics' && (!item.images || item.images.length === 0)}}" class="upload-hint">物流发货需上传凭证</text>
@@ -225,7 +233,7 @@
           <view wx:if="{{isManager}}" class="payment-toggle-btn {{item.payment_status === 'paid' ? 'pt-paid' : 'pt-unpaid'}}" data-order-id="{{item._id}}" catchtap="onTogglePayment">
             {{item.payment_status === 'paid' ? '✓ 已付款' : '标记已付'}}
           </view>
-          <view class="share-bill-btn" data-order="{{item}}" catchtap="onShareBill">📋 对账单</view>
+          <view class="share-bill-btn" data-order="{{item}}" catchtap="onShareBill">☰ 对账单</view>
         </view>
       </view>
     </view>
@@ -250,6 +258,9 @@
   <!-- 对账单 Canvas（隐藏，用于后台绑图） -->
   <canvas type="2d" id="billCanvas" class="bill-canvas"></canvas>
 
+  </scroll-view>
+  <!-- ===== /可滚动列表 ===== -->
+
   <!-- 后台底部 Tab 栏 -->
   <view class="admin-tab-bar">
     <view class="admin-tab-item {{isToolsTab ? '' : 'active'}}" data-tab="orders" bindtap="onAdminTab">
@@ -258,5 +269,14 @@
     <view class="admin-tab-item {{isToolsTab ? 'active' : ''}}" data-tab="tools" bindtap="onAdminTab">
       <text class="admin-tab-text">功能</text>
     </view>
+  </view>
+
+  <!-- 图片预览弹窗（自定义，避免 wx.previewImage 导致页面跳到顶部） -->
+  <view wx:if="{{showImagePreview}}" class="image-preview-mask" catchtap="onCloseImagePreview">
+    <view class="ip-close" catchtap="onCloseImagePreview">✕</view>
+    <view wx:if="{{previewImageIndex > 0}}" class="ip-arrow ip-arrow-left" catchtap="onPrevImage">‹</view>
+    <image class="ip-image" src="{{previewImageUrl}}" mode="aspectFit" catchtap="" />
+    <view wx:if="{{previewImageIndex < previewImageUrls.length - 1}}" class="ip-arrow ip-arrow-right" catchtap="onNextImage">›</view>
+    <view wx:if="{{previewImageUrls.length > 1}}" class="ip-indicator">{{previewImageIndex + 1}} / {{previewImageUrls.length}}</view>
   </view>
 </view>

@@ -57,7 +57,7 @@ exports.main = async () => {
     logger.info('Admin accounts initialized', { count: results.length });
     return res.record(results);
   } catch (err) {
-    logger.error('initAdminAccounts error', { error: err.message });
+    logger.error('initAdminAccounts error', err);
     return res.internalError();
   }
 };

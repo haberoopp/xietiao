@@ -94,10 +94,10 @@ printf "y\n" | tcb fn deploy --force
 ### 6. 初始化管理员账号
 
 ```bash
-tcb fn invoke seedAdmin
+tcb fn invoke initAdminAccounts
 ```
 
-这将创建 3 个预置账号。也可在微信开发者工具中直接调用 `seedAdmin` 云函数。
+这将创建 3 个预置账号。也可在微信开发者工具中直接调用 `initAdminAccounts` 云函数。
 
 ### 7. 配置订阅消息模板（可选）
 
@@ -110,15 +110,7 @@ tcb fn invoke seedAdmin
 3. 将获取的模板 ID 更新到 `utils/constants.js` 的 `NOTIFY_TEMPLATES` 中
 4. 同步更新 `cloudfunctions/lib/notify.js` 中的 `TEMPLATES`
 
-### 8. 配置高德地图（可选）
-
-1. 前往 https://console.amap.com/ 申请 Web 服务 Key
-2. 复制 `utils/config.example.js` 为 `utils/config.js`
-3. 填入你的 `AMAP_KEY`
-
-不配置也能使用微信原生地图选点（导航功能会降级为手动搜索）。
-
-### 9. 编译运行
+### 8. 编译运行
 
 微信开发者工具 → 点击「编译」→ 扫码预览
 
@@ -242,7 +234,6 @@ console.table(wx.getStorageSync('_error_logs') || [])
 | `cloudbaserc.json` | 根目录 | 云函数部署配置（函数名/超时/运行时） |
 | `config.json` | 每个云函数目录 | 单个云函数的 timeout + permissions |
 | `utils/constants.js` | utils/ | 产品分类、模板 ID、状态映射 |
-| `utils/config.js` | utils/（需手动创建） | 高德地图 Key |
 
 ---
 

@@ -1,6 +1,6 @@
 <view class="login-page">
   <view class="login-card">
-    <view class="login-logo">🧵</view>
+    <text class="login-logo">◈</text>
     <view class="login-title">温州斜条批发</view>
     <view class="login-form">
       <input class="login-input" placeholder="账号" value="{{username}}" data-field="username" bindinput="onInput" />

@@ -1,5 +1,4 @@
 const util = require('../../utils/util');
-const amap = require('../../utils/amap');
 
 Page({
   data: {
@@ -22,7 +21,13 @@ Page({
   },
 
   async getLocation() {
-    const loc = await amap.getCurrentLocation();
+    const loc = await new Promise((resolve) => {
+      wx.getLocation({
+        type: 'gcj02',
+        success: (res) => resolve({ lat: res.latitude, lng: res.longitude }),
+        fail: () => resolve(null)
+      });
+    });
     if (loc) {
       this.setData({ currentLocation: loc });
     }
@@ -140,10 +145,22 @@ Page({
 
   async onChooseLocation() {
     const { currentLocation } = this.data;
-    const result = await amap.chooseLocation(
-      currentLocation ? currentLocation.lat : null,
-      currentLocation ? currentLocation.lng : null
-    );
+    const result = await new Promise((resolve) => {
+      wx.chooseLocation({
+        latitude: currentLocation ? currentLocation.lat : 27.9939,
+        longitude: currentLocation ? currentLocation.lng : 120.6993,
+        success: (res) => resolve({
+          name: res.name || '',
+          address: res.address || res.name || '',
+          lat: res.latitude,
+          lng: res.longitude
+        }),
+        fail: (err) => {
+          if (err.errMsg.includes('cancel')) resolve(null);
+          else { wx.showToast({ title: '定位失败，请授权位置权限', icon: 'none' }); resolve(null); }
+        }
+      });
+    });
     if (result) {
       this.setData({
         'form.address': result.address || result.name,

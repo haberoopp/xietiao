@@ -1,4 +1,6 @@
 <view class="container">
+  <!-- ===== 固定头部 ===== -->
+  <view class="header-fixed">
   <!-- 换购模式提示 -->
   <view wx:if="{{exchangeMode}}" class="exchange-banner">
     <view class="exb-info">
@@ -24,6 +26,12 @@
     </view>
   </view>
 
+  <!-- 全部 / 买过 -->
+  <view class="purchase-filter">
+    <view class="pf-tab {{purchaseFilter === 'all' ? 'active' : ''}}" bindtap="onPurchaseFilter" data-filter="all">全部</view>
+    <view class="pf-tab {{purchaseFilter === 'bought' ? 'active' : ''}}" bindtap="onPurchaseFilter" data-filter="bought">买过</view>
+  </view>
+
   <!-- 分类筛选 -->
   <scroll-view class="category-bar" scroll-x enable-flex>
     <view
@@ -38,7 +46,11 @@
 
   <!-- 搜索结果提示 -->
   <view wx:if="{{keyword}}" class="search-info">搜索"{{keyword}}"，找到 {{products.length}} 个产品</view>
+  </view>
+  <!-- ===== /固定头部 ===== -->
 
+  <!-- ===== 可滚动列表 ===== -->
+  <scroll-view class="scroll-list" scroll-y scroll-top="{{listScrollTop}}" bindscroll="onListScroll">
   <!-- 产品列表 -->
   <view wx:if="{{loading}}" class="loading-hint">加载中...</view>
 
@@ -49,18 +61,19 @@
 
   <view wx:else class="product-list">
     <view class="product-card card {{item.status === 'out' ? 'product-out' : ''}}" wx:for="{{products}}" wx:key="_id">
-      <image class="product-image {{item.status === 'out' ? 'img-out' : ''}}" src="{{item.image || '/images/placeholder.png'}}" mode="aspectFill" />
+      <image class="product-image {{item.status === 'out' ? 'img-out' : ''}}" src="{{item.image || '/images/placeholder.png'}}" mode="aspectFill" catchtap="onPreviewImage" data-url="{{item.image}}" />
       <view class="product-info">
         <view class="product-name">{{item.name}}</view>
         <view class="product-meta">{{item.category}} / {{item.unit}}</view>
         <view class="product-bottom">
           <view class="price"><text class="price-symbol">¥</text>{{item.priceText}}</view>
           <view wx:if="{{item.status === 'out'}}" class="add-cart-btn add-cart-out">缺货</view>
-          <view wx:else class="add-cart-btn" data-product="{{item}}" catchtap="showQtyInput">加入</view>
+          <view wx:else class="add-cart-btn" data-product="{{item}}" catchtap="showQtyInput">+</view>
         </view>
       </view>
     </view>
   </view>
+  </scroll-view>
 
   <!-- 数量输入弹窗 -->
   <view wx:if="{{showQtyModal}}" class="modal-mask" catchtouchmove="preventMove">
@@ -86,39 +99,17 @@
     </view>
   </view>
 
-  <!-- 悬浮购物车面板 -->
-  <view class="cart-float {{cartExpanded ? 'cart-float--open' : ''}}">
-    <!-- 展开后的商品列表 -->
-    <view wx:if="{{cartExpanded}}" class="cart-float-list">
-      <view class="cart-float-item" wx:for="{{cartItems}}" wx:key="_id" wx:for-index="ci">
-        <image class="cfi-image" src="{{item.image || '/images/placeholder.png'}}" mode="aspectFill" />
-        <view class="cfi-info">
-          <view class="cfi-name">{{item.name}}</view>
-          <view class="cfi-price">¥{{item.priceText}}</view>
-        </view>
-        <view class="cfi-qty-ctrl">
-          <view class="cfi-qty-btn" data-index="{{ci}}" catchtap="onCartMinus">-</view>
-          <input class="cfi-qty-input" type="number" value="{{item.quantity}}" data-index="{{ci}}" bindinput="onCartQtyInput" />
-          <view class="cfi-qty-btn" data-index="{{ci}}" catchtap="onCartPlus">+</view>
-        </view>
-        <view class="cfi-del" data-index="{{ci}}" catchtap="onCartDelete">×</view>
-      </view>
-    </view>
+  <!-- 换购模式：底部完成按钮 -->
+  <view wx:if="{{exchangeMode}}" class="exchange-float-bar">
+    <view class="efb-btn" catchtap="onCartCheckout">完成换购选择 →</view>
+  </view>
 
-    <!-- 底部栏 -->
-    <view class="cart-float-bar">
-      <view class="cfb-left">
-        <view class="cfb-icon-wrap" bindtap="onToggleCart">
-          <view class="cfb-icon-bg"></view>
-          <text class="cfb-icon-text">🛒</text>
-          <text wx:if="{{cartCount > 0}}" class="cfb-count">{{cartCount > 99 ? '99+' : cartCount}}</text>
-        </view>
-        <text class="cfb-total">¥{{cartTotal}}</text>
-      </view>
-      <view class="cfb-right">
-        <view wx:if="{{exchangeMode}}" class="cfb-exchange-btn" catchtap="onCartCheckout">完成换购选择 →</view>
-        <view wx:else class="cfb-checkout-btn" catchtap="onCartCheckout">去结算</view>
-      </view>
-    </view>
+  <!-- 图片预览弹窗（自定义，避免 wx.previewImage 导致页面跳到顶部） -->
+  <view wx:if="{{showImagePreview}}" class="image-preview-mask" catchtap="onCloseImagePreview">
+    <view class="ip-close" catchtap="onCloseImagePreview">✕</view>
+    <view wx:if="{{previewImageIndex > 0}}" class="ip-arrow ip-arrow-left" catchtap="onPrevImage">‹</view>
+    <image class="ip-image" src="{{previewImageUrl}}" mode="aspectFit" catchtap="" />
+    <view wx:if="{{previewImageIndex < previewImageUrls.length - 1}}" class="ip-arrow ip-arrow-right" catchtap="onNextImage">›</view>
+    <view wx:if="{{previewImageUrls.length > 1}}" class="ip-indicator">{{previewImageIndex + 1}} / {{previewImageUrls.length}}</view>
   </view>
 </view>

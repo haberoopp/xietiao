@@ -7,16 +7,10 @@
     data-index="{{idx}}"
     bindtap="switchTab"
   >
-    <image class="tab-icon" src="/images/{{selected === idx ? item.selectedIconPath : item.iconPath}}" mode="aspectFit" />
+    <view class="tab-icon-wrap">
+      <text class="tab-icon-text {{selected === idx ? 'active' : ''}}">{{item.iconText}}</text>
+      <view wx:if="{{item.badge > 0}}" class="tab-badge">{{item.badge > 99 ? '99+' : item.badge}}</view>
+    </view>
     <view class="tab-text">{{item.text}}</view>
-  </view>
-  <view
-    wx:if="{{showAdmin}}"
-    class="tab-item {{selected === 3 ? 'active' : ''}}"
-    data-index="3"
-    bindtap="switchTab"
-  >
-    <image class="tab-icon" src="/images/{{selected === 3 ? adminTab.selectedIconPath : adminTab.iconPath}}" mode="aspectFit" />
-    <view class="tab-text">后台</view>
   </view>
 </view>

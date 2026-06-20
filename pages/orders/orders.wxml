@@ -81,6 +81,15 @@
     </view>
   </view>
 
+  <!-- 对账单导出栏 -->
+  <view wx:if="{{showBillPrompt && orders.length > 0}}" class="bill-bar">
+    <view class="bill-info">
+      <text class="bill-title">☰ 对账单</text>
+      <text class="bill-summary">共 {{orders.length}} 笔订单</text>
+    </view>
+    <view class="btn-primary bill-export-btn" bindtap="onExportBill">导出 CSV</view>
+  </view>
+
   <view class="bottom-links">
     <view class="bottom-link" bindtap="goAddress">收货地址管理</view>
     <view class="bottom-link admin-link" bindtap="goAdmin">商家管理</view>

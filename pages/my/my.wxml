@@ -1,0 +1,77 @@
+<view class="container">
+  <!-- 头像栏 -->
+  <view class="profile-bar">
+    <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+      <image class="avatar" src="{{avatarUrl || '/images/placeholder.png'}}" mode="aspectFill" />
+    </button>
+    <view class="profile-info">
+      <input class="profile-name-input" type="nickname" placeholder="点击设置昵称" value="{{customerName === '未设置' ? '' : customerName}}" bindblur="onNicknameBlur" />
+      <view class="edit-name-btn" bindtap="onEditName">
+        <text class="edit-icon">✎</text>
+      </view>
+    </view>
+  </view>
+  <!-- 首次使用提示 -->
+  <view wx:if="{{isFirstTime}}" class="first-time-tip">
+    <text>👆 点击头像和昵称即可同步微信资料</text>
+  </view>
+
+  <!-- 我的订单 -->
+  <view class="section">
+    <view class="section-title">我的订单</view>
+    <view class="order-status-row">
+      <view class="order-status-item" bindtap="onTapOrders" data-status="processing">
+        <view class="status-icon-box">
+          <text class="status-icon">◷</text>
+        </view>
+        <text class="status-label">待处理</text>
+        <text wx:if="{{pendingCount > 0}}" class="status-badge">{{pendingCount}}</text>
+      </view>
+      <view class="order-status-item" bindtap="onTapOrders" data-status="completed">
+        <view class="status-icon-box">
+          <text class="status-icon">✓</text>
+        </view>
+        <text class="status-label">已完成</text>
+        <text wx:if="{{completedCount > 0}}" class="status-badge">{{completedCount}}</text>
+      </view>
+      <view class="order-status-item" bindtap="onTapOrders" data-status="all">
+        <view class="status-icon-box">
+          <text class="status-icon">⊞</text>
+        </view>
+        <text class="status-label">全部订单</text>
+        <text class="status-badge">{{totalOrderCount}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能菜单列表 -->
+  <view class="section menu-section">
+    <view class="menu-item" bindtap="onTapBill">
+      <text class="menu-icon">☰</text>
+      <text class="menu-text">对账单</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="onTapAddress">
+      <text class="menu-icon">◎</text>
+      <text class="menu-text">收货地址</text>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 商家管理 -->
+  <view class="admin-entry" bindtap="onTapAdmin">
+    <text class="admin-text">商家管理</text>
+  </view>
+
+  <!-- 编辑名称弹窗 -->
+  <view wx:if="{{showNameEdit}}" class="modal-mask">
+    <view class="modal-content" catchtap="">
+      <view class="modal-title">修改名称</view>
+      <input class="form-input name-input" placeholder="请输入您的名称" value="{{editNameValue}}" bindinput="onNameInput" focus="{{true}}" />
+      <view class="modal-btns">
+        <view class="btn-outline modal-cancel" bindtap="onCancelEditName">取消</view>
+        <view class="btn-primary modal-save" bindtap="onConfirmEditName">确定</view>
+      </view>
+    </view>
+  </view>
+</view>

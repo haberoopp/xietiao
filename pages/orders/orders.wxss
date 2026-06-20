@@ -216,6 +216,41 @@
   background: #fff5f5;
 }
 
+/* 对账单导出栏 */
+.bill-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  padding: 24rpx 32rpx;
+  border-radius: 8rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+  margin-bottom: 16rpx;
+}
+
+.bill-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.bill-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #1A1A1A;
+}
+
+.bill-summary {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.bill-export-btn {
+  padding: 14rpx 32rpx;
+  font-size: 26rpx;
+  flex-shrink: 0;
+}
+
 .bottom-links {
   display: flex;
   justify-content: center;

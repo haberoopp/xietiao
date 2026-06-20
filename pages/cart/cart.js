@@ -6,6 +6,9 @@ Page({
   },
 
   onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 1 });
+    }
     this.loadCart();
   },
 
@@ -107,6 +110,10 @@ Page({
     const app = getApp();
     app.globalData.cart = cart;
     wx.setStorageSync('cart', cart);
+    // 同步更新导航栏购物车角标
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().updateCartBadge();
+    }
   },
 
   onCheckout() {

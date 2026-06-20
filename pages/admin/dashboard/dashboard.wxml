@@ -1,7 +1,7 @@
 <view class="container">
   <view class="admin-top-bar">
     <view class="back-btn" bindtap="onBackToOrders">← 返回订单</view>
-    <text class="dash-title">📊 经营看板</text>
+    <text class="dash-title">◈ 经营看板</text>
   </view>
 
   <view class="date-tabs">
@@ -39,7 +39,7 @@
 
   <view class="section">
     <view class="section-header">
-      <text class="section-title">📈 近7天趋势</text>
+      <text class="section-title">↗ 近7天趋势</text>
     </view>
     <view class="trend-chart">
       <view class="trend-bar-col" wx:for="{{trendDays}}" wx:key="label">
@@ -52,7 +52,7 @@
 
   <view class="section">
     <view class="section-header">
-      <text class="section-title">👥 客户消费排行</text>
+      <text class="section-title">◉ 客户消费排行</text>
     </view>
     <view wx:if="{{topCustomers.length === 0}}" class="empty-state"><text>暂无数据</text></view>
     <view wx:else class="rank-list">
@@ -74,7 +74,7 @@
 
   <view class="section">
     <view class="section-header">
-      <text class="section-title">🔥 产品销量排行</text>
+      <text class="section-title">✦ 产品销量排行</text>
     </view>
     <view wx:if="{{topProducts.length === 0}}" class="empty-state"><text>暂无销售数据</text></view>
     <view wx:else class="rank-list">
@@ -96,13 +96,13 @@
 
   <view class="section">
     <view class="section-header">
-      <text class="section-title">⚠️ 缺货预警</text>
+      <text class="section-title">△ 缺货预警</text>
       <text class="section-more" bindtap="onFilterShortage">查看全部</text>
     </view>
-    <view wx:if="{{shortageProducts.length === 0}}" class="empty-state"><text>所有产品库存充足 🎉</text></view>
+    <view wx:if="{{shortageProducts.length === 0}}" class="empty-state"><text>所有产品库存充足 ✓</text></view>
     <view wx:else class="shortage-list">
       <view class="shortage-item {{item.status === 'out' ? 'so-out' : 'so-low'}}" wx:for="{{shortageProducts}}" wx:key="_id">
-        <view class="si-status">{{item.status === 'out' ? '🔴 缺货' : '🟡 紧张'}}</view>
+        <view class="si-status {{item.status === 'out' ? 'si-out' : 'si-low'}}">{{item.status === 'out' ? '● 缺货' : '● 紧张'}}</view>
         <view class="si-name">{{item.name}}</view>
         <view class="si-meta">
           <text>近7天销 ¥{{item.recentSalesText}}</text>

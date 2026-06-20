@@ -144,6 +144,8 @@
 .so-low { border-left-color: #E67E22; }
 
 .si-status { font-size: 22rpx; margin-bottom: 6rpx; }
+.si-out { color: #E74C3C; font-weight: 500; }
+.si-low { color: #F39C12; font-weight: 500; }
 .si-name { font-size: 28rpx; font-weight: 500; }
 
 .si-meta {

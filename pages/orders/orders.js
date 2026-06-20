@@ -14,13 +14,20 @@ Page({
     exchangeItems: [],
     returnAmountText: '0.00',
     exchangeAmountText: '0.00',
-    priceDiffText: ''
+    priceDiffText: '',
+    filterStatus: '',
+    showBillPrompt: false
+  },
+
+  onLoad(options) {
+    if (options) {
+      const filterStatus = options.status === 'all' ? '' : (options.status || '');
+      const showBillPrompt = options.showBill === '1';
+      this.setData({ filterStatus, showBillPrompt });
+    }
   },
 
   onShow() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 2 });
-    }
     this.loadOrders();
     // 从换购选择页返回时恢复弹窗
     const app = getApp();
@@ -80,7 +87,13 @@ Page({
           returnStatusText: rr ? util.getReturnStatusText(rr.status) : (order.returnRequest ? util.getReturnStatusText(order.returnRequest.status) : '')
         };
       });
-      this.setData({ orders, loading: false });
+      this._cachedOrders = orders;
+      this._lastOrdersData = JSON.stringify(orders);
+      let filteredOrders = orders;
+      if (this.data.filterStatus) {
+        filteredOrders = orders.filter(o => o.status === this.data.filterStatus);
+      }
+      this.setData({ orders: filteredOrders, loading: false });
       return;
     }
 
@@ -104,7 +117,17 @@ Page({
             returnStatusText: rr ? util.getReturnStatusText(rr.status) : ''
           };
         });
-        this.setData({ orders });
+        // 数据未变化时跳过 setData，避免页面闪烁
+        const newDataStr = JSON.stringify(orders);
+        if (this._lastOrdersData !== newDataStr) {
+          this._lastOrdersData = newDataStr;
+          this._cachedOrders = orders;
+          let filteredOrders = orders;
+          if (this.data.filterStatus) {
+            filteredOrders = orders.filter(o => o.status === this.data.filterStatus);
+          }
+          this.setData({ orders: filteredOrders });
+        }
       }
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' });
@@ -367,16 +390,15 @@ Page({
   },
 
   goAddress() {
-    wx.switchTab({ url: '/pages/address/address' });
+    wx.navigateTo({ url: '/pages/address/address' });
   },
 
   goAdmin() {
     const app = getApp();
-    // 已登录直接进后台，未登录跳到登录tab页
     if (app.globalData.adminLoggedIn || wx.getStorageSync('adminLoggedIn')) {
       wx.navigateTo({ url: '/pages/admin/orders/orders' });
     } else {
-      wx.switchTab({ url: '/pages/admin/login/login' });
+      wx.navigateTo({ url: '/pages/admin/login/login' });
     }
   },
 
@@ -426,5 +448,37 @@ Page({
     wx.setClipboardData({ data: text, success: () => {
       wx.showToast({ title: '已复制', icon: 'success' });
     }});
+  },
+
+  // 导出对账单 CSV
+  onExportBill() {
+    const orders = this.data.orders;
+    if (orders.length === 0) {
+      wx.showToast({ title: '无订单可导出', icon: 'none' });
+      return;
+    }
+    const exportUtil = require('../../utils/export');
+    const csv = exportUtil.ordersToCSV(orders);
+    const fs = wx.getFileSystemManager();
+    const filePath = `${wx.env.USER_DATA_PATH}/对账单_${Date.now()}.csv`;
+    fs.writeFile({
+      filePath,
+      data: csv,
+      encoding: 'utf8',
+      success: () => {
+        wx.shareFileMessage({
+          filePath,
+          success: () => wx.showToast({ title: '已导出', icon: 'success' }),
+          fail: () => {
+            wx.showModal({
+              title: '导出成功',
+              content: '文件已保存，可在微信中分享或转发。',
+              showCancel: false
+            });
+          }
+        });
+      },
+      fail: () => wx.showToast({ title: '导出失败', icon: 'none' })
+    });
   }
 });

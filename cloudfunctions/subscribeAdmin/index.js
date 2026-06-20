@@ -40,7 +40,7 @@ exports.main = async (event) => {
 
     return res.badRequest('未知操作');
   } catch (err) {
-    logger.error('subscribeAdmin error', { error: err.message, action: event.action, openid });
+    logger.error('subscribeAdmin error', err, { action: event.action, openid });
     return res.internalError();
   }
 };

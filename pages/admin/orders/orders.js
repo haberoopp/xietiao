@@ -1,5 +1,4 @@
 const util = require('../../../utils/util');
-const amap = require('../../../utils/amap');
 const exportUtil = require('../../../utils/export');
 const demoStore = require('../../../utils/demoStore');
 
@@ -34,13 +33,18 @@ Page({
     selectMode: false,
     selectedIds: {},
     selectedCount: 0,
-    allSelected: false
+    allSelected: false,
+    listScrollTop: 0,
+    showImagePreview: false,
+    previewImageUrl: '',
+    previewImageUrls: [],
+    previewImageIndex: 0
   },
 
   onShow() {
     const role = wx.getStorageSync('adminRole') || getApp().globalData.adminRole || 'warehouse';
     if (!getApp().globalData.adminLoggedIn && !wx.getStorageSync('adminLoggedIn')) {
-      wx.switchTab({ url: '/pages/admin/login/login' });
+      wx.redirectTo({ url: '/pages/admin/login/login' });
       return;
     }
     this.setData({
@@ -58,7 +62,7 @@ Page({
 
   onTabTap(e) {
     const tab = e.currentTarget.dataset.status;
-    this.setData({ activeStatus: tab, isReturnTab: tab === 'returns' });
+    this.setData({ activeStatus: tab, isReturnTab: tab === 'returns', listScrollTop: 0 });
     this.loadOrders();
   },
 
@@ -68,10 +72,10 @@ Page({
   },
 
   async loadOrders() {
-    this.setData({ loading: true });
     const app = getApp();
 
     if (app.globalData.demoMode) {
+      this.setData({ loading: true });
       const returnReqs = demoStore.getAll(demoStore.KEYS.returnRequests);
       let orders = demoStore.getAll(demoStore.KEYS.orders);
 
@@ -97,7 +101,6 @@ Page({
           returnStatusText: order.returnRequest ? util.getReturnStatusText(order.returnRequest.status) : '',
           paymentStatusText: (order.payment_status === 'paid' ? '已付款' : order.payment_status === 'unpaid' ? '未付款' : '未付款')
         }));
-        // 客户搜索过滤
         if (this.data.searchKeyword) {
           const kw = this.data.searchKeyword.toLowerCase();
           orders = orders.filter(o =>
@@ -107,10 +110,30 @@ Page({
           );
         }
         this.setData({ orders, returnList: [], loading: false });
+        this._cachedOrders = orders;
+        this._lastOrdersData = JSON.stringify(orders);
       }
       return;
     }
 
+    // 1. 缓存优先：瞬间显示上次数据（仅订单列表模式）
+    let fromCache = false;
+    if (!this.data.isReturnTab) {
+      const cached = wx.getStorageSync('cache_admin_orders');
+      if (cached && cached.length > 0) {
+        this._cachedOrders = cached;
+        this._lastOrdersData = JSON.stringify(cached);
+        this.setData({ orders: cached, returnList: [], loading: false });
+        fromCache = true;
+      } else {
+        this.setData({ loading: true });
+      }
+    } else {
+      this.setData({ loading: true });
+    }
+
+    // 2. 后台拉取最新数据（count + 第一页并行，减少 1 个 RTT）
+    const PAGE = 200;
     try {
       if (this.data.isReturnTab) {
         const res = await wx.cloud.callFunction({ name: 'adminGetReturns', data: { page: 1, pageSize: 200 } });
@@ -122,53 +145,72 @@ Page({
           this.setData({ returnList, orders: [] });
         }
       } else {
-        // 先查总数，再并行拉取全部
-        const countRes = await wx.cloud.callFunction({
-          name: 'adminGetOrders',
-          data: Object.assign({ page: 1, pageSize: 1 }, this.data.activeStatus ? { status: this.data.activeStatus } : {})
-        });
+        const baseParams = this.data.activeStatus ? { status: this.data.activeStatus } : {};
+        const [countRes, firstPageRes] = await Promise.all([
+          wx.cloud.callFunction({ name: 'adminGetOrders', data: Object.assign({ page: 1, pageSize: 1 }, baseParams) }),
+          wx.cloud.callFunction({ name: 'adminGetOrders', data: Object.assign({ page: 1, pageSize: PAGE }, baseParams) })
+        ]);
         if (countRes.result.code !== 0) throw new Error('count failed');
         const total = countRes.result.data.total;
-        const PAGE = 200;
-        const pages = Math.ceil(total / PAGE);
 
-        const calls = [];
-        for (let i = 0; i < pages; i++) {
-          const params = { page: i + 1, pageSize: PAGE };
-          if (this.data.activeStatus) params.status = this.data.activeStatus;
-          calls.push(wx.cloud.callFunction({ name: 'adminGetOrders', data: params }));
-        }
-        const results = await Promise.all(calls);
-        let orders = results
-          .filter(r => r.result && r.result.code === 0)
-          .flatMap(r => r.result.data.list)
-          .map(order => ({
-            ...order,
-            items: (order.items || []).map(i => ({ ...i, priceText: ((i.price || 0) / 100).toFixed(2) })),
-            statusText: util.getOrderStatusText(order.status),
-            totalText: (order.totalAmount / 100).toFixed(2),
-            timeText: util.formatDate(order.createdAt),
-            deliveryMethodText: util.getDeliveryMethodText(order.deliveryMethod),
-            pickedUp: order.pickedUp || false,
-            returnStatusText: order.returnRequest ? util.getReturnStatusText(order.returnRequest.status) : '',
-            paymentStatusText: (order.payment_status === 'paid' ? '已付款' : order.payment_status === 'unpaid' ? '未付款' : '未付款')
-          }));
-          if (this.data.searchKeyword) {
-            const kw = this.data.searchKeyword.toLowerCase();
-            orders = orders.filter(o =>
-              (o.customerName || '').toLowerCase().includes(kw) ||
-              (o.phone || '').toLowerCase().includes(kw) ||
-              (o.address || '').toLowerCase().includes(kw)
-            );
+        let orders = (firstPageRes.result && firstPageRes.result.code === 0)
+          ? firstPageRes.result.data.list : [];
+
+        if (total > PAGE) {
+          const remaining = Math.ceil((total - PAGE) / PAGE);
+          const calls = [];
+          for (let i = 0; i < remaining; i++) {
+            calls.push(wx.cloud.callFunction({
+              name: 'adminGetOrders',
+              data: Object.assign({ page: i + 2, pageSize: PAGE }, baseParams)
+            }));
           }
-          // 把 cloud:// 图片转为临时 HTTP URL，非上传者也能加载
-          orders = await this.convertOrderImageUrls(orders);
-          this.setData({ orders, returnList: [] });
+          const results = await Promise.all(calls);
+          orders = orders.concat(
+            results.filter(r => r.result && r.result.code === 0).flatMap(r => r.result.data.list)
+          );
+        }
+
+        orders = orders.map(order => ({
+          ...order,
+          items: (order.items || []).map(i => ({ ...i, priceText: ((i.price || 0) / 100).toFixed(2) })),
+          statusText: util.getOrderStatusText(order.status),
+          totalText: (order.totalAmount / 100).toFixed(2),
+          timeText: util.formatDate(order.createdAt),
+          deliveryMethodText: util.getDeliveryMethodText(order.deliveryMethod),
+          pickedUp: order.pickedUp || false,
+          returnStatusText: order.returnRequest ? util.getReturnStatusText(order.returnRequest.status) : '',
+          paymentStatusText: (order.payment_status === 'paid' ? '已付款' : order.payment_status === 'unpaid' ? '未付款' : '未付款')
+        }));
+
+        if (this.data.searchKeyword) {
+          const kw = this.data.searchKeyword.toLowerCase();
+          orders = orders.filter(o =>
+            (o.customerName || '').toLowerCase().includes(kw) ||
+            (o.phone || '').toLowerCase().includes(kw) ||
+            (o.address || '').toLowerCase().includes(kw)
+          );
+        }
+
+        orders = await this.convertOrderImageUrls(orders);
+
+        const newDataStr = JSON.stringify(orders);
+        if (this._lastOrdersData === newDataStr) {
+          this.setData({ loading: false });
+          return;
+        }
+
+        wx.setStorage({ key: 'cache_admin_orders', data: orders });
+        this._lastOrdersData = newDataStr;
+        this._cachedOrders = orders;
+        this.setData({ orders, returnList: [], loading: false });
+        console.log('✅ 已加载 ' + orders.length + ' 个订单' + (fromCache ? '（缓存秒开 + 后台更新）' : ''));
       }
     } catch (err) {
-      wx.showToast({ title: '加载失败', icon: 'none' });
+      console.error('admin loadOrders 失败', err);
+      if (!fromCache) wx.showToast({ title: '加载失败', icon: 'none' });
+      this.setData({ loading: false });
     }
-    this.setData({ loading: false });
   },
 
   onSearchInput(e) {
@@ -177,7 +219,7 @@ Page({
   },
 
   onClearSearch() {
-    this.setData({ searchKeyword: '' });
+    this.setData({ searchKeyword: '', listScrollTop: 0 });
     this.loadOrders();
   },
 
@@ -225,31 +267,20 @@ Page({
     if (idx === -1) return;
     const oldAmount = this.data.orders[idx].totalAmount;
     const oldText = this.data.orders[idx].totalText;
-    this.setData({
-      [`orders[${idx}].totalAmount`]: Math.round(newAmount * 100),
-      [`orders[${idx}].totalText`]: newAmount.toFixed(2),
-      showPriceModal: false
-    });
+    this.setData({ [`orders[${idx}].totalAmount`]: Math.round(newAmount * 100), [`orders[${idx}].totalText`]: newAmount.toFixed(2), showPriceModal: false });
 
     try {
-      const res = await wx.cloud.callFunction({
-        name: 'adminUpdateOrderPrice',
-        data: { orderId: priceOrderId, totalAmount: newAmount * 100 }
+      const result = await wx.cloud.callFunction({
+        name: 'adminUpdateOrderPrice', data: { orderId: priceOrderId, newTotal: Math.round(newAmount * 100) }
       });
-      if (res.result.code !== 0) {
-        this.setData({
-          [`orders[${idx}].totalAmount`]: oldAmount,
-          [`orders[${idx}].totalText`]: oldText
-        });
-        wx.showToast({ title: res.result.msg, icon: 'none' });
+      if (result.result.code !== 0) {
+        this.setData({ [`orders[${idx}].totalAmount`]: oldAmount, [`orders[${idx}].totalText`]: oldText, showPriceModal: true });
+        wx.showToast({ title: '更新失败', icon: 'none' });
       } else {
         wx.showToast({ title: '价格已更新', icon: 'success' });
       }
     } catch (err) {
-      this.setData({
-        [`orders[${idx}].totalAmount`]: oldAmount,
-        [`orders[${idx}].totalText`]: oldText
-      });
+      this.setData({ [`orders[${idx}].totalAmount`]: oldAmount, [`orders[${idx}].totalText`]: oldText, showPriceModal: true });
       wx.showToast({ title: '网络错误', icon: 'none' });
     }
   },
@@ -309,18 +340,54 @@ Page({
   },
 
   // 预览图片
+  onListScroll(e) {
+    this._lastScrollTop = e.detail.scrollTop;
+  },
+
+  // 点击图片放大预览（自定义弹窗，避免 wx.previewImage 导致页面跳到顶部）
   onPreviewImage(e) {
     const { url } = e.currentTarget.dataset;
+    if (!url) return;
     const orderImages = [];
     this.data.orders.forEach(order => {
       if (order.images) {
         order.images.forEach(img => orderImages.push(img.fileID));
       }
     });
-    wx.previewImage({
-      current: url,
-      urls: orderImages.length > 0 ? orderImages : [url]
+    const allUrls = orderImages.length > 0 ? orderImages : [url];
+    const idx = allUrls.indexOf(url);
+    this.setData({
+      showImagePreview: true,
+      previewImageUrl: url,
+      previewImageUrls: allUrls,
+      previewImageIndex: idx >= 0 ? idx : 0
     });
+  },
+
+  onCloseImagePreview() {
+    this.setData({ showImagePreview: false });
+  },
+
+  onPrevImage() {
+    const { previewImageIndex, previewImageUrls } = this.data;
+    if (previewImageIndex > 0) {
+      const newIdx = previewImageIndex - 1;
+      this.setData({
+        previewImageIndex: newIdx,
+        previewImageUrl: previewImageUrls[newIdx]
+      });
+    }
+  },
+
+  onNextImage() {
+    const { previewImageIndex, previewImageUrls } = this.data;
+    if (previewImageIndex < previewImageUrls.length - 1) {
+      const newIdx = previewImageIndex + 1;
+      this.setData({
+        previewImageIndex: newIdx,
+        previewImageUrl: previewImageUrls[newIdx]
+      });
+    }
   },
 
   // 删除图片
@@ -397,24 +464,34 @@ Page({
           return;
         }
 
-        // 乐观更新
+        // 乐观更新（status + statusText 同步更新，避免界面不刷新）
         const idx = this.data.orders.findIndex(o => o._id === order._id);
         if (idx === -1) return;
         const oldStatus = this.data.orders[idx].status;
-        this.setData({ [`orders[${idx}].status`]: newStatus });
+        const oldStatusText = this.data.orders[idx].statusText;
+        this.setData({
+          [`orders[${idx}].status`]: newStatus,
+          [`orders[${idx}].statusText`]: util.getOrderStatusText(newStatus)
+        });
 
         try {
           const result = await wx.cloud.callFunction({
             name: 'adminUpdateOrderStatus', data: { orderId: order._id, status: newStatus }
           });
           if (result.result.code !== 0) {
-            this.setData({ [`orders[${idx}].status`]: oldStatus });
+            this.setData({
+              [`orders[${idx}].status`]: oldStatus,
+              [`orders[${idx}].statusText`]: oldStatusText
+            });
             wx.showToast({ title: '更新失败', icon: 'none' });
           } else {
             wx.showToast({ title: '已更新', icon: 'success' });
           }
         } catch (err) {
-          this.setData({ [`orders[${idx}].status`]: oldStatus });
+          this.setData({
+            [`orders[${idx}].status`]: oldStatus,
+            [`orders[${idx}].statusText`]: oldStatusText
+          });
           wx.showToast({ title: '网络错误', icon: 'none' });
         }
       }
@@ -519,12 +596,13 @@ Page({
     const idx = this.data.orders.findIndex(o => o._id === orderId);
     if (idx === -1) return;
     const oldVal = this.data.orders[idx].pickedUp;
-    this.setData({ [`orders[${idx}].pickedUp`]: !oldVal });
+    const newVal = !oldVal;
+    this.setData({ [`orders[${idx}].pickedUp`]: newVal });
 
     try {
       const res = await wx.cloud.callFunction({
         name: 'adminTogglePickedUp',
-        data: { orderId }
+        data: { orderId, pickedUp: newVal }
       });
       if (res.result.code !== 0) {
         // 失败回滚
@@ -563,33 +641,39 @@ Page({
       return;
     }
 
-    // 乐观更新
+    // 乐观更新（同步更新 paymentStatusText 避免界面不刷新）
     const idx = this.data.orders.findIndex(o => o._id === orderId);
     if (idx === -1) return;
     const oldStatus = this.data.orders[idx].payment_status;
     const oldPaidAmount = this.data.orders[idx].paid_amount;
+    const oldStatusText = this.data.orders[idx].paymentStatusText;
     const isPaid = oldStatus === 'paid';
+    const newStatus = isPaid ? 'unpaid' : 'paid';
+    const newStatusText = newStatus === 'paid' ? '已付款' : '未付款';
     this.setData({
-      [`orders[${idx}].payment_status`]: isPaid ? 'unpaid' : 'paid',
-      [`orders[${idx}].paid_amount`]: isPaid ? 0 : this.data.orders[idx].totalAmount
+      [`orders[${idx}].payment_status`]: newStatus,
+      [`orders[${idx}].paid_amount`]: isPaid ? 0 : this.data.orders[idx].totalAmount,
+      [`orders[${idx}].paymentStatusText`]: newStatusText
     });
 
     try {
       const res = await wx.cloud.callFunction({
         name: 'adminUpdateOrderStatus',
-        data: { orderId, payment_status: isPaid ? 'unpaid' : 'paid' }
+        data: { orderId, payment_status: newStatus }
       });
       if (res.result.code !== 0) {
         this.setData({
           [`orders[${idx}].payment_status`]: oldStatus,
-          [`orders[${idx}].paid_amount`]: oldPaidAmount
+          [`orders[${idx}].paid_amount`]: oldPaidAmount,
+          [`orders[${idx}].paymentStatusText`]: oldStatusText
         });
         wx.showToast({ title: '操作失败', icon: 'none' });
       }
     } catch (err) {
       this.setData({
         [`orders[${idx}].payment_status`]: oldStatus,
-        [`orders[${idx}].paid_amount`]: oldPaidAmount
+        [`orders[${idx}].paid_amount`]: oldPaidAmount,
+        [`orders[${idx}].paymentStatusText`]: oldStatusText
       });
       wx.showToast({ title: '网络错误', icon: 'none' });
     }
@@ -606,7 +690,22 @@ Page({
         fail: () => wx.showToast({ title: '请安装地图应用', icon: 'none' })
       });
     } else {
-      amap.openNavigation(address);
+      wx.showModal({
+        title: '导航提示',
+        content: '该订单无准确坐标，将打开地图显示大致位置。\n客户地址：' + (address || '未知'),
+        confirmText: '打开地图',
+        success: (res) => {
+          if (res.confirm) {
+            wx.openLocation({
+              latitude: 27.9939,
+              longitude: 120.6993,
+              address: address,
+              scale: 16,
+              fail: () => wx.showToast({ title: '请安装地图应用', icon: 'none' })
+            });
+          }
+        }
+      });
     }
   },
 
@@ -776,22 +875,34 @@ Page({
   // 分享对账单（Canvas 生成图片后分享）
   onShareBill(e) {
     const order = e.currentTarget.dataset.order;
-    wx.showLoading({ title: '生成中...' });
-    exportUtil.drawBillOnCanvas(order, (err, tempFilePath) => {
-      wx.hideLoading();
-      if (err) {
-        wx.showToast({ title: '生成失败', icon: 'none' });
-        return;
+    // 先确认，避免误触后直接跳到分享界面
+    wx.showModal({
+      title: '对账单',
+      content: '生成对账单图片，可分享给客户或保存到相册。',
+      confirmText: '生成',
+      cancelText: '取消',
+      success: (modalRes) => {
+        if (!modalRes.confirm) return;
+        wx.showLoading({ title: '生成中...' });
+        exportUtil.drawBillOnCanvas(order, (err, tempFilePath) => {
+          wx.hideLoading();
+          if (err) {
+            wx.showToast({ title: '生成失败', icon: 'none' });
+            return;
+          }
+          wx.showShareImageMenu({
+            path: tempFilePath,
+            success: () => {
+              wx.showToast({ title: '可发送给客户或保存', icon: 'success' });
+            },
+            fail: (shareErr) => {
+              // 用户取消分享不降级到其他分享方式
+              if (shareErr && shareErr.errMsg && shareErr.errMsg.includes('cancel')) return;
+              exportUtil.shareBillImage(tempFilePath);
+            }
+          });
+        });
       }
-      wx.showShareImageMenu({
-        path: tempFilePath,
-        success: () => {
-          wx.showToast({ title: '可发送给客户或保存', icon: 'success' });
-        },
-        fail: () => {
-          exportUtil.shareBillImage(tempFilePath);
-        }
-      });
     });
   },
 
@@ -847,7 +958,7 @@ Page({
     wx.removeStorageSync('adminNickname');
     // 清除服务端登录状态
     wx.cloud.callFunction({ name: 'adminLogout' }).catch(() => {});
-    wx.switchTab({ url: '/pages/admin/login/login' });
+    wx.redirectTo({ url: '/pages/admin/login/login' });
   },
 
   // 将订单图片的 cloud:// fileID 转为临时 HTTP URL，解决非上传者无法加载的问题

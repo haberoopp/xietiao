@@ -1,3 +1,19 @@
+/* ===== scroll-view 布局 ===== */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  padding: 0 16rpx;
+}
+.header-fixed {
+  flex-shrink: 0;
+}
+.scroll-list {
+  flex: 1;
+  overflow: hidden;
+}
+
 .admin-top-bar {
   display: flex;
   justify-content: space-between;
@@ -607,6 +623,10 @@
 .tool-icon {
   font-size: 40rpx;
   margin-right: 16rpx;
+  transition: color 0.15s;
+}
+.tool-item:active .tool-icon {
+  color: var(--color-primary);
 }
 
 .tool-label {
@@ -767,4 +787,31 @@
   top: 20rpx;
   left: 16rpx;
   z-index: 2;
+}
+
+/* ===== 图片预览弹窗 ===== */
+.image-preview-mask {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.95); z-index: 3000;
+  display: flex; align-items: center; justify-content: center;
+}
+.ip-close {
+  position: fixed; top: 60rpx; right: 32rpx; z-index: 3002;
+  width: 64rpx; height: 64rpx; line-height: 64rpx; text-align: center;
+  font-size: 34rpx; color: #fff; background: rgba(255,255,255,0.2); border-radius: 50%;
+}
+.ip-image {
+  width: 100%; height: 80vh;
+}
+.ip-arrow {
+  position: fixed; top: 50%; transform: translateY(-50%); z-index: 3001;
+  width: 72rpx; height: 72rpx; line-height: 72rpx; text-align: center;
+  font-size: 48rpx; color: #fff; background: rgba(255,255,255,0.15); border-radius: 50%;
+}
+.ip-arrow-left { left: 24rpx; }
+.ip-arrow-right { right: 24rpx; }
+.ip-indicator {
+  position: fixed; bottom: 60rpx; left: 50%; transform: translateX(-50%); z-index: 3001;
+  font-size: 26rpx; color: #ccc; background: rgba(0,0,0,0.5);
+  padding: 8rpx 24rpx; border-radius: 20rpx;
 }

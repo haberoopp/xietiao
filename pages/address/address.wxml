@@ -52,7 +52,7 @@
             <text wx:if="{{pickedLocation}}" class="addr-search-tag">✓ 已定位</text>
           </view>
           <view wx:else class="addr-search-placeholder">
-            <text class="addr-search-icon">📍</text>
+            <text class="addr-search-icon">◎</text>
             <text>点击搜索地址（可在地图中搜索任意地址）</text>
           </view>
         </view>

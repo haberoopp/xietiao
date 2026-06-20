@@ -6,11 +6,13 @@ const logger = require('./logger');
 const auth = require('./auth');
 
 exports.main = async (event) => {
-  const wxContext = cloud.getWXContext();
-  const openid = wxContext.OPENID;
   const { page = 1, pageSize = 100 } = event || {};
 
   try {
+    const authResult = await auth.requireOpenid();
+    if (!authResult.authorized) return authResult.response;
+    const openid = authResult.openid;
+
     const [countRes, listRes] = await Promise.all([
       db.collection('orders').where({ _openid: openid }).count(),
       db.collection('orders')
@@ -24,7 +26,7 @@ exports.main = async (event) => {
     logger.info('getMyOrders', { openid, page, total: countRes.total });
     return res.list(listRes.data, countRes.total);
   } catch (err) {
-    logger.error('getMyOrders', err, { openid, page });
+    logger.error('getMyOrders', err, { page });
     return res.internalError();
   }
 };

@@ -12,12 +12,18 @@ Page({
     cartCount: 0,
     cartItems: [],
     cartTotal: '0.00',
-    cartExpanded: false,
+    purchaseFilter: 'all',
+    purchasedProductIds: [],
     showQtyModal: false,
     qtyProduct: {},
     qtyValue: 1,
     qtyInputFocus: false,
-    exchangeMode: false
+    exchangeMode: false,
+    listScrollTop: 0,
+    showImagePreview: false,
+    previewImageUrl: '',
+    previewImageUrls: [],
+    previewImageIndex: 0
   },
 
   onLoad() {
@@ -36,11 +42,13 @@ Page({
       this.setData({ exchangeMode: false });
       this.loadCart();
     }
-    this.loadProducts();  // 每次切到此 Tab 都刷新
+    // 始终拉取数据（数据对比在 loadProducts 内部，未变化则跳过 setData 避免滚动重置）
+    this.loadProducts();
+    this.loadPurchaseHistory();
   },
 
   onPullDownRefresh() {
-    this.setData({ keyword: '' });
+    this.setData({ keyword: '', listScrollTop: 0 });
     this.loadProducts().then(() => wx.stopPullDownRefresh());
   },
 
@@ -57,6 +65,13 @@ Page({
       cartTotal: (total / 100).toFixed(2),
       cartCount: cart.length
     });
+    this.refreshTabBadge();
+  },
+
+  refreshTabBadge() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().updateCartBadge();
+    }
   },
 
   saveCart() {
@@ -79,6 +94,47 @@ Page({
     this.setData({ cartCount: cart.reduce((sum, item) => sum + item.quantity, 0) });
   },
 
+  // 加载购买历史（提取已购商品ID集合）
+  async loadPurchaseHistory() {
+    const app = getApp();
+    let orders = [];
+
+    if (app.globalData.demoMode) {
+      // 演示模式：读取所有订单（演示数据量小，直接全取）
+      orders = demoStore.getAll(demoStore.KEYS.orders);
+    } else {
+      try {
+        const res = await wx.cloud.callFunction({
+          name: 'getMyOrders',
+          data: { page: 1, pageSize: 500 }
+        });
+        if (res.result && res.result.code === 0) {
+          orders = res.result.data.list || [];
+        }
+      } catch (err) {
+        // 静默失败，买过滤镜不可用
+        return;
+      }
+    }
+
+    // 提取所有订单中的产品ID（去重）
+    const idSet = new Set();
+    orders.forEach(order => {
+      (order.items || order.products || []).forEach(item => {
+        const pid = item._id || item.productId || item.id;
+        if (pid) idSet.add(pid);
+      });
+    });
+    this.setData({ purchasedProductIds: Array.from(idSet) });
+  },
+
+  // 全部 / 买过 切换
+  onPurchaseFilter(e) {
+    const filter = e.currentTarget.dataset.filter;
+    this.setData({ purchaseFilter: filter, listScrollTop: 0 });
+    this.filterProducts();
+  },
+
   // 搜索
   onSearchInput(e) {
     const keyword = e.detail.value;
@@ -91,20 +147,27 @@ Page({
   },
 
   onClearSearch() {
-    this.setData({ keyword: '' });
+    this.setData({ keyword: '', listScrollTop: 0 });
     this.filterProducts();
   },
 
   filterProducts() {
-    const { keyword, activeCategory, allProducts } = this.data;
-    let products = allProducts;
+    // 使用缓存的完整产品列表，避免 this.data.allProducts 被意外覆盖
+    const allProducts = this._cachedAllProducts || this.data.allProducts || [];
+    const { keyword, activeCategory, purchaseFilter, purchasedProductIds } = this.data;
+    let products = [...allProducts]; // 浅拷贝，避免引用问题
 
     if (keyword && keyword.trim()) {
       const kw = keyword.trim().toLowerCase();
-      products = products.filter(p => p.name.toLowerCase().includes(kw));
+      products = products.filter(p => (p.name || '').toLowerCase().includes(kw));
     }
     if (activeCategory !== '全部') {
       products = products.filter(p => p.category === activeCategory);
+    }
+    if (purchaseFilter === 'bought' && purchasedProductIds.length > 0) {
+      products = products.filter(p => purchasedProductIds.includes(p._id));
+    } else if (purchaseFilter === 'bought' && purchasedProductIds.length === 0) {
+      products = [];
     }
 
     this.setData({ products: products.map(p => ({ ...p, priceText: (p.price / 100).toFixed(2) })) });
@@ -112,58 +175,91 @@ Page({
 
   onCategoryTap(e) {
     const category = e.currentTarget.dataset.category;
-    this.setData({ activeCategory: category });
+    this.setData({ activeCategory: category, listScrollTop: 0 });
     this.filterProducts();
   },
 
   async loadProducts() {
-    this.setData({ loading: true });
     const app = getApp();
 
     if (app.globalData.demoMode) {
       const products = demoStore.getAll(demoStore.KEYS.products).map(p => ({
         ...p, priceText: (p.price / 100).toFixed(2)
-      }));
+      })).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }));
+      this._cachedProducts = products;
+      this._cachedAllProducts = products;
+      this._lastProductsData = JSON.stringify(products);
       this.setData({ products, allProducts: products, loading: false });
       this.filterProducts();
       return;
     }
 
+    // 1. 缓存优先：瞬间显示上次数据
+    let fromCache = false;
+    const cached = wx.getStorageSync('cache_index_products');
+    if (cached && cached.length > 0) {
+      this._cachedProducts = cached;
+      this._cachedAllProducts = cached;
+      this._lastProductsData = JSON.stringify(cached);
+      this.setData({ products: cached, allProducts: cached, loading: false });
+      this.filterProducts();
+      fromCache = true;
+    } else {
+      this.setData({ loading: true });
+    }
+
+    // 2. 后台拉取最新数据（count + 第一页并行，减少 1 个 RTT）
+    const PAGE = 200;
     try {
-      // 先查总数
-      const countRes = await wx.cloud.callFunction({
-        name: 'getProducts',
-        data: { page: 1, pageSize: 1 }
-      });
-      if (countRes.result.code !== 0) {
-        throw new Error('count failed');
-      }
+      const [countRes, firstPageRes] = await Promise.all([
+        wx.cloud.callFunction({ name: 'getProducts', data: { page: 1, pageSize: 1 } }),
+        wx.cloud.callFunction({ name: 'getProducts', data: { page: 1, pageSize: PAGE } })
+      ]);
+      if (countRes.result.code !== 0) throw new Error('count failed');
       const total = countRes.result.data.total;
-      const PAGE = 200;
-      const pages = Math.ceil(total / PAGE);
 
-      // 并行拉取全部数据，一次 setData 避免滚动跳动
-      const calls = [];
-      for (let i = 0; i < pages; i++) {
-        calls.push(wx.cloud.callFunction({
-          name: 'getProducts',
-          data: { page: i + 1, pageSize: PAGE }
-        }));
+      let allProducts = (firstPageRes.result && firstPageRes.result.code === 0)
+        ? firstPageRes.result.data.list : [];
+
+      // 剩余页并行拉取
+      if (total > PAGE) {
+        const remaining = Math.ceil((total - PAGE) / PAGE);
+        const calls = [];
+        for (let i = 0; i < remaining; i++) {
+          calls.push(wx.cloud.callFunction({
+            name: 'getProducts', data: { page: i + 2, pageSize: PAGE }
+          }));
+        }
+        const results = await Promise.all(calls);
+        allProducts = allProducts.concat(
+          results.filter(r => r.result && r.result.code === 0).flatMap(r => r.result.data.list)
+        );
       }
-      const results = await Promise.all(calls);
-      const allProducts = results
-        .filter(r => r.result && r.result.code === 0)
-        .flatMap(r => r.result.data.list)
-        .map(p => ({ ...p, priceText: (p.price / 100).toFixed(2) }));
 
-      this.setData({ products: allProducts, allProducts });
-      console.log(`✅ 已加载 ${allProducts.length} / ${total} 个产品`);
+      allProducts = allProducts
+        .map(p => ({ ...p, priceText: (p.price / 100).toFixed(2) }))
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }));
+
+      // 数据未变化跳过更新
+      const newDataStr = JSON.stringify(allProducts);
+      if (this._lastProductsData === newDataStr) {
+        this.setData({ loading: false });
+        return;
+      }
+
+      // 更新缓存 + 界面
+      wx.setStorage({ key: 'cache_index_products', data: allProducts });
+      this._lastProductsData = newDataStr;
+      this._cachedProducts = allProducts;
+      this._cachedAllProducts = allProducts;
+      this.setData({ products: allProducts, allProducts, loading: false });
+      this.filterProducts();
+      console.log(`✅ 已加载 ${allProducts.length} / ${total} 个产品` + (fromCache ? '（缓存秒开 + 后台更新）' : ''));
     } catch (err) {
       console.error('加载产品失败', err);
-      wx.showToast({ title: '加载失败，请重试', icon: 'none' });
+      if (!fromCache) wx.showToast({ title: '加载失败，请重试', icon: 'none' });
+      this.setData({ loading: false });
     }
-    this.filterProducts();
-    this.setData({ loading: false });
   },
 
   // 显示数量输入弹窗
@@ -237,67 +333,8 @@ Page({
     } else {
       this.loadCart();
     }
+    this.refreshTabBadge();
     wx.showToast({ title: `已添加 ${qty} ${product.unit}`, icon: 'success' });
-  },
-
-  // 悬浮购物车
-  onToggleCart() {
-    this.setData({ cartExpanded: !this.data.cartExpanded });
-  },
-
-  onCartMinus(e) {
-    const idx = e.currentTarget.dataset.index;
-    const items = this.data.cartItems;
-    if (items[idx].quantity > 1) {
-      items[idx].quantity--;
-      this.refreshCart(items);
-    } else {
-      items.splice(idx, 1);
-      this.refreshCart(items);
-    }
-  },
-
-  onCartPlus(e) {
-    const idx = e.currentTarget.dataset.index;
-    const items = this.data.cartItems;
-    items[idx].quantity++;
-    this.refreshCart(items);
-  },
-
-  onCartQtyInput(e) {
-    const idx = e.currentTarget.dataset.index;
-    let val = parseInt(e.detail.value, 10);
-    if (isNaN(val) || val < 1) val = 1;
-    const items = this.data.cartItems;
-    items[idx].quantity = val;
-    this.refreshCart(items);
-  },
-
-  onCartDelete(e) {
-    const idx = e.currentTarget.dataset.index;
-    const items = this.data.cartItems;
-    items.splice(idx, 1);
-    this.refreshCart(items);
-    if (items.length === 0) {
-      this.setData({ cartExpanded: false });
-    }
-  },
-
-  refreshCart(items) {
-    items.forEach(item => {
-      item.priceText = (item.price / 100).toFixed(2);
-    });
-    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    this.setData({
-      cartItems: items,
-      cartTotal: (total / 100).toFixed(2),
-      cartCount: items.length
-    });
-    if (this.data.exchangeMode) {
-      this.saveExchangeCart();
-    } else {
-      this.saveCart();
-    }
   },
 
   // 换购模式：加载换购购物车
@@ -350,7 +387,7 @@ Page({
     const app = getApp();
     app.globalData.exchangeMode = false;
     this.setData({ exchangeMode: false });
-    wx.switchTab({ url: '/pages/orders/orders' });
+    wx.navigateTo({ url: '/pages/orders/orders' });
   },
 
   onCartCheckout() {
@@ -368,5 +405,53 @@ Page({
 
   goToCart() {
     wx.switchTab({ url: '/pages/cart/cart' });
-  }
+  },
+
+  // 跟踪 scroll-view 滚动位置
+  onListScroll(e) {
+    this._lastScrollTop = e.detail.scrollTop;
+  },
+
+  // 点击图片放大预览（自定义弹窗，避免 wx.previewImage 导致页面跳到顶部）
+  onPreviewImage(e) {
+    const url = e.currentTarget.dataset.url;
+    if (!url) return;
+    const urls = this.data.products
+      .filter(p => p.image)
+      .map(p => p.image);
+    const allUrls = urls.length > 0 ? urls : [url];
+    const idx = allUrls.indexOf(url);
+    this.setData({
+      showImagePreview: true,
+      previewImageUrl: url,
+      previewImageUrls: allUrls,
+      previewImageIndex: idx >= 0 ? idx : 0
+    });
+  },
+
+  onCloseImagePreview() {
+    this.setData({ showImagePreview: false });
+  },
+
+  onPrevImage() {
+    const { previewImageIndex, previewImageUrls } = this.data;
+    if (previewImageIndex > 0) {
+      const newIdx = previewImageIndex - 1;
+      this.setData({
+        previewImageIndex: newIdx,
+        previewImageUrl: previewImageUrls[newIdx]
+      });
+    }
+  },
+
+  onNextImage() {
+    const { previewImageIndex, previewImageUrls } = this.data;
+    if (previewImageIndex < previewImageUrls.length - 1) {
+      const newIdx = previewImageIndex + 1;
+      this.setData({
+        previewImageIndex: newIdx,
+        previewImageUrl: previewImageUrls[newIdx]
+      });
+    }
+  },
 });

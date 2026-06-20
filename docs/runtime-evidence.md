@@ -195,14 +195,7 @@ CloudBase CLI 不自动包含 `../lib/`。解决方案: 部署前运行 `deploy.
 
 ### 5.4 env.example
 
-本项目无传统 .env 文件(CloudBase 不需要数据库连接字符串)。唯一外部密钥:
-
-```
-# utils/config.js (需手动创建)
-AMAP_KEY = "your-amap-key-here"
-```
-
-不配置也能运行 — 导航降级为微信原生地图。
+本项目无传统 .env 文件(CloudBase 不需要数据库连接字符串)。高德地图功能已移除，地图功能直接使用微信原生 API（wx.getLocation / wx.chooseLocation / wx.openLocation）。
 
 ---
 

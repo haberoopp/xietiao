@@ -80,9 +80,9 @@
   padding: 24rpx 0; border: 2rpx solid #EEEEEE; border-radius: 8rpx;
 }
 .delivery-option.active { border-color: var(--color-primary); background: var(--color-primary-light); }
-.do-icon { font-size: 44rpx; margin-bottom: 8rpx; color: var(--color-text-secondary); }
-.do-label { font-size: 26rpx; color: #1A1A1A; }
+.do-icon { font-size:44rpx;margin-bottom:8rpx;display:flex;align-items:center;justify-content:center; }
 .delivery-option.active .do-icon { color: var(--color-primary); }
+.do-label { font-size: 26rpx; color: #1A1A1A; }
 .delivery-option.active .do-label { color: var(--color-primary); font-weight: 600; }
 
 .logistics-warn {

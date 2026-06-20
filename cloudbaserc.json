@@ -3,6 +3,7 @@
   "envId": "cloudbase-d6g98vaoyb7ec331a",
   "functionRoot": "./cloudfunctions",
   "functions": [
+    { "name": "login",                   "timeout": 10, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "getProducts",             "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "getMyOrders",             "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "submitOrder",             "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
@@ -27,7 +28,6 @@
     { "name": "adminTogglePickedUp",     "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "importProducts",          "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "subscribeAdmin",          "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
-    { "name": "seedAdmin",               "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "initAdminAccounts",       "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "healthCheck",             "timeout": 10, "runtime": "Nodejs18.15", "handler": "index.main" }
   ]

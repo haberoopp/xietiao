@@ -7,9 +7,6 @@ Page({
   },
 
   onShow() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 3 });
-    }
     // 已登录直接进后台，不用重复登录
     if (getApp().globalData.adminLoggedIn || wx.getStorageSync('adminLoggedIn')) {
       wx.redirectTo({ url: '/pages/admin/orders/orders' });

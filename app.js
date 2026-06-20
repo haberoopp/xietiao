@@ -5,6 +5,32 @@ App({
     this.initCloud();
     this.initCart();
     this.initErrorListener();
+    this.wxLogin();
+  },
+
+  // 微信登录：获取 openid 并同步用户资料
+  async wxLogin() {
+    try {
+      if (!wx.cloud) return;
+      const res = await wx.cloud.callFunction({ name: 'login' });
+      if (res.result && res.result.code === 0) {
+        const { isNew, openid, profile } = res.result.data;
+        this.globalData.openid = openid;
+        this.globalData.isNewUser = isNew;
+        // 如果云端有存档的头像/名称，同步到本地
+        if (profile) {
+          if (profile.name && !wx.getStorageSync('customerName')) {
+            wx.setStorageSync('customerName', profile.name);
+          }
+          if (profile.avatarUrl && !wx.getStorageSync('customerAvatar')) {
+            wx.setStorageSync('customerAvatar', profile.avatarUrl);
+          }
+        }
+        console.log(isNew ? '新用户注册成功' : '欢迎回来', openid);
+      }
+    } catch (err) {
+      console.warn('微信登录失败，使用本地缓存', err.message);
+    }
   },
 
   initErrorListener() {
@@ -93,11 +119,13 @@ App({
   },
 
   globalData: {
+    openid: '',
+    isNewUser: false,
     cart: [],
     adminLoggedIn: false,
     adminRole: '',
     adminNickname: '',
-    demoMode: true,  // 启动时默认演示模式，探活成功后再切换
+    demoMode: true,
     demoProducts: [],
     demoOrders: [],
     exchangeMode: false,
