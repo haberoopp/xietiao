@@ -9,10 +9,9 @@ const auth = require('./auth');
 exports.main = async (event) => {
   const { action } = event;
   // 仅管理操作需要鉴权（list/add/update/delete）
-  if (action !== 'getByPhone' && action !== 'upsert') {
-    const authResult = await auth.requireOpenid();
-    const admin = await db.collection('admins').where({ lastLoginOpenid: authResult.openid, loggedIn: true }).get();
-    if (admin.data.length === 0) return res.forbidden('无管理员权限');
+  if (action !== 'getByPhone' && action !== 'upsert' && action !== 'updateProfile') {
+    const adminAuth = await auth.requireAdmin();
+    if (!adminAuth.authorized) return adminAuth.response;
   }
 
   try {
@@ -46,7 +45,7 @@ exports.main = async (event) => {
       }
 
       case 'add': {
-        const { name, phone, discount } = event;
+        const { name, phone } = event;
         const existing = await db.collection('customers').where({ phone }).count();
         if (existing.total > 0) {
           return res.conflict('该手机号已存在');
@@ -55,7 +54,6 @@ exports.main = async (event) => {
           data: {
             name: name.trim(),
             phone: phone.trim(),
-            discount: parseFloat(discount) || 1.0,
             totalOrders: 0,
             totalAmount: 0,
             createdAt: db.serverDate(),
@@ -67,11 +65,10 @@ exports.main = async (event) => {
       }
 
       case 'update': {
-        const { customerId, name, phone, discount } = event;
+        const { customerId, name, phone } = event;
         const data = { updatedAt: db.serverDate() };
         if (name !== undefined) data.name = name.trim();
         if (phone !== undefined) data.phone = phone.trim();
-        if (discount !== undefined) data.discount = parseFloat(discount);
         await db.collection('customers').doc(customerId).update({ data });
         logger.info('Customer updated', { customerId });
         return res.ok();
@@ -96,7 +93,6 @@ exports.main = async (event) => {
             data: {
               name: cName.trim(),
               phone: cPhone.trim(),
-              discount: 1.0,
               totalOrders: 1,
               totalAmount: Math.round(orderAmount),
               createdAt: db.serverDate(),
@@ -115,11 +111,31 @@ exports.main = async (event) => {
         return res.ok();
       }
 
+      // 用户更新自己的头像和昵称
+      case 'updateProfile': {
+        const openid = cloud.getWXContext().OPENID;
+        if (!openid) return res.unauthorized();
+        const data = { updatedAt: db.serverDate() };
+        if (event.name !== undefined) data.name = event.name.trim();
+        if (event.avatarUrl !== undefined) data.avatarUrl = event.avatarUrl;
+        const exist = await db.collection('customers').where({ _openid: openid }).limit(1).get();
+        if (exist.data.length > 0) {
+          await db.collection('customers').doc(exist.data[0]._id).update({ data });
+        } else {
+          // 用户尚不存在（login 未调用），创建
+          data._openid = openid;
+          data.createdAt = db.serverDate();
+          await db.collection('customers').add({ data });
+        }
+        logger.info('Profile updated', { openid });
+        return res.ok();
+      }
+
       default:
         return res.badRequest('未知操作');
     }
   } catch (err) {
-    logger.error('customerCRUD error', { error: err.message, action: event.action });
+    logger.error('customerCRUD error', err, { action: event.action });
     return res.internalError();
   }
 };
