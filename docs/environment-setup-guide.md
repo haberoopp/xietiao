@@ -25,38 +25,19 @@
 
 ---
 
-## 第二步：创建 Staging 环境（2 分钟）
+## 第二步：创建 Staging 环境 ✅ 已完成
 
-充值到账后，在终端运行以下命令：
-
-```bash
-tcb env create \
-  --package baas_personal \
-  --alias xietiao-staging \
-  --region ap-shanghai \
-  --duration 1 \
-  --yes
-```
-
-**各参数含义：**
-
-| 参数 | 含义 |
-|------|------|
-| `--package baas_personal` | 个人版套餐（与生产一致） |
-| `--alias xietiao-staging` | 环境别名：斜条-staging |
-| `--region ap-shanghai` | 上海地域（与生产一致） |
-| `--duration 1` | 购买 1 个月 |
-| `--yes` | 跳过交互确认 |
-
-**成功后你会看到：**
-```
-✔ Environment created successfully
-Environment ID: cloudbase-xxxxxxxxxxxxx
-```
-
-**⚠️ 记下这个新的 Environment ID！** 它就是 `TCB_ENV_STAGING`，后续步骤需要用到。
-
-> 验证：运行 `tcb env list`，应该看到两个环境（生产 + staging）。
+> **Staging 环境已创建成功**
+> 
+> | 项目 | 值 |
+> |------|-----|
+> | 环境 ID | `xietiao-staging-d4fbbn7ca552cad5` |
+> | 套餐 | 体验版 |
+> | 地域 | ap-shanghai |
+> | 状态 | Normal |
+> | 到期 | 2027-01-13 |
+>
+> 全部 39 个云函数已部署到 staging，健康检查通过（6/6 集合正常）。
 
 ---
 
