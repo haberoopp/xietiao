@@ -100,7 +100,7 @@ Page({
     try {
       const res = await wx.cloud.callFunction({ name: 'getMyOrders', data: { page: 1, pageSize: 500 } });
       if (res.result.code === 0) {
-        const orders = (res.result.data.list || []).map(order => {
+        let orders = (res.result.data.list || []).map(order => {
           const rr = order.returnRequest;
           if (rr && rr.exchangeItems) {
             rr.exchangeItems = rr.exchangeItems.map(ei => ({
@@ -117,6 +117,8 @@ Page({
             returnStatusText: rr ? util.getReturnStatusText(rr.status) : ''
           };
         });
+        // 将 cloud:// fileID 转为临时 HTTP URL，解决非上传者无法加载图片的问题
+        orders = await this.convertOrderImageUrls(orders);
         // 数据未变化时跳过 setData，避免页面闪烁
         const newDataStr = JSON.stringify(orders);
         if (this._lastOrdersData !== newDataStr) {
@@ -241,7 +243,7 @@ Page({
     const { index, delta } = e.currentTarget.dataset;
     const items = this.data.returnItems;
     const item = items[index];
-    const newQty = (item.returnQty || 0) + parseInt(delta);
+    const newQty = (item.returnQty || 0) + parseFloat(delta);
     if (newQty < 0 || newQty > item.quantity) return;
     item.returnQty = newQty;
     this.setData({ returnItems: items });
@@ -250,7 +252,7 @@ Page({
   // 退换数量手动输入
   onReturnItemQtyInput(e) {
     const idx = e.currentTarget.dataset.index;
-    let val = parseInt(e.detail.value, 10);
+    let val = parseFloat(e.detail.value);
     if (isNaN(val) || val < 0) val = 0;
     const items = this.data.returnItems;
     if (val > items[idx].quantity) val = items[idx].quantity;
@@ -404,7 +406,55 @@ Page({
 
   onPreviewOrderImage(e) {
     const { url } = e.currentTarget.dataset;
-    wx.previewImage({ current: url, urls: [url] });
+    if (!url) return;
+    // 收集当前订单所有图片的可展示 URL
+    const orderImages = [];
+    this.data.orders.forEach(order => {
+      if (order.images) {
+        order.images.forEach(img => orderImages.push(img.tempUrl));
+      }
+    });
+    wx.previewImage({ current: url, urls: orderImages.length > 0 ? orderImages : [url] });
+  },
+
+  // 将订单图片的 cloud:// fileID 转为临时 HTTP URL
+  async convertOrderImageUrls(orders) {
+    const fileIDs = [];
+    const fileIdSet = new Set();
+    orders.forEach(order => {
+      if (order.images && order.images.length > 0) {
+        order.images.forEach(img => {
+          const fid = img.fileID || '';
+          if (fid.startsWith('cloud://') && !fileIdSet.has(fid)) {
+            fileIDs.push(fid);
+            fileIdSet.add(fid);
+          }
+        });
+      }
+    });
+    if (fileIDs.length === 0) return orders;
+
+    try {
+      const res = await wx.cloud.getTempFileURL({ fileList: fileIDs });
+      const map = {};
+      (res.fileList || []).forEach(f => {
+        if (f.tempFileURL) map[f.fileID] = f.tempFileURL;
+      });
+      return orders.map(order => ({
+        ...order,
+        images: (order.images || []).map(img => {
+          const fid = img.fileID || '';
+          return {
+            ...img,
+            fileID: fid,
+            tempUrl: map[fid] || (fid.startsWith('cloud://') ? '' : fid) || ''
+          };
+        })
+      }));
+    } catch (e) {
+      console.error('convertOrderImageUrls 失败', e);
+      return orders;
+    }
   },
 
   // 再次购买

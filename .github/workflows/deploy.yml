@@ -1,0 +1,78 @@
+name: Deploy
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options: [staging, production]
+        default: 'staging'
+env:
+  TCB_ENV_STAGING: ${{ secrets.TCB_ENV_STAGING }}
+  TCB_ENV_PRODUCTION: cloudbase-d6g98vaoyb7ec331a
+  TCB_SECRET_ID: ${{ secrets.TCB_SECRET_ID }}
+  TCB_SECRET_KEY: ${{ secrets.TCB_SECRET_KEY }}
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '18'}
+      - run: npm install -g @cloudbase/cli
+      - run: tcb login --apiKeyId $TCB_SECRET_ID --apiKeyValue $TCB_SECRET_KEY
+      - name: Deploy all functions to staging
+        run: |
+          cd $GITHUB_WORKSPACE
+          for d in cloudfunctions/*/; do
+            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "initAdminAccounts" ] && continue
+            cp cloudfunctions/lib/*.js "$d/" 2>/dev/null
+          done
+          for d in cloudfunctions/*/; do
+            n=$(basename "$d"); [ "$n" = "lib" ] && continue
+            echo "y" | tcb fn deploy "$n" --env-id "$TCB_ENV_STAGING" --force
+          done
+      - name: Health check
+        run: tcb fn invoke healthCheck --env-id "$TCB_ENV_STAGING" 2>&1 | tee /dev/stderr | grep -q '"code":0'
+      - name: Cleanup lib files
+        if: always()
+        run: |
+          for d in cloudfunctions/*/; do
+            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "initAdminAccounts" ] && continue
+            rm -f "$d"/{response,logger,auth,notify,security,passwordHash,passwordPolicy,jwtAuth,operationLog,rateLimiter}.js
+          done
+  deploy-production:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '18'}
+      - run: npm install -g @cloudbase/cli
+      - run: tcb login --apiKeyId $TCB_SECRET_ID --apiKeyValue $TCB_SECRET_KEY
+      - name: Deploy all functions to production
+        run: |
+          cd $GITHUB_WORKSPACE
+          for d in cloudfunctions/*/; do
+            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "initAdminAccounts" ] && continue
+            cp cloudfunctions/lib/*.js "$d/" 2>/dev/null
+          done
+          for d in cloudfunctions/*/; do
+            n=$(basename "$d"); [ "$n" = "lib" ] && continue
+            echo "y" | tcb fn deploy "$n" --env-id "$TCB_ENV_PRODUCTION" --force
+          done
+      - name: Health check
+        run: tcb fn invoke healthCheck --env-id "$TCB_ENV_PRODUCTION" 2>&1 | tee /dev/stderr | grep -q '"code":0'
+      - name: Build and deploy web admin
+        run: cd $GITHUB_WORKSPACE/web-admin && npm install && npm run build && tcb hosting deploy dist -e "$TCB_ENV_PRODUCTION"
+      - name: Cleanup lib files
+        if: always()
+        run: |
+          for d in cloudfunctions/*/; do
+            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "initAdminAccounts" ] && continue
+            rm -f "$d"/{response,logger,auth,notify,security,passwordHash,passwordPolicy,jwtAuth,operationLog,rateLimiter}.js
+          done

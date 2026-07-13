@@ -95,7 +95,7 @@
           </view>
           <view class="form-group half">
             <view class="form-label">单位</view>
-            <picker mode="selector" range="{{['米','卷','个','公斤','包']}}" bindchange="onUnitChange">
+            <picker mode="selector" range="{{['米','卷','个','公斤','包','捆']}}" bindchange="onUnitChange">
               <view class="picker-val">{{form.unit}}</view>
             </picker>
           </view>

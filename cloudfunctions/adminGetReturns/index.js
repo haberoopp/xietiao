@@ -7,7 +7,7 @@ const auth = require('./auth');
 const _ = db.command;
 
 exports.main = async (event) => {
-  const authResult = await auth.requireAdmin();
+  const authResult = await auth.requireRole('manager');
   if (!authResult.authorized) return authResult.response;
 
   const { status, page = 1, pageSize = 50 } = event;
@@ -21,7 +21,7 @@ exports.main = async (event) => {
         .where(where)
         .orderBy('createdAt', 'desc')
         .skip((page - 1) * pageSize)
-        .limit(Math.min(pageSize, 100))
+        .limit(Math.min(pageSize, 200))
         .get()
     ]);
 

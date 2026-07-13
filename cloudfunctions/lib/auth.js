@@ -57,13 +57,45 @@ async function requireAdmin() {
       return { authorized: false, response: res.forbidden() };
     }
 
-    return { authorized: true, admin: result.data[0], openid };
+    // Check session timeout (7 days)
+    const SESSION_TIMEOUT_MS = 7 * 24 * 3600 * 1000;
+    const admin = result.data[0];
+    const lastLoginAt = admin.lastLoginAt ? new Date(admin.lastLoginAt).getTime() : 0;
+    if (Date.now() - lastLoginAt > SESSION_TIMEOUT_MS) {
+      // Session expired, clear login state
+      try {
+        await db.collection('admins').doc(admin._id).update({
+          data: { loggedIn: false, updatedAt: db.serverDate() }
+        });
+      } catch (e) {
+        // ignore cleanup errors
+      }
+      return { authorized: false, response: res.unauthorized() };
+    }
+
+    return { authorized: true, admin: admin, openid };
   } catch (err) {
     return { authorized: false, response: res.internalError() };
   }
 }
 
+/**
+ * 管理员身份 + 角色校验
+ * 在 requireAdmin 基础上进一步校验角色。
+ * @param {...string} roles - 允许的角色列表，如 'manager', 'delivery', 'warehouse'
+ * @returns {Promise<{ authorized: true, admin: object, openid: string } | { authorized: false, response: object }>}
+ */
+async function requireRole(...roles) {
+  const result = await requireAdmin();
+  if (!result.authorized) return result;
+  if (!roles.includes(result.admin.role)) {
+    return { authorized: false, response: res.forbidden('权限不足，请联系厂长') };
+  }
+  return result;
+}
+
 module.exports = {
   requireOpenid,
-  requireAdmin
+  requireAdmin,
+  requireRole
 };

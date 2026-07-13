@@ -7,7 +7,7 @@ const auth = require('./auth');
 
 exports.main = async (event) => {
   try {
-    const authResult = await auth.requireAdmin();
+    const authResult = await auth.requireRole('manager');
     if (!authResult.authorized) return authResult.response;
 
     const { orderId, fileID } = event;

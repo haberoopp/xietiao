@@ -8,9 +8,9 @@ const auth = require('./auth');
 
 exports.main = async (event) => {
   const { action } = event;
-  // 仅管理操作需要鉴权（list/add/update/delete）
+  // 仅管理操作需要鉴权（list/add/update/delete）— 仅厂长可操作
   if (action !== 'getByPhone' && action !== 'upsert' && action !== 'updateProfile') {
-    const adminAuth = await auth.requireAdmin();
+    const adminAuth = await auth.requireRole('manager');
     if (!adminAuth.authorized) return adminAuth.response;
   }
 
@@ -33,8 +33,11 @@ exports.main = async (event) => {
       }
 
       case 'getByPhone': {
+        const authResult = await auth.requireOpenid();
+        if (!authResult.authorized) return authResult.response;
         const { phone } = event;
         if (!phone) return res.badRequest('手机号不能为空');
+        if (typeof phone !== 'string') return res.badRequest('参数格式错误');
         const result = await db.collection('customers')
           .where({ phone })
           .limit(1)
@@ -46,6 +49,7 @@ exports.main = async (event) => {
 
       case 'add': {
         const { name, phone } = event;
+        if (!name) return res.badRequest('客户名称不能为空');
         const existing = await db.collection('customers').where({ phone }).count();
         if (existing.total > 0) {
           return res.conflict('该手机号已存在');
@@ -66,6 +70,10 @@ exports.main = async (event) => {
 
       case 'update': {
         const { customerId, name, phone } = event;
+        if (!customerId) return res.badRequest('客户ID不能为空');
+        if (typeof customerId !== 'string') return res.badRequest('参数格式错误');
+        const existCheck = await db.collection('customers').doc(customerId).get();
+        if (!existCheck.data) return res.notFound('客户不存在');
         const data = { updatedAt: db.serverDate() };
         if (name !== undefined) data.name = name.trim();
         if (phone !== undefined) data.phone = phone.trim();
@@ -76,6 +84,8 @@ exports.main = async (event) => {
 
       // 下单后自动录入/更新客户统计
       case 'upsert': {
+        const authResult = await auth.requireOpenid();
+        if (!authResult.authorized) return authResult.response;
         const { name: cName, phone: cPhone, orderAmount } = event;
         const existing = await db.collection('customers').where({ phone: cPhone }).limit(1).get();
         if (existing.data.length > 0) {
@@ -106,6 +116,8 @@ exports.main = async (event) => {
 
       case 'delete': {
         const { customerId } = event;
+        if (!customerId) return res.badRequest('客户ID不能为空');
+        if (typeof customerId !== 'string') return res.badRequest('参数格式错误');
         await db.collection('customers').doc(customerId).remove();
         logger.info('Customer deleted', { customerId });
         return res.ok();
@@ -121,9 +133,10 @@ exports.main = async (event) => {
         const exist = await db.collection('customers').where({ _openid: openid }).limit(1).get();
         if (exist.data.length > 0) {
           await db.collection('customers').doc(exist.data[0]._id).update({ data });
-        } else {
-          // 用户尚不存在（login 未调用），创建
+        } else if (data.name || event.phone) {
+          // 仅在用户提供了名称或手机号时才创建记录
           data._openid = openid;
+          if (event.phone) data.phone = event.phone.trim();
           data.createdAt = db.serverDate();
           await db.collection('customers').add({ data });
         }

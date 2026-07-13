@@ -1,10 +1,10 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
-const { requireJwt, httpOk, httpError } = require('../lib/jwtAuth')
+const { requireJwt, httpOk, httpError } = require('./jwtAuth')
 
 exports.main = async (event) => {
-  const auth = requireJwt(event)
+  const auth = await requireJwt(event)
   if (!auth.authorized) return auth.response
   if (auth.user.role !== 'manager') return httpError(403, '无权限', 403)
 

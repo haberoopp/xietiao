@@ -34,6 +34,8 @@ Page({
     });
     if (loc) {
       this.setData({ currentLocation: loc });
+    } else {
+      this.setData({ currentLocation: { lat: 31.9545, lng: 121.0793 } });
     }
   },
 
@@ -155,8 +157,8 @@ Page({
     const { currentLocation } = this.data;
     const result = await new Promise((resolve) => {
       wx.chooseLocation({
-        latitude: currentLocation ? currentLocation.lat : 27.9939,
-        longitude: currentLocation ? currentLocation.lng : 120.6993,
+        latitude: currentLocation ? currentLocation.lat : 31.9545,
+        longitude: currentLocation ? currentLocation.lng : 121.0793,
         success: (res) => resolve({
           name: res.name || '',
           address: res.address || res.name || '',

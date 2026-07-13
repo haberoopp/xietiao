@@ -116,14 +116,16 @@ Page({
       return;
     }
 
-    // 1. 缓存优先：瞬间显示上次数据（仅订单列表模式）
+    // 1. 缓存优先：先转换 cloud:// fileID 为临时 URL 再显示（避免 cloud:// 被当成相对路径）
     let fromCache = false;
     if (!this.data.isReturnTab) {
       const cached = wx.getStorageSync('cache_admin_orders');
       if (cached && cached.length > 0) {
-        this._cachedOrders = cached;
-        this._lastOrdersData = JSON.stringify(cached);
-        this.setData({ orders: cached, returnList: [], loading: false });
+        // 先转换缓存中的 cloud:// fileID，再显示
+        const converted = await this.convertOrderImageUrls(cached);
+        this._cachedOrders = converted;
+        this._lastOrdersData = JSON.stringify(converted);
+        this.setData({ orders: converted, returnList: [], loading: false });
         fromCache = true;
       } else {
         this.setData({ loading: true });
@@ -200,7 +202,15 @@ Page({
           return;
         }
 
-        wx.setStorage({ key: 'cache_admin_orders', data: orders });
+        // 缓存时剥离临时 URL（仅 2 小时有效），下次加载会重新转换
+        const cacheOrders = orders.map(o => ({
+          ...o,
+          images: (o.images || []).map(img => {
+            const { tempUrl, ...rest } = img;
+            return rest;
+          })
+        }));
+        wx.setStorage({ key: 'cache_admin_orders', data: cacheOrders });
         this._lastOrdersData = newDataStr;
         this._cachedOrders = orders;
         this.setData({ orders, returnList: [], loading: false });
@@ -351,7 +361,7 @@ Page({
     const orderImages = [];
     this.data.orders.forEach(order => {
       if (order.images) {
-        order.images.forEach(img => orderImages.push(img.fileID));
+        order.images.forEach(img => orderImages.push(img.tempUrl));
       }
     });
     const allUrls = orderImages.length > 0 ? orderImages : [url];
@@ -697,8 +707,8 @@ Page({
         success: (res) => {
           if (res.confirm) {
             wx.openLocation({
-              latitude: 27.9939,
-              longitude: 120.6993,
+              latitude: 31.9545,
+              longitude: 121.0793,
               address: address,
               scale: 16,
               fail: () => wx.showToast({ title: '请安装地图应用', icon: 'none' })
@@ -966,13 +976,19 @@ Page({
   },
 
   // 将订单图片的 cloud:// fileID 转为临时 HTTP URL，解决非上传者无法加载的问题
+  // 注意：临时 URL 仅 2 小时有效，因此将临时 URL 存入 tempUrl 字段，不覆盖永久 fileID
   async convertOrderImageUrls(orders) {
+    // 收集所有需要转换的 cloud:// fileID（包括缓存数据中可能已被覆盖为 HTTP URL 的情况）
     const fileIDs = [];
+    const fileIdSet = new Set();
     orders.forEach(order => {
       if (order.images && order.images.length > 0) {
         order.images.forEach(img => {
-          if (img.fileID && img.fileID.startsWith('cloud://')) {
-            fileIDs.push(img.fileID);
+          // 优先使用原始 fileID（cloud:// 格式）
+          const fid = img.fileID || '';
+          if (fid.startsWith('cloud://') && !fileIdSet.has(fid)) {
+            fileIDs.push(fid);
+            fileIdSet.add(fid);
           }
         });
       }
@@ -987,13 +1003,20 @@ Page({
       });
       return orders.map(order => ({
         ...order,
-        images: (order.images || []).map(img => ({
-          ...img,
-          fileID: map[img.fileID] || img.fileID
-        }))
+        images: (order.images || []).map(img => {
+          const fid = img.fileID || '';
+          // 如果当前 fileID 已经是 HTTP URL（来自旧缓存），尝试从 map 中查找
+          // 保留原始 fileID，将临时 URL 存入 tempUrl 字段
+          return {
+            ...img,
+            fileID: fid, // 保持原始 cloud:// fileID 不变
+            tempUrl: map[fid] || (fid.startsWith('cloud://') ? '' : fid) || ''
+          };
+        })
       }));
     } catch (e) {
       // 转换失败不影响订单数据显示
+      console.error('convertOrderImageUrls 失败', e);
       return orders;
     }
   }

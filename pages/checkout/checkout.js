@@ -79,7 +79,7 @@ Page({
     wx.getLocation({
       type: 'gcj02',
       success: (res) => this.setData({ currentLocation: { lat: res.latitude, lng: res.longitude } }),
-      fail: () => {}
+      fail: () => this.setData({ currentLocation: { lat: 31.9545, lng: 121.0793 } })
     });
   },
 
@@ -109,7 +109,7 @@ Page({
   onIncrease(e) {
     const idx = e.currentTarget.dataset.index;
     const items = this.data.items;
-    items[idx].quantity += 1;
+    items[idx].quantity = Math.round((items[idx].quantity + 0.1) * 10) / 10;
     this.setData({ items: this.formatItems(items) });
     this.calcTotal();
   },
@@ -117,7 +117,7 @@ Page({
   onDecrease(e) {
     const idx = e.currentTarget.dataset.index;
     const items = this.data.items;
-    if (items[idx].quantity <= 1) {
+    if (items[idx].quantity <= 0.1) {
       wx.showModal({
         title: '删除商品',
         content: '确定要移除该商品吗？',
@@ -138,8 +138,8 @@ Page({
 
   onQtyInput(e) {
     const idx = e.currentTarget.dataset.index;
-    let val = parseInt(e.detail.value, 10);
-    if (isNaN(val) || val < 1) val = 1;
+    let val = parseFloat(e.detail.value);
+    if (isNaN(val) || val <= 0) val = 0.1;
     const items = this.data.items;
     items[idx].quantity = val;
     this.setData({ items: this.formatItems(items) });
@@ -267,8 +267,8 @@ Page({
     const { currentLocation } = this.data;
     const result = await new Promise((resolve) => {
       wx.chooseLocation({
-        latitude: currentLocation ? currentLocation.lat : 27.9939,
-        longitude: currentLocation ? currentLocation.lng : 120.6993,
+        latitude: currentLocation ? currentLocation.lat : 31.9545,
+        longitude: currentLocation ? currentLocation.lng : 121.0793,
         success: (res) => resolve({
           name: res.name || '',
           address: res.address || res.name || '',

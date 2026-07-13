@@ -19,7 +19,7 @@ exports.main = async (event) => {
         .where({ _openid: openid })
         .orderBy('createdAt', 'desc')
         .skip((page - 1) * pageSize)
-        .limit(Math.min(pageSize, 100))
+        .limit(Math.min(pageSize, 200))
         .get()
     ]);
 

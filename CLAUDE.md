@@ -148,10 +148,70 @@
 5. 部署 — 修改了云函数代码就必须自动部署，跑 bash deploy.sh（并行部署全部）
 ```
 
+**部署前强制检查**（所有云函数）：
+> ⚠️ `tcb fn deploy` 上传整个目录。若 lib 文件缺失，部署后 `require('./xxx')` 直接报错，云函数返回 500。
+> ⚠️ `deploy.sh` 部署后会自动清理 lib 文件（保持目录整洁）。因此**本地目录看不到 lib 文件是正常的**。
+> ⚠️ 若单独部署某个云函数（而非运行 `deploy.sh`），**必须**先从 `lib/` 复制所需文件。
+
+**adminWeb* 云函数**（HTTP API 类）需要以下文件：
+```
+jwtAuth.js       — requireJwt / httpOk / httpError
+operationLog.js  — logOperation（操作日志写入）
+security.js      — escapeRegex（输入安全转义）
+```
+
+**小程序云函数**（wx-server-sdk 直调类）需要以下文件：
+```
+response.js      — res.list() / res.record() / res.ok() / res.badRequest() 等
+logger.js        — logger.info() / logger.warn() / logger.error()
+auth.js          — auth.requireOpenid() / auth.requireRole()
+```
+
+**快速复制命令**：
+```bash
+# adminWeb* 函数
+for d in E:/miniprogram/cloudfunctions/adminWeb*/; do
+  for f in jwtAuth.js operationLog.js security.js; do
+    [ -f "${d}${f}" ] || cp "E:/miniprogram/cloudfunctions/adminWebOrders/${f}" "${d}${f}"
+  done
+done
+
+# 小程序云函数
+for d in E:/miniprogram/cloudfunctions/*/; do
+  name=$(basename "$d")
+  [ "$name" = "lib" ] && continue
+  [[ "$name" == adminWeb* ]] && continue
+  for f in response.js logger.js auth.js; do
+    [ -f "${d}${f}" ] || cp "E:/miniprogram/cloudfunctions/lib/${f}" "${d}${f}"
+  done
+done
+```
+
+**批量检查脚本**：
+```bash
+echo "=== adminWeb* 缺少的文件 ==="
+for d in E:/miniprogram/cloudfunctions/adminWeb*/; do
+  for f in jwtAuth.js operationLog.js security.js; do
+    [ -f "${d}${f}" ] || echo "MISSING: $(basename $d)/${f}"
+  done
+done
+echo "=== 小程序函数缺少的文件 ==="
+for d in E:/miniprogram/cloudfunctions/*/; do
+  name=$(basename "$d")
+  [ "$name" = "lib" ] && continue
+  [[ "$name" == adminWeb* ]] && continue
+  for f in response.js logger.js auth.js; do
+    [ -f "${d}${f}" ] || echo "MISSING: ${name}/${f}"
+  done
+done
+```
+
 **部署强制规则**：
-- 任何云函数代码（index.js / lib/）被修改后，**必须立即**执行 `bash deploy.sh`
-- deploy.sh 已内置并行部署（26 个函数同时上传），不要逐个部署
+- 任何云函数代码被修改后，**必须**通过 `bash deploy.sh` 部署（内置 lib 复制 + 并行部署 + 清理）
+- **禁止**单独使用 `tcb fn deploy <name>` —— 本地 lib 文件已被 deploy.sh 清理，单独部署会缺少 lib 文件导致云函数崩溃
+- deploy.sh 并行部署全部云函数，不需要逐个部署
 - 部署完成后验证：`tcb fn invoke healthCheck --env-id cloudbase-d6g98vaoyb7ec331a`
+- Web 前端修改后：`cd E:/web-admin && npm run build && tcb hosting deploy dist -e cloudbase-d6g98vaoyb7ec331a`
 
 ---
 

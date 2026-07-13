@@ -50,8 +50,9 @@ Page({
   onMinus(e) {
     const index = e.currentTarget.dataset.index;
     const cartItems = this.data.cartItems;
-    if (cartItems[index].quantity > 1) {
-      cartItems[index].quantity--;
+    if (cartItems[index].quantity > 0.1) {
+      cartItems[index].quantity = Math.round((cartItems[index].quantity - 0.1) * 10) / 10;
+      if (cartItems[index].quantity < 0.1) cartItems[index].quantity = 0.1;
       cartItems[index].subtotal = (cartItems[index].price * cartItems[index].quantity / 100).toFixed(2);
       this.setData({ cartItems });
       this.saveCart();
@@ -62,7 +63,7 @@ Page({
   onPlus(e) {
     const index = e.currentTarget.dataset.index;
     const cartItems = this.data.cartItems;
-    cartItems[index].quantity++;
+    cartItems[index].quantity = Math.round((cartItems[index].quantity + 0.1) * 10) / 10;
     cartItems[index].subtotal = (cartItems[index].price * cartItems[index].quantity / 100).toFixed(2);
     this.setData({ cartItems });
     this.saveCart();
@@ -71,8 +72,8 @@ Page({
 
   onQtyInput(e) {
     const index = e.currentTarget.dataset.index;
-    let val = parseInt(e.detail.value, 10);
-    if (isNaN(val) || val < 1) val = 1;
+    let val = parseFloat(e.detail.value);
+    if (isNaN(val) || val <= 0) val = 0.1;
     const cartItems = this.data.cartItems;
     cartItems[index].quantity = val;
     cartItems[index].subtotal = (cartItems[index].price * val / 100).toFixed(2);

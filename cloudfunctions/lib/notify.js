@@ -67,7 +67,7 @@ async function sendOne(templateId, toUser, page, data) {
     return { success: true };
   } catch (err) {
     console.warn('[notify] send failed: template=' + templateId + ' errCode=' + (err.errCode || '?') + ' errMsg=' + (err.errMsg || err.message));
-    return { success: false, errCode: err.errCode, error: err.message };
+    return { success: false, errCode: err.errCode, error: '消息推送失败' };
   }
 }
 

@@ -169,6 +169,7 @@
               <view class="info-addr-text">
                 <text class="info-label">地址：</text><text class="addr-value">{{item.address}}</text>
               </view>
+              <view class="navi-btn" data-address="{{item.address}}" data-lat="{{item.location.lat}}" data-lng="{{item.location.lng}}" catchtap="onNavigate">导航</view>
             </view>
           </block>
           <view class="info-row">
@@ -207,7 +208,7 @@
         <!-- 订单图片 -->
         <view wx:if="{{item.images && item.images.length > 0}}" class="order-images">
           <view class="oi-image-item" wx:for="{{item.images}}" wx:key="fileID" wx:for-item="img" wx:for-index="imgIdx">
-            <image class="oi-thumb" src="{{img.fileID}}" mode="aspectFill" data-url="{{img.fileID}}" bindtap="onPreviewImage" />
+            <image class="oi-thumb" src="{{img.tempUrl}}" mode="aspectFill" data-url="{{img.tempUrl}}" bindtap="onPreviewImage" />
             <view class="oi-img-del" data-order-id="{{item._id}}" data-img-index="{{imgIdx}}" catchtap="onDeleteImage">×</view>
           </view>
         </view>

@@ -6,6 +6,7 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const res = require('./response');
 
 exports.main = async () => {
   const start = Date.now();
@@ -27,20 +28,15 @@ exports.main = async () => {
     });
 
     if (!allOk) {
-      return { code: 400, msg: '部分集合不可用', errors: status };
+      return res.badRequest('部分集合不可用', status);
     }
 
-    return {
-      code: 0,
-      data: {
-        record: {
-          db: 'ok',
-          collections: status,
-          uptime: Date.now() - start
-        }
-      }
-    };
+    return res.record({
+      db: 'ok',
+      collections: status,
+      uptime: Date.now() - start
+    });
   } catch (err) {
-    return { code: 500, msg: '操作失败，请稍后重试' };
+    return res.internalError();
   }
 };

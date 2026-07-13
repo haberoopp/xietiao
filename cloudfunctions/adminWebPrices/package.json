@@ -1,1 +1,8 @@
-{"name": "adminWebPrices", "version": "1.0.0", "dependencies": {"wx-server-sdk": "~2.6.3"}}
+{
+  "name": "adminWebPrices",
+  "version": "1.0.0",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

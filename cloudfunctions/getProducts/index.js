@@ -3,7 +3,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const res = require('./response');
 const logger = require('./logger');
-const auth = require('./auth');
+const security = require('./security');
 
 exports.main = async (event) => {
   const { category, keyword, page = 1, pageSize = 20 } = event;
@@ -13,7 +13,7 @@ exports.main = async (event) => {
     where.category = category;
   }
   if (keyword) {
-    where.name = db.RegExp({ regexp: keyword, options: 'i' });
+    where.name = db.RegExp({ regexp: security.escapeRegex(keyword), options: 'i' });
   }
 
   try {
@@ -23,7 +23,7 @@ exports.main = async (event) => {
         .where(where)
         .orderBy('createdAt', 'desc')
         .skip((page - 1) * pageSize)
-        .limit(Math.min(pageSize, 100))
+        .limit(Math.min(pageSize, 200))
         .get()
     ]);
 

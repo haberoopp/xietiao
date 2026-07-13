@@ -3,7 +3,6 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const res = require('./response');
 const logger = require('./logger');
-const auth = require('./auth');
 const crypto = require('crypto');
 
 const MAX_ATTEMPTS = 5;
@@ -25,32 +24,39 @@ exports.main = async (event) => {
   if (!username || !password) {
     return res.badRequest('请输入账号和密码');
   }
+  if (typeof username !== 'string' || typeof password !== 'string') {
+    return res.badRequest('参数格式错误');
+  }
 
   try {
-    const result = await db.collection('admins').where({ username }).get();
+    const result = await db.collection('admins').where({ username: username.trim() }).get();
     if (result.data.length === 0) {
       return res.badRequest('账号或密码错误');
     }
 
     const admin = result.data[0];
 
+    // 检查账号状态
+    if (admin.status === 'disabled') {
+      logger.warn('adminLogin: disabled account attempt', { username });
+      return res.badRequest('账号或密码错误');
+    }
+
     // 检查是否被锁定
     if (admin.lockedUntil && admin.lockedUntil > Date.now()) {
-      const remaining = Math.ceil((admin.lockedUntil - Date.now()) / 60000);
-      return res.forbidden(`账号已锁定，请${remaining}分钟后再试`);
+      logger.warn('adminLogin: locked account attempt', { username });
+      return res.badRequest('账号或密码错误');
     }
 
     let valid = false;
-    let needsMigration = false;
 
     if (admin.passwordHash) {
-      // 新版哈希验证
+      // 哈希验证 (10k PBKDF2-SHA512，与初始部署代码一致)
       const hash = hashPassword(password, admin.salt);
       valid = hash === admin.passwordHash;
     } else {
       // 兼容旧版明文密码
       valid = password === admin.password;
-      needsMigration = true;
     }
 
     if (!valid) {
@@ -79,9 +85,10 @@ exports.main = async (event) => {
       loggedIn: true,
       lastLoginOpenid: openid,
       lastLoginAt: db.serverDate(),
+      lastActivityAt: db.serverDate(),
       updatedAt: db.serverDate()
     };
-    if (needsMigration) {
+    if (admin.password && !admin.passwordHash) {
       const salt = generateSalt();
       updateData.passwordHash = hashPassword(password, salt);
       updateData.salt = salt;

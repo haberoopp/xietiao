@@ -1,1 +1,54 @@
-# 不追踪任何敏感配置
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+web-admin/dist/
+
+# CloudBase 临时文件
+cloudfunctions/*/jwtAuth.js
+cloudfunctions/*/operationLog.js
+cloudfunctions/*/security.js
+cloudfunctions/*/passwordPolicy.js
+cloudfunctions/*/passwordHash.js
+cloudfunctions/*/response.js
+cloudfunctions/*/logger.js
+cloudfunctions/*/auth.js
+cloudfunctions/*/notify.js
+cloudfunctions/*/rateLimiter.js
+
+# 但保留 lib/ 下的源文件（不 ignore lib/*.js）
+
+# IDE
+.vscode/
+.idea/
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.tar.gz
+_temp_*
+convert.js
+
+# 测试文件
+cloudfunctions/*/jwtAuth_test.js
+
+# 导入用的 Excel/CSV 数据（可能含敏感信息）
+*.xlsx
+*.csv
+!docs/
+
+# 敏感文档
+docs/account-password-security-review.md
+docs/injection-risk-review.md
+docs/input-security-review.md
+docs/long-term-strategy.md
+docs/over-engineering-review.md
+docs/security-boundary-table.md
+docs/system-permission-design.md
+
+# 其他
+test*.sh

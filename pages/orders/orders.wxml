@@ -56,8 +56,8 @@
       <!-- 订单图片（只读） -->
       <view wx:if="{{item.images && item.images.length > 0}}" class="order-images">
         <image class="oi-thumb" wx:for="{{item.images}}" wx:key="fileID" wx:for-item="img"
-          src="{{img.fileID}}" mode="aspectFill"
-          data-url="{{img.fileID}}" bindtap="onPreviewOrderImage" />
+          src="{{img.tempUrl}}" mode="aspectFill"
+          data-url="{{img.tempUrl}}" bindtap="onPreviewOrderImage" />
       </view>
 
       <view class="order-footer">

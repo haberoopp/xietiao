@@ -5,21 +5,30 @@ const db = cloud.database();
 const res = require('./response');
 const logger = require('./logger');
 const auth = require('./auth');
+const oplog = require('./operationLog');
 
 exports.main = async (event) => {
-  const authResult = await auth.requireAdmin();
+  const authResult = await auth.requireRole('manager');
   if (!authResult.authorized) return authResult.response;
 
   const { fileID } = event;
 
   try {
     const downloadRes = await cloud.downloadFile({ fileID });
+    // 文件大小限制 10MB
+    if (downloadRes.fileContent && downloadRes.fileContent.byteLength > 10 * 1024 * 1024) {
+      return res.badRequest('Excel文件大小不能超过10MB');
+    }
     const buffer = downloadRes.fileContent;
 
     const workbook = XLSX.read(buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    // 行数限制 5000 行
+    if (rows.length > 5000) {
+      return res.badRequest('单次导入最多5000行，请拆分文件');
+    }
 
     if (rows.length === 0) {
       return res.badRequest('Excel文件中没有数据，请检查第一行为表头');
@@ -86,6 +95,7 @@ exports.main = async (event) => {
     }
 
     logger.info('Products imported', { success: results.success, errors: results.errors.length, total: rows.length });
+    try { await oplog.logOperation(db, authResult.admin.username, 'product.import', 'Excel导入', `导入${results.success}个产品`); } catch (e) {}
     return res.ok(results);
   } catch (err) {
     logger.error('importProducts error', err);

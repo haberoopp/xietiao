@@ -30,6 +30,13 @@ Page({
     // loadProducts 由 onShow 统一触发，避免 onLoad + onShow 双重请求
   },
 
+  onShareAppMessage() {
+    return {
+      title: '送货单 - 快速下单，高效配送',
+      path: '/pages/index/index'
+    };
+  },
+
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 });
@@ -282,18 +289,24 @@ Page({
   },
 
   onQtyMinus() {
-    if (this.data.qtyValue > 1) {
-      this.setData({ qtyValue: this.data.qtyValue - 1 });
+    if (this.data.qtyValue > 0.1) {
+      const newVal = Math.max(0.1, this.data.qtyValue - 0.1);
+      this.setData({ qtyValue: Math.round(newVal * 10) / 10 });
     }
   },
 
   onQtyPlus() {
-    this.setData({ qtyValue: this.data.qtyValue + 1 });
+    const newVal = Math.round((this.data.qtyValue + 0.1) * 10) / 10;
+    this.setData({ qtyValue: newVal });
   },
 
   onQtyInput(e) {
-    const val = parseInt(e.detail.value) || 1;
-    this.setData({ qtyValue: Math.max(1, val) });
+    const val = parseFloat(e.detail.value);
+    if (isNaN(val) || val <= 0) {
+      this.setData({ qtyValue: 0.1 });
+    } else {
+      this.setData({ qtyValue: Math.round(val * 10) / 10 });
+    }
   },
 
   onCancelQty() {
@@ -302,7 +315,7 @@ Page({
 
   onConfirmQty() {
     const product = this.data.qtyProduct;
-    const qty = Math.max(1, this.data.qtyValue);
+    const qty = Math.max(0.1, this.data.qtyValue);
     const app = getApp();
     const isExchange = this.data.exchangeMode;
     const cart = isExchange ? (app.globalData.exchangeCart || []) : (app.globalData.cart || []);

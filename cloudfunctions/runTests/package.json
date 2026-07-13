@@ -1,0 +1,1 @@
+{"name":"runTests","version":"1.0.0","description":"Automated test suite for critical backend functions","main":"index.js","dependencies":{"wx-server-sdk":"latest"}}

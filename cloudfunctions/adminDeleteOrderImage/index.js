@@ -4,10 +4,11 @@ const db = cloud.database();
 const res = require('./response');
 const logger = require('./logger');
 const auth = require('./auth');
+const oplog = require('./operationLog');
 
 exports.main = async (event) => {
   try {
-    const authResult = await auth.requireAdmin();
+    const authResult = await auth.requireRole('manager');
     if (!authResult.authorized) return authResult.response;
 
     const { orderId, imageIndex } = event;
@@ -36,6 +37,7 @@ exports.main = async (event) => {
       data: { images, updatedAt: db.serverDate() }
     });
     logger.info('Order image deleted', { orderId, imageIndex });
+    await oplog.logOperation(db, authResult.admin.username, 'order.deleteImage', orderId, `删除订单图片`);
     return res.ok();
   } catch (err) {
     logger.error('adminDeleteOrderImage error', err);

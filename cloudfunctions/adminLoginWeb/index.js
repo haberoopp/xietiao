@@ -2,11 +2,11 @@ const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const crypto = require('crypto')
-const { sign, httpOk, httpError } = require('../lib/jwtAuth')
+const { sign, httpOk, httpError } = require('./jwtAuth')
+const rateLimiter = require('./rateLimiter')
 
-function verifyPassword(password, salt, hash) {
-  const derived = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex')
-  return derived === hash
+function hashPassword(password, salt) {
+  return crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex')
 }
 
 exports.main = async (event) => {
@@ -20,37 +20,61 @@ exports.main = async (event) => {
   const { username, password } = body || {}
   if (!username || !password) return httpError(400, '请输入用户名和密码')
 
+  // 频率限制：每个用户名每分钟最多10次尝试
+  const ip = (event.headers && (event.headers['x-forwarded-for'] || event.headers['X-Forwarded-For'])) || 'unknown';
+  const rateKey = `login:${ip}:${(username || '').trim()}`;
+  const rateCheck = await rateLimiter.check(db, rateKey, { max: 10, window: 60 });
+  if (!rateCheck.allowed) return httpError(429, `请求过于频繁，请${rateCheck.retryAfter}秒后再试`, 429);
+
   try {
     const result = await db.collection('admins').where({ username: username.trim() }).get()
-    if (result.data.length === 0) return httpError(-1, '账号或密码错误')
+    if (result.data.length === 0) return httpError(401, '账号或密码错误', 401)
     const admin = result.data[0]
 
-    if (admin.status === 'disabled') return httpError(-1, '账号已被禁用，请联系管理员')
+    if (admin.status === 'disabled') { console.log('adminLoginWeb: disabled account', { username: username.trim() }); return httpError(401, '账号或密码错误', 401) }
     if (admin.lockedUntil && admin.lockedUntil > Date.now()) {
-      const minutes = Math.ceil((admin.lockedUntil - Date.now()) / 60000)
-      return httpError(-1, `账号已锁定，请${minutes}分钟后再试`)
+      console.log('adminLoginWeb: locked account', { username: username.trim() })
+      return httpError(401, '账号或密码错误', 401)
     }
 
     let passwordOk = false
     if (admin.passwordHash && admin.salt) {
-      passwordOk = verifyPassword(password, admin.salt, admin.passwordHash)
+      passwordOk = hashPassword(password, admin.salt) === admin.passwordHash
     } else if (admin.password) {
       passwordOk = (password === admin.password)
     }
 
     if (!passwordOk) {
-      const failedAttempts = (admin.failedAttempts || 0) + 1
-      const updateData = { failedAttempts: db.command.inc(1) }
-      if (failedAttempts >= 5) updateData.lockedUntil = Date.now() + 15 * 60 * 1000
-      await db.collection('admins').doc(admin._id).update({ data: updateData })
-      return httpError(-1, failedAttempts >= 5 ? '密码错误次数过多，账号已锁定15分钟' : '账号或密码错误')
+      // 原子递增失败次数
+      await db.collection('admins').doc(admin._id).update({
+        data: { failedAttempts: db.command.inc(1), updatedAt: db.serverDate() }
+      })
+      // 重新读取以判断是否需要锁定（inc 后值 = 原值 + 1）
+      const updatedAdmin = await db.collection('admins').doc(admin._id).field({ failedAttempts: true }).get()
+      const currentAttempts = updatedAdmin.data.failedAttempts
+      if (currentAttempts >= 5) {
+        await db.collection('admins').doc(admin._id).update({
+          data: { lockedUntil: Date.now() + 15 * 60 * 1000, updatedAt: db.serverDate() }
+        })
+        return httpError(423, '密码错误次数过多，账号已锁定15分钟', 423)
+      }
+      return httpError(401, '账号或密码错误', 401)
+    }
+
+    // 自动迁移旧明文密码到哈希存储
+    if (admin.password && !admin.passwordHash) {
+      const salt = crypto.randomBytes(32).toString('hex')
+      const passwordHash = hashPassword(password, salt)
+      await db.collection('admins').doc(admin._id).update({
+        data: { passwordHash, salt, password: db.command.remove(), updatedAt: db.serverDate() }
+      })
     }
 
     await db.collection('admins').doc(admin._id).update({
       data: { failedAttempts: 0, lockedUntil: db.command.remove(), lastLoginAt: db.serverDate(), updatedAt: db.serverDate() }
     })
 
-    const token = sign({ username: admin.username, role: admin.role, nickname: admin.nickname || admin.username })
+    const token = await sign({ username: admin.username, role: admin.role, nickname: admin.nickname || admin.username })
     return httpOk({ token, username: admin.username, role: admin.role, nickname: admin.nickname || admin.username })
   } catch (err) {
     console.error('adminLoginWeb error:', err)

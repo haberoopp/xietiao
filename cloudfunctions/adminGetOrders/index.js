@@ -6,7 +6,7 @@ const logger = require('./logger');
 const auth = require('./auth');
 
 exports.main = async (event) => {
-  const authResult = await auth.requireAdmin();
+  const authResult = await auth.requireRole('manager');
   if (!authResult.authorized) return authResult.response;
 
   const { status, page = 1, pageSize = 50 } = event;

@@ -1,0 +1,9 @@
+{
+  "name": "secTest",
+  "version": "1.0.0",
+  "description": "Security penetration testing suite for backend APIs",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

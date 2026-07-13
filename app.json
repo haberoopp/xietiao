@@ -48,6 +48,7 @@
       }
     ]
   },
+  "cloud": true,
   "style": "v2",
   "sitemapLocation": "sitemap.json"
 }

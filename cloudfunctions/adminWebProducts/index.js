@@ -2,16 +2,19 @@ const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
-const { requireJwt, httpOk, httpError } = require('../lib/jwtAuth')
-const { logOperation } = require('../lib/operationLog')
+const fs = require('fs')
+const path = require('path')
+const { requireJwt, httpOk, httpError } = require('./jwtAuth')
+const { logOperation } = require('./operationLog')
+const security = require('./security')
 
 exports.main = async (event) => {
-  const auth = requireJwt(event)
+  const auth = await requireJwt(event)
   if (!auth.authorized) return auth.response
   if (auth.user.role !== 'manager') return httpError(403, '无权限', 403)
 
   const method = event.httpMethod
-  const path = event.path || ''
+  const path = (event.path || '').replace('/api/admin', '')
   const qs = event.queryStringParameters || {}
   let body = {}
   try { body = typeof event.body === 'string' ? JSON.parse(event.body) : (event.body || {}) } catch (e) {}
@@ -22,6 +25,7 @@ exports.main = async (event) => {
   if (method === 'POST' && path === '/products/batch') return handleBatch(auth.user, body)
   if (method === 'GET' && path === '/products/export') return handleExport(qs)
   if (method === 'POST' && path === '/products/import') return handleImport(auth.user, body)
+  if (method === 'POST' && path === '/products/upload') return handleUpload(body)
 
   return httpError(404, 'Not Found', 404)
 }
@@ -29,26 +33,73 @@ exports.main = async (event) => {
 async function handleList(qs) {
   try {
     const page = parseInt(qs.page) || 1
-    const pageSize = Math.min(parseInt(qs.pageSize) || 20, 100)
+    const requestedSize = parseInt(qs.pageSize) || 20
+    // 前端修改订单的产品搜索需要全部产品，上限提高到 2000
+    const pageSize = Math.min(requestedSize, 2000)
     const where = {}
     if (qs.category) where.category = qs.category
     if (qs.status) where.status = qs.status
     if (qs.keyword) {
-      const kw = qs.keyword.trim()
+      const kw = security.escapeRegex(qs.keyword.trim())
       where.$or = [{ name: db.RegExp({ regexp: kw, options: 'i' }) }, { category: db.RegExp({ regexp: kw, options: 'i' }) }]
     }
-    const [countRes, listRes] = await Promise.all([
-      db.collection('products').where(where).count(),
-      db.collection('products').where(where).skip((page - 1) * pageSize).limit(pageSize).orderBy('name', 'asc').get()
-    ])
-    return httpOk({ list: listRes.data, total: countRes.total, page, pageSize })
+    const countRes = await db.collection('products').where(where).count()
+
+    // CloudBase 单次 get() 最多返回 100 条，pageSize 超过 100 时分批拉取
+    const MAX_BATCH = 100
+    let listData = []
+    if (pageSize <= MAX_BATCH) {
+      const res = await db.collection('products').where(where)
+        .skip((page - 1) * pageSize).limit(pageSize).orderBy('name', 'asc').get()
+      listData = res.data
+    } else {
+      const totalNeeded = Math.min(pageSize, countRes.total - (page - 1) * pageSize)
+      for (let offset = (page - 1) * pageSize; offset < (page - 1) * pageSize + totalNeeded; offset += MAX_BATCH) {
+        const res = await db.collection('products').where(where)
+          .skip(offset).limit(Math.min(MAX_BATCH, totalNeeded - (offset - (page - 1) * pageSize)))
+          .orderBy('name', 'asc').get()
+        listData = listData.concat(res.data)
+      }
+    }
+    // 解析图片 URL（供 web 端显示）
+    // image 字段可能是 HTTPS URL（直接可用）或 cloud:// fileID（需转换）
+    const cloudFileIds = []
+    const directUrls = {}
+    listData.forEach(p => {
+      ;[p.image, ...(p.images || [])].filter(Boolean).forEach(url => {
+        if (url.startsWith('cloud://')) {
+          cloudFileIds.push(url)
+        } else if (url.startsWith('http://') || url.startsWith('https://')) {
+          directUrls[url] = url  // HTTPS URL 直接用
+        }
+      })
+    })
+    const urlMap = { ...directUrls }
+    if (cloudFileIds.length > 0) {
+      try {
+        const uniqueIds = [...new Set(cloudFileIds)]
+        for (let i = 0; i < uniqueIds.length; i += 50) {
+          const batch = uniqueIds.slice(i, i + 50)
+          const urlRes = await cloud.getTempFileURL({ fileList: batch })
+          urlRes.fileList.forEach(f => {
+            if (f.tempFileURL) urlMap[f.fileID] = f.tempFileURL
+          })
+        }
+      } catch (e) { console.error('products.getTempFileURL:', e) }
+    }
+    const list = listData.map(p => ({
+      ...p,
+      imageUrl: p.image ? (urlMap[p.image] || '') : '',
+      imagesUrls: p.images ? p.images.map(fid => urlMap[fid] || '') : []
+    }))
+    return httpOk({ list, total: countRes.total, page, pageSize })
   } catch (err) { console.error('products.list:', err); return httpError(500, '加载失败', 500) }
 }
 
 async function handleCreate(user, body) {
   try {
     const { name, category, price, unit, stock, description, images, status } = body
-    if (!name || !category || price === undefined) return httpError(400, '名称、分类和价格不能为空')
+    if (!name || !category || price === undefined || price === null || isNaN(parseFloat(price)) || parseFloat(price) < 0) return httpError(400, '名称、分类和价格不能为空，价格不能为负数')
     const data = {
       name: name.trim(), category, price: Math.round(parseFloat(price) * 100),
       unit: unit || '米', stock: parseInt(stock) || 0, status: status || 'sufficient',
@@ -69,7 +120,10 @@ async function handleUpdate(user, body) {
     const data = { updatedAt: db.serverDate() }
     if (name) data.name = name.trim()
     if (category) data.category = category
-    if (price !== undefined) data.price = Math.round(parseFloat(price) * 100)
+    if (price !== undefined) {
+      if (price === null || isNaN(parseFloat(price)) || parseFloat(price) < 0) return httpError(400, '价格不能为负数')
+      data.price = Math.round(parseFloat(price) * 100)
+    }
     if (unit) data.unit = unit
     if (stock !== undefined) data.stock = parseInt(stock)
     if (status) data.status = status
@@ -121,18 +175,39 @@ async function handleImport(user, body) {
     let success = 0
     for (const item of items) {
       if (!item.name || item.price === undefined) continue
-      await db.collection('products').add({
-        data: {
-          name: item.name.trim(), category: item.category || '其他',
-          price: Math.round(parseFloat(item.price) * 100),
-          unit: item.unit || '米', stock: parseInt(item.stock) || 0,
-          status: 'sufficient', description: item.description || '',
-          createdAt: db.serverDate(), updatedAt: db.serverDate()
-        }
-      })
+      const data = {
+        name: item.name.trim(), category: item.category || '其他',
+        price: Math.round(parseFloat(item.price) * 100),
+        unit: item.unit || '米', stock: parseInt(item.stock) || 0,
+        status: 'sufficient', description: item.description || '',
+        createdAt: db.serverDate(), updatedAt: db.serverDate()
+      }
+      if (item.images && item.images.length) {
+        data.images = item.images
+        data.image = item.images[0]
+      }
+      await db.collection('products').add({ data })
       success++
     }
     await logOperation(db, user.username, 'product.create', `批量导入`, `导入${success}个产品`)
     return httpOk({ success })
   } catch (err) { console.error('products.import:', err); return httpError(500, '导入失败', 500) }
+}
+
+async function handleUpload(body) {
+  try {
+    const { image, fileName } = body
+    if (!image || !fileName) return httpError(400, '缺少图片数据')
+    const ext = path.extname(fileName).toLowerCase()
+    if (!['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'].includes(ext)) {
+      return httpError(400, '不支持的图片格式')
+    }
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, '')
+    const tmpPath = `/tmp/${Date.now()}_${Math.random().toString(36).slice(2, 8)}${ext}`
+    fs.writeFileSync(tmpPath, Buffer.from(base64Data, 'base64'))
+    const cloudPath = `products/${Date.now()}_${Math.random().toString(36).slice(2, 8)}${ext}`
+    const uploadRes = await cloud.uploadFile({ cloudPath, filePath: tmpPath })
+    try { fs.unlinkSync(tmpPath) } catch (e) {}
+    return httpOk({ fileID: uploadRes.fileID, cloudPath })
+  } catch (err) { console.error('products.upload:', err); return httpError(500, '图片上传失败', 500) }
 }

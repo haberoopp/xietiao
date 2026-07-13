@@ -28,7 +28,20 @@
     { "name": "adminTogglePickedUp",     "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "importProducts",          "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "subscribeAdmin",          "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "changePassword",          "timeout": 10, "runtime": "Nodejs18.15", "handler": "index.main" },
     { "name": "initAdminAccounts",       "timeout": 30, "runtime": "Nodejs18.15", "handler": "index.main" },
-    { "name": "healthCheck",             "timeout": 10, "runtime": "Nodejs18.15", "handler": "index.main" }
+    { "name": "healthCheck",             "timeout": 10, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminLoginWeb",           "timeout": 20, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminGetDashboard",       "timeout": 20, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminWebOrders",          "timeout": 20, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminWebProducts",        "timeout": 20, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminWebCustomers",       "timeout": 20, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminWebPrices",          "timeout": 20, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminWebFinance",         "timeout": 20, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminWebAdmins",          "timeout": 20, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminWebLogs",            "timeout": 20, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "adminWebSettings",        "timeout": 20, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "runTests",               "timeout": 300, "runtime": "Nodejs18.15", "handler": "index.main" },
+    { "name": "secTest",               "timeout": 300, "runtime": "Nodejs18.15", "handler": "index.main" }
   ]
 }

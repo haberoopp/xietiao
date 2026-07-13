@@ -35,7 +35,7 @@ Page({
       status: ''
     },
     batchCategories: ['', '色丁', '雪纺', '涤纶', '锦纶', '花边', '其他'],
-    batchUnits: ['', '米', '卷', '个', '公斤', '包'],
+    batchUnits: ['', '米', '卷', '个', '公斤', '包', '捆'],
     batchStatuses: ['', '充足', '紧张', '缺货'],
     filterMode: ''  // 'shortage' 来自仪表盘缺货预警
   },

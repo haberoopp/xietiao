@@ -1,26 +1,20 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
-const crypto = require('crypto');
 const res = require('./response');
 const logger = require('./logger');
 const auth = require('./auth');
-
-function hashPassword(password, salt) {
-  return crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
-}
-
-function generateSalt() {
-  return crypto.randomBytes(32).toString('hex');
-}
+const pwHash = require('./passwordHash');
 
 const ACCOUNTS = [
-  { username: 'changzhang', password: '123456', role: 'manager', nickname: '厂长' },
-  { username: 'songhuo', password: '123456', role: 'delivery', nickname: '送货员' },
-  { username: 'diaohuo', password: '123456', role: 'warehouse', nickname: '仓库调货员' },
+  { username: 'changzhang', password: pwHash.generateRandomPassword(16), role: 'manager', nickname: '厂长' },
+  { username: 'songhuo',   password: pwHash.generateRandomPassword(16), role: 'delivery', nickname: '送货员' },
+  { username: 'diaohuo',   password: pwHash.generateRandomPassword(16), role: 'warehouse', nickname: '仓库调货员' },
 ];
 
 exports.main = async () => {
+  const authResult = await auth.requireRole('manager');
+  if (!authResult.authorized) return authResult.response;
   try {
     const results = [];
     for (const account of ACCOUNTS) {
@@ -33,8 +27,7 @@ exports.main = async () => {
         continue;
       }
 
-      const salt = generateSalt();
-      const passwordHash = hashPassword(account.password, salt);
+      const { salt, hash: passwordHash } = pwHash.hashPassword(account.password);
 
       await db.collection('admins').add({
         data: {
@@ -52,9 +45,15 @@ exports.main = async () => {
           updatedAt: db.serverDate()
         }
       });
-      results.push({ username: account.username, status: 'created' });
+      results.push({ username: account.username, status: 'created', password: account.password });
     }
     logger.info('Admin accounts initialized', { count: results.length });
+    // Log that passwords were generated — do NOT log the actual password values
+    results.forEach(r => {
+      if (r.status === 'created') {
+        logger.info('Admin account created with random password', { username: r.username, note: 'Password only visible once in initAdminAccounts response' });
+      }
+    });
     return res.record(results);
   } catch (err) {
     logger.error('initAdminAccounts error', err);

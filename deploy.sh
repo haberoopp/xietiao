@@ -43,7 +43,7 @@ for d in "$FUNCTIONS_DIR"/*/; do
   [ "$name" = "lib" ] && continue
   [ "$name" = "initAdminAccounts" ] && continue
 
-  for lib in response logger auth notify; do
+  for lib in response logger auth notify security passwordHash passwordPolicy jwtAuth operationLog rateLimiter; do
     rm -f "$d/$lib.js"
   done
   echo "  $name: cleaned"

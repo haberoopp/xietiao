@@ -118,6 +118,22 @@ App({
     }
   },
 
+  // 全局默认分享（所有页面未自定义时生效）
+  onShareAppMessage() {
+    return {
+      title: '送货单小程序 - 高效管理订单',
+      path: '/pages/index/index'
+    };
+  },
+
+  // 分享到朋友圈（需基础库 2.11.3+）
+  onShareTimeline() {
+    return {
+      title: '送货单小程序 - 高效管理订单',
+      query: ''
+    };
+  },
+
   globalData: {
     openid: '',
     isNewUser: false,

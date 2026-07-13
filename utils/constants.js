@@ -6,7 +6,7 @@ const PRODUCT_CATEGORIES = ['色丁', '凉感丝', '丝纹', '全棉', '圆盘',
 
 const PRODUCT_CATEGORIES_WITH_ALL = ['全部', ...PRODUCT_CATEGORIES];
 
-const PRODUCT_UNITS = ['米', '卷', '个', '公斤', '包'];
+const PRODUCT_UNITS = ['米', '卷', '个', '公斤', '包', '捆'];
 
 const PRODUCT_STATUSES = ['sufficient', 'low', 'out'];
 

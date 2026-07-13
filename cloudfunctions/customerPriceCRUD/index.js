@@ -4,6 +4,7 @@ const db = cloud.database();
 const res = require('./response');
 const logger = require('./logger');
 const auth = require('./auth');
+const security = require('./security');
 
 exports.main = async (event) => {
   const { action } = event;
@@ -14,7 +15,7 @@ exports.main = async (event) => {
   }
 
   // All other actions require admin auth
-  const adminAuth = await auth.requireAdmin();
+  const adminAuth = await auth.requireRole('manager');
   if (!adminAuth.authorized) return adminAuth.response;
 
   try {
@@ -40,7 +41,7 @@ async function doList(event) {
   const { page = 1, pageSize = 50, customerPhone, keyword } = event;
   const where = {};
   if (customerPhone) where.customerPhone = customerPhone;
-  if (keyword) where.productName = db.RegExp({ regexp: keyword, options: 'i' });
+  if (keyword) where.productName = db.RegExp({ regexp: security.escapeRegex(keyword), options: 'i' });
 
   const safeSize = Math.min(parseInt(pageSize) || 50, 100);
   const skip = (parseInt(page) - 1) * safeSize;
@@ -207,6 +208,8 @@ async function doBatchDelete(event) {
  */
 async function doGetByPhone(event) {
   const { phone } = event;
+  const authResult = await auth.requireOpenid();
+  if (!authResult.authorized) return authResult.response;
   if (!phone) return res.badRequest('手机号不能为空');
 
   const result = await db.collection('customerPrices')

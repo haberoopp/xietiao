@@ -4,10 +4,11 @@ const db = cloud.database();
 const res = require('./response');
 const logger = require('./logger');
 const auth = require('./auth');
+const oplog = require('./operationLog');
 
 exports.main = async (event) => {
   try {
-    const authResult = await auth.requireAdmin();
+    const authResult = await auth.requireRole('manager');
     if (!authResult.authorized) return authResult.response;
 
     const { productId } = event;
@@ -18,6 +19,7 @@ exports.main = async (event) => {
 
     await db.collection('products').doc(productId).remove();
     logger.info('Product deleted', { productId });
+    await oplog.logOperation(db, authResult.admin.username, 'product.delete', productId, `删除产品`);
     return res.ok();
   } catch (err) {
     logger.error('adminDeleteProduct error', err);

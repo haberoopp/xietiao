@@ -80,6 +80,8 @@ async function updateAddress(openid, event) {
   const { addressId, name, phone, address: addr, location } = event;
   if (!addressId) return res.badRequest('参数错误');
 
+  if (typeof addressId !== 'string') return res.badRequest('参数格式错误');
+
   const doc = db.collection('addresses').doc(addressId);
   const check = await doc.get();
   if (!check.data || check.data._openid !== openid) {
@@ -101,6 +103,7 @@ async function updateAddress(openid, event) {
 async function deleteAddress(openid, event) {
   const { addressId } = event;
   if (!addressId) return res.badRequest('参数错误');
+  if (typeof addressId !== 'string') return res.badRequest('参数格式错误');
 
   const doc = db.collection('addresses').doc(addressId);
   const check = await doc.get();
@@ -131,6 +134,13 @@ async function deleteAddress(openid, event) {
 async function setDefault(openid, event) {
   const { addressId } = event;
   if (!addressId) return res.badRequest('参数错误');
+  if (typeof addressId !== 'string') return res.badRequest('参数格式错误');
+
+  // 验证地址所有权
+  const check = await db.collection('addresses').doc(addressId).get();
+  if (!check.data || check.data._openid !== openid) {
+    return res.forbidden('无权操作');
+  }
 
   await db.collection('addresses').where({ _openid: openid, isDefault: true }).update({
     data: { isDefault: false, updatedAt: db.serverDate() }

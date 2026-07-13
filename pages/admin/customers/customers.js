@@ -109,10 +109,12 @@ Page({
           const result = await wx.cloud.callFunction({ name: 'customerCRUD', data: { action: 'delete', customerId: id } });
           if (result.result.code === 0) {
             wx.showToast({ title: '已删除', icon: 'success' });
-            this.loadCustomers();
+            await this.loadCustomers();
+          } else {
+            wx.showToast({ title: result.result.msg || '删除失败', icon: 'none' });
           }
         } catch (err) {
-          wx.showToast({ title: '删除失败', icon: 'none' });
+          wx.showToast({ title: '删除失败，请检查网络', icon: 'none' });
         }
       }
     });

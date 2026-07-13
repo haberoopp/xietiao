@@ -4,11 +4,12 @@ const db = cloud.database();
 const res = require('./response');
 const logger = require('./logger');
 const auth = require('./auth');
+const oplog = require('./operationLog');
 const _ = db.command;
 
 exports.main = async (event) => {
   try {
-    const authResult = await auth.requireAdmin();
+    const authResult = await auth.requireRole('manager');
     if (!authResult.authorized) return authResult.response;
 
     const { action, ids } = event;
@@ -22,9 +23,9 @@ exports.main = async (event) => {
 
     switch (action) {
       case 'delete':
-        return await batchDelete(ids);
+        return await batchDelete(ids, authResult.admin.username);
       case 'update':
-        return await batchUpdate(ids, event);
+        return await batchUpdate(ids, event, authResult.admin.username);
       default:
         return res.badRequest('未知操作');
     }
@@ -34,12 +35,13 @@ exports.main = async (event) => {
   }
 };
 
-async function batchDelete(ids) {
+async function batchDelete(ids, operator) {
   try {
     await db.collection('products')
       .where({ _id: _.in(ids) })
       .remove();
     logger.info('Batch delete products', { count: ids.length });
+    try { await oplog.logOperation(db, operator, 'product.delete', '批量', `删除${ids.length}个产品`); } catch (e) {}
     return res.ok();
   } catch (err) {
     // Fallback: delete one by one
@@ -57,7 +59,7 @@ async function batchDelete(ids) {
   }
 }
 
-async function batchUpdate(ids, event) {
+async function batchUpdate(ids, event, operator) {
   const updateData = { updatedAt: db.serverDate() };
 
   if (event.category !== undefined) updateData.category = event.category;
@@ -73,6 +75,7 @@ async function batchUpdate(ids, event) {
       .where({ _id: _.in(ids) })
       .update({ data: updateData });
     logger.info('Batch update products', { count: ids.length, fields: Object.keys(updateData) });
+    try { await oplog.logOperation(db, operator, 'product.update', '批量', `批量更新${ids.length}个产品`); } catch (e) {}
     return res.ok();
   } catch (err) {
     // Fallback: update one by one
