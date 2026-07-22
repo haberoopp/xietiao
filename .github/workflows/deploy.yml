@@ -29,11 +29,11 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           for d in cloudfunctions/*/; do
-            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "initAdminAccounts" ] && continue
+            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "initAdminAccounts" ] && continue; [ "$n" = "diagnoseAdmins" ] && continue
             cp cloudfunctions/lib/*.js "$d/" 2>/dev/null
           done
           for d in cloudfunctions/*/; do
-            n=$(basename "$d"); [ "$n" = "lib" ] && continue
+            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "diagnoseAdmins" ] && continue
             echo "y" | tcb fn deploy "$n" --env-id "$TCB_ENV_STAGING" --force
           done
       - name: Health check
@@ -42,7 +42,7 @@ jobs:
         if: always()
         run: |
           for d in cloudfunctions/*/; do
-            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "initAdminAccounts" ] && continue
+            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "initAdminAccounts" ] && continue; [ "$n" = "diagnoseAdmins" ] && continue
             rm -f "$d"/{response,logger,auth,notify,security,passwordHash,passwordPolicy,jwtAuth,operationLog,rateLimiter}.js
           done
   deploy-production:
@@ -58,11 +58,11 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           for d in cloudfunctions/*/; do
-            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "initAdminAccounts" ] && continue
+            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "initAdminAccounts" ] && continue; [ "$n" = "diagnoseAdmins" ] && continue
             cp cloudfunctions/lib/*.js "$d/" 2>/dev/null
           done
           for d in cloudfunctions/*/; do
-            n=$(basename "$d"); [ "$n" = "lib" ] && continue
+            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "diagnoseAdmins" ] && continue
             echo "y" | tcb fn deploy "$n" --env-id "$TCB_ENV_PRODUCTION" --force
           done
       - name: Health check
@@ -73,6 +73,6 @@ jobs:
         if: always()
         run: |
           for d in cloudfunctions/*/; do
-            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "initAdminAccounts" ] && continue
+            n=$(basename "$d"); [ "$n" = "lib" ] && continue; [ "$n" = "initAdminAccounts" ] && continue; [ "$n" = "diagnoseAdmins" ] && continue
             rm -f "$d"/{response,logger,auth,notify,security,passwordHash,passwordPolicy,jwtAuth,operationLog,rateLimiter}.js
           done
