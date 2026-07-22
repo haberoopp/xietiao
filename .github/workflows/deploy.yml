@@ -23,8 +23,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '20'}
-      - run: npm install -g @cloudbase/cli
-      - run: tcb login --apiKeyId $TCB_SECRET_ID --apiKeyValue $TCB_SECRET_KEY
+      - run: npm install -g @cloudbase/cli@3.5.7
+      - run: tcb login --apiKeyId $TCB_SECRET_ID --apiKey $TCB_SECRET_KEY
       - name: Deploy all functions to staging
         run: |
           cd $GITHUB_WORKSPACE
@@ -52,8 +52,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '20'}
-      - run: npm install -g @cloudbase/cli
-      - run: tcb login --apiKeyId $TCB_SECRET_ID --apiKeyValue $TCB_SECRET_KEY
+      - run: npm install -g @cloudbase/cli@3.5.7
+      - run: tcb login --apiKeyId $TCB_SECRET_ID --apiKey $TCB_SECRET_KEY
       - name: Deploy all functions to production
         run: |
           cd $GITHUB_WORKSPACE
